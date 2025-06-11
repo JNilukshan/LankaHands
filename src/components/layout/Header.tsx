@@ -1,3 +1,6 @@
+
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -11,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState, useRef, useEffect, type FC } from 'react';
 
 const mainNavLinks = [
   { href: '/', label: 'Home' },
@@ -23,7 +27,33 @@ const accountNavLinks = [
 ];
 
 
-const Header = () => {
+const Header: FC = () => {
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenDropdown = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsAccountDropdownOpen(true);
+  };
+
+  const handleCloseDropdown = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsAccountDropdownOpen(false);
+    }, 150); // ms delay to allow cursor to move to content
+  };
+
+  useEffect(() => {
+    // Clear timeout on component unmount
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -42,14 +72,24 @@ const Header = () => {
 
         <div className="hidden md:flex items-center space-x-3">
           <LanguageSwitcher />
-          <DropdownMenu>
+          <DropdownMenu open={isAccountDropdownOpen} onOpenChange={setIsAccountDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-sm">
+              <Button
+                variant="ghost"
+                className="text-sm"
+                onMouseEnter={handleOpenDropdown}
+                onMouseLeave={handleCloseDropdown}
+                onFocus={handleOpenDropdown} // Also open on focus for keyboard users
+                onBlur={handleCloseDropdown}  // Close on blur for keyboard users
+              >
                 Welcome
-                {/* Optional: Add a small icon like ChevronDown here if desired */}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              onMouseEnter={handleOpenDropdown}
+              onMouseLeave={handleCloseDropdown}
+            >
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
