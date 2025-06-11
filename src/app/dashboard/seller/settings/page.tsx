@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save } from 'lucide-react'; // Removed RotateCcw
+import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle } from 'lucide-react'; 
 
 export default function StoreSettingsPage() {
   // In a real app, form state would be managed with react-hook-form or similar
@@ -17,44 +17,21 @@ export default function StoreSettingsPage() {
         <Settings size={32} className="mr-3 text-accent" /> Store Settings
       </h1>
 
-      <Tabs defaultValue="store-info" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1"> {/* Adjusted md:grid-cols-4 */}
-          <TabsTrigger value="store-info" className="flex items-center gap-2 py-2"><Store size={16}/> Store Info</TabsTrigger>
+      <Tabs defaultValue="artisan-profile" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1"> 
+          <TabsTrigger value="artisan-profile" className="flex items-center gap-2 py-2"><UserCircle size={16}/> Artisan Profile</TabsTrigger>
           <TabsTrigger value="payment" className="flex items-center gap-2 py-2"><CreditCard size={16}/> Payments</TabsTrigger>
           <TabsTrigger value="shipping" className="flex items-center gap-2 py-2"><Truck size={16}/> Shipping</TabsTrigger>
           <TabsTrigger value="policies" className="flex items-center gap-2 py-2"><ShieldCheck size={16}/> Policies</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="store-info">
+        <TabsContent value="artisan-profile">
           <Card className="shadow-lg mt-4">
             <CardHeader>
-              <CardTitle className="font-headline text-xl text-primary">Store & Artisan Information</CardTitle>
-              <CardDescription>Manage your store's public details, branding, and artisan profile.</CardDescription>
+              <CardTitle className="font-headline text-xl text-primary">Artisan Profile Information</CardTitle>
+              <CardDescription>Manage your public artisan profile details. This information appears on your store and product pages.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="storeName">Store Name</Label>
-                <Input id="storeName" defaultValue="My Artisan Store" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="storeBio">Store Bio / About</Label>
-                <Textarea id="storeBio" rows={4} placeholder="Tell customers about your store and your craft..." defaultValue="Dedicated to handcrafted Sri Lankan treasures, bringing authentic artistry to your doorstep." />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="storeBanner" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Store Banner Image</Label>
-                <Input id="storeBanner" type="file" accept="image/*" />
-                <p className="text-xs text-muted-foreground">Recommended size: 1200x300px. Max 2MB.</p>
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="storeLogo" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Store Logo</Label>
-                <Input id="storeLogo" type="file" accept="image/*" />
-                <p className="text-xs text-muted-foreground">Recommended size: 200x200px. Max 1MB.</p>
-              </div>
-
-              <hr className="my-6 border-border" />
-              <h3 className="text-lg font-semibold text-primary">Artisan Profile Details</h3>
-              <CardDescription>This information appears on your store and product pages.</CardDescription>
-              
               <div className="space-y-2">
                   <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
                   <Input id="artisanName" defaultValue="Nimali Perera - Batik Artistry" />
@@ -78,7 +55,7 @@ export default function StoreSettingsPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Information</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Profile Information</Button>
             </CardFooter>
           </Card>
         </TabsContent>
