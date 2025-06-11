@@ -9,7 +9,7 @@ import { Award, MapPin, MessageCircle, UserPlus, Users, Star } from 'lucide-reac
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; // Import the new component
+import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; 
 
 // Placeholder data - in a real app, this would be fetched based on [id]
 const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
@@ -30,7 +30,7 @@ const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
   const artisans: Record<string, Artisan> = {
     '1': { 
       id: '1', name: 'Nimali Perera', 
-      bio: 'Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka\'s lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics.', 
+      bio: "Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics.", 
       profileImageUrl: 'https://placehold.co/600x400.png', 
       speciality: 'Master Batik Artist',
       location: 'Kandy, Sri Lanka',
@@ -98,7 +98,13 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
                 <span>{artisan.location}</span>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-center mt-4 md:mt-0">
+            <div className="flex flex-col gap-3 items-stretch mt-4 md:mt-0 w-full sm:w-auto">
+                <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                  <Link href={`/artisans/${artisan.id}/contact`}>
+                    <MessageCircle size={18} className="mr-2" />
+                    Contact Artisan
+                  </Link>
+                </Button>
                 <ArtisanFollowButton artisanId={artisan.id} artisanName={artisan.name} />
             </div>
           </div>
