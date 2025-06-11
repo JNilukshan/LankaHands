@@ -11,10 +11,21 @@ import type { Product } from '@/types';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data for products
-const mockProducts: Product[] = [
+// Initial Mock data for products
+const initialMockProducts: Product[] = [
   { id: 'prod1', name: 'Ocean Breeze Batik Saree', price: 120.00, category: 'Apparel', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 5, description: 'Elegant silk saree.'},
   { id: 'prod2', name: 'Hand-Carved Elephant Statue', price: 75.00, category: 'Decor', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 10, description: 'Detailed wooden elephant.' },
   { id: 'prod3', name: 'Terracotta Clay Vase Set', price: 45.00, category: 'Pottery', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 0, description: 'Set of 3 vases.' },
@@ -23,8 +34,34 @@ const mockProducts: Product[] = [
 
 export default function ManageProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredProducts = mockProducts.filter(product =>
+  useEffect(() => {
+    setProducts(initialMockProducts);
+  }, []);
+
+  const handleDeleteClick = (productId: string) => {
+    setProductToDeleteId(productId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (productToDeleteId) {
+      const deletedProduct = products.find(p => p.id === productToDeleteId);
+      setProducts(currentProducts => currentProducts.filter(product => product.id !== productToDeleteId));
+      toast({
+        title: "Product Deleted",
+        description: `${deletedProduct?.name || 'The product'} has been successfully deleted.`,
+      });
+    }
+    setIsDeleteDialogOpen(false);
+    setProductToDeleteId(null);
+  };
+
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -87,7 +124,7 @@ export default function ManageProductsPage() {
                   <TableCell className="text-center">{product.stock}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant={product.stock && product.stock > 0 ? 'default' : 'destructive'}
-                           className={product.stock && product.stock > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
+                           className={product.stock && product.stock > 0 ? 'bg-green-500 text-white hover:bg-green-500/90' : 'bg-red-500 text-white hover:bg-red-500/90'}>
                       {product.stock && product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                     </Badge>
                   </TableCell>
@@ -96,7 +133,7 @@ export default function ManageProductsPage() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">Actions for {product.name}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -105,7 +142,10 @@ export default function ManageProductsPage() {
                             <Edit className="mr-2 h-4 w-4" /> Edit Product
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                        <DropdownMenuItem 
+                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                          onClick={() => handleDeleteClick(product.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete Product
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -115,18 +155,36 @@ export default function ManageProductsPage() {
               ))}
             </TableBody>
           </Table>
-          {mockProducts.length > 0 && filteredProducts.length === 0 && (
+          {products.length > 0 && filteredProducts.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No products found matching your search criteria.
             </div>
           )}
-          {mockProducts.length === 0 && (
+          {products.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No products listed yet. <Link href="/dashboard/seller/products/new" className="text-primary hover:underline">Add your first product!</Link>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product
+              "{products.find(p => p.id === productToDeleteId)?.name || 'selected product'}" from your listings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProductToDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteProduct} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
