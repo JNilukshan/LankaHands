@@ -1,4 +1,6 @@
 
+"use client";
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,8 +9,21 @@ import { Separator } from '@/components/ui/separator';
 import type { User, Order, Product, OrderItem } from '@/types';
 import { Edit3, History, Heart, LogOut, UserCircle2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
-import ProductCard from '@/components/shared/ProductCard'; // Re-use for saved items
-import { Badge } from '@/components/ui/badge'; // Added import for Badge
+import ProductCard from '@/components/shared/ProductCard';
+import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder data
 const mockUser: User = {
@@ -36,6 +51,19 @@ const mockSavedProducts: Product[] = [
 
 export default function ProfilePage() {
   const user = mockUser; // In a real app, this would come from auth state
+  const { toast } = useToast();
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+  const handleLogout = () => {
+    // Simulate logout
+    setIsLogoutDialogOpen(false);
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    // In a real app, you'd redirect or update auth state here
+    // e.g., router.push('/login');
+  };
 
   return (
     <div className="space-y-10">
@@ -53,12 +81,30 @@ export default function ProfilePage() {
               <CardDescription className="text-md text-muted-foreground">{user.email}</CardDescription>
             </div>
             <div className="md:ml-auto flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
-                <Button variant="outline" className="text-primary border-primary hover:bg-primary/10">
-                    <Edit3 size={16} className="mr-2"/> Edit Profile
+                <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
+                    <Link href="/profile/edit">
+                        <Edit3 size={16} className="mr-2"/> Edit Profile
+                    </Link>
                 </Button>
-                <Button variant="destructive" className="bg-destructive/90 hover:bg-destructive">
-                    <LogOut size={16} className="mr-2"/> Logout
-                </Button>
+                <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="bg-destructive/90 hover:bg-destructive">
+                        <LogOut size={16} className="mr-2"/> Logout
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        You will be returned to the login page.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
             </div>
           </div>
         </CardHeader>
@@ -111,7 +157,9 @@ export default function ProfilePage() {
                     </div>
                 </CardContent>
                 <CardContent className="border-t pt-4 flex justify-end">
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/10">View Order Details</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
+                        <Link href={`/profile/orders/${order.id}`}>View Order Details</Link>
+                    </Button>
                 </CardContent>
               </Card>
             ))}
