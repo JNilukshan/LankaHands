@@ -9,6 +9,7 @@ import { Award, MapPin, MessageCircle, UserPlus, Users, Star } from 'lucide-reac
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; // Import the new component
 
 // Placeholder data - in a real app, this would be fetched based on [id]
 const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
@@ -98,9 +99,7 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-center mt-4 md:mt-0">
-                <Button variant="default" className="bg-primary hover:bg-primary/90">
-                    <UserPlus size={18} className="mr-2" /> Follow Artisan
-                </Button>
+                <ArtisanFollowButton artisanId={artisan.id} artisanName={artisan.name} />
                 <Button variant="outline" className="text-primary border-primary hover:bg-primary/10">
                     <MessageCircle size={18} className="mr-2" /> Message Artisan
                 </Button>
