@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { Order, OrderItem } from '@/types';
-import { CalendarDays, MapPin, ShoppingBag, Tag, Package, Hash, DollarSign, ListOrdered, UserCircle2 } from 'lucide-react';
+import { CalendarDays, MapPin, ShoppingBag, Tag, Package, Hash, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
@@ -76,6 +76,12 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
     );
   }
 
+  const typicalProcessingTime = "1-2 business days";
+  const returnPolicy = "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.";
+  const exchangePolicy = "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.";
+  const cancellationPolicy = "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped.";
+
+
   return (
     <div className="py-8 space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -105,9 +111,15 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     order.status === 'Shipped' ? 'secondary' :
                     order.status === 'Pending' ? 'secondary' :
                     order.status === 'Cancelled' ? 'destructive' :
-                    'default' // Fallback
+                    'default'
                 }
-                className="mt-2 sm:mt-0 text-sm px-3 py-1"
+                className={`text-sm px-3 py-1 ${
+                    order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' :
+                    order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-white' : // Changed from border-blue to bg-blue for consistency
+                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
+                    order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' :
+                    '' // Fallback class if needed, or remove if variants cover all
+                }`}
             >
                 {order.status}
             </Badge>
@@ -118,7 +130,6 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                 <div>
                     <h3 className="font-semibold text-md text-foreground mb-2 flex items-center"><UserCircle2 size={18} className="mr-2 text-accent"/>Customer Information</h3>
                     <p className="text-sm text-muted-foreground"><strong>Name:</strong> {order.customerName || order.userId}</p>
-                    {/* In a real app, more customer details might be available */}
                 </div>
                 <div>
                     <h3 className="font-semibold text-md text-foreground mb-2 flex items-center"><MapPin size={18} className="mr-2 text-accent"/>Shipping Address</h3>
@@ -160,7 +171,7 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                 <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal:</span>
-                        <span>${order.totalAmount.toFixed(2)}</span> {/* Assuming totalAmount is subtotal for now */}
+                        <span>${order.totalAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipping:</span>
@@ -177,6 +188,44 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     </div>
                 </div>
             </div>
+
+            <Separator />
+            
+            <div>
+                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><Truck size={18} className="mr-2 text-accent"/>Shipping Information & Policies</h3>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                    <p><strong>Typical Order Processing Time:</strong> {typicalProcessingTime}</p>
+                    <div>
+                        <h4 className="font-medium text-foreground mb-1">Standard Shipping Policy:</h4>
+                        <ul className="list-disc list-inside pl-4 space-y-1">
+                            <li>Local (Sri Lanka): $5 (3-5 business days)</li>
+                            <li>International: $25 (7-21 business days, varies by destination)</li>
+                            <li>Free shipping on orders over $100 (local) / $200 (international).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <Separator />
+
+            <div>
+                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><ShieldCheck size={18} className="mr-2 text-accent"/>Store Policies</h3>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                    <div>
+                        <h4 className="font-medium text-foreground mb-1">Return & Refund Policy:</h4>
+                        <p>{returnPolicy}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-medium text-foreground mb-1">Exchange Policy:</h4>
+                        <p>{exchangePolicy}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-medium text-foreground mb-1">Order Cancellation Policy:</h4>
+                        <p>{cancellationPolicy}</p>
+                    </div>
+                </div>
+            </div>
+
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex flex-col sm:flex-row justify-end gap-3">
             <Button variant="outline">Print Invoice</Button>
@@ -186,3 +235,4 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
     </div>
   );
 }
+
