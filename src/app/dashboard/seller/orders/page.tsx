@@ -32,10 +32,11 @@ export default function AllOrdersPage() {
   const ordersPerPage = 10;
 
   const filteredOrders = mockAllOrders.filter(order => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
     const matchesSearchTerm =
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.customerName && order.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
+      order.id.toLowerCase().includes(lowerSearchTerm) ||
+      (order.customerName && order.customerName.toLowerCase().includes(lowerSearchTerm)) ||
+      order.items.some(item => item.productName.toLowerCase().includes(lowerSearchTerm));
     
     const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase();
     
@@ -166,6 +167,3 @@ export default function AllOrdersPage() {
     </div>
   );
 }
-    
-
-    
