@@ -1,7 +1,8 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, DollarSign, TrendingUp, Users, ShoppingBag, Eye, Percent, Package } from 'lucide-react'; // Added Package back, it's valid
+import { BarChart3, DollarSign, TrendingUp, Users, ShoppingBag, Eye, Percent, Package, Brain } from 'lucide-react'; 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'; 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Legend, Tooltip } from 'recharts'; 
 
@@ -94,11 +95,13 @@ export default function SalesAnalyticsPage() {
       {/* Placeholder for other charts/data tables */}
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg font-headline text-primary">More Analytics Coming Soon</CardTitle>
+          <CardTitle className="text-lg font-headline text-primary flex items-center">
+            <Brain size={22} className="mr-2 text-accent" /> AI-Powered Insights Coming Soon
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Detailed reports on customer demographics, traffic sources, and product performance will be available here.
+            Get ready for advanced analytics! Future updates will include AI-driven reports on customer demographics, traffic sources, product performance predictions, and personalized sales strategies.
           </p>
         </CardContent>
       </Card>
