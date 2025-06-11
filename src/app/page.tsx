@@ -96,22 +96,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Popular Products Section */}
-      <section>
-        <h2 className="text-3xl font-headline font-semibold text-center mb-2 text-primary">Popular Products</h2>
-        <p className="text-center text-muted-foreground mb-8">Handpicked favorites from our collections</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {popularProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <Button className="bg-primary hover:bg-primary/90" asChild>
-            <Link href="/products">Explore More Products</Link>
-          </Button>
-        </div>
-      </section>
-
       {/* Call to Action: Become a Seller */}
       <section className="bg-secondary/30 p-8 md:p-12 rounded-lg text-center">
         <h2 className="text-3xl font-headline font-semibold mb-4 text-primary">Share Your Craft with the World</h2>
