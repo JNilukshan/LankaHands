@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card'; // Added Card and CardContent import
+import { Card, CardContent } from '@/components/ui/card';
 
 // Placeholder data
 const allProducts: Product[] = [
@@ -78,9 +79,6 @@ export default function ProductsPage() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      <aside className="lg:w-1/4 xl:w-1/5">
-        <ProductFilters onFilterChange={handleFilterChange} />
-      </aside>
       <section className="lg:w-3/4 xl:w-4/5">
         <div className="mb-6 p-4 bg-card rounded-lg shadow">
           <h1 className="text-3xl font-headline font-semibold mb-4 text-primary">Our Collection</h1>
@@ -134,6 +132,9 @@ export default function ProductsPage() {
           </div>
         )}
       </section>
+      <aside className="lg:w-1/4 xl:w-1/5">
+        <ProductFilters onFilterChange={handleFilterChange} />
+      </aside>
     </div>
   );
 }
