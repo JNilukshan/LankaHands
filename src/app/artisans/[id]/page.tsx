@@ -16,14 +16,14 @@ const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API call
 
   const sampleProductsForNimali: Product[] = [
-    { id: 'p1', name: 'Sunrise Batik Kaftan', description: 'Flowy kaftan with sunrise motifs.', price: 85.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', reviews: [{id:'r1', userId:'u1', userName:'Aisha',productId:'p1', rating:5,comment:'Lovely!', createdAt: new Date().toISOString()}]},
-    { id: 'p2', name: 'Tropical Leaf Batik Cushion Cover', description: 'Vibrant cushion cover.', price: 30.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', reviews: [{id:'r2', userId:'u2', userName:'Ben',productId:'p2', rating:4,comment:'Nice design.', createdAt: new Date().toISOString()}]},
-    { id: 'p3', name: 'Floral Batik Scarf', description: 'Lightweight silk scarf with floral batik.', price: 45.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '1'},
+    { id: 'p1', name: 'Sunrise Batik Kaftan', description: 'Flowy kaftan with sunrise motifs.', price: 85.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 7, reviews: [{id:'r1', userId:'u1', userName:'Aisha',productId:'p1', rating:5,comment:'Lovely!', createdAt: new Date().toISOString()}]},
+    { id: 'p2', name: 'Tropical Leaf Batik Cushion Cover', description: 'Vibrant cushion cover.', price: 30.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 12, reviews: [{id:'r2', userId:'u2', userName:'Ben',productId:'p2', rating:4,comment:'Nice design.', createdAt: new Date().toISOString()}]},
+    { id: 'p3', name: 'Floral Batik Scarf', description: 'Lightweight silk scarf with floral batik.', price: 45.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 0},
   ];
   
   const sampleProductsForLeatherCo: Product[] = [
-    { id: 'p107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6' },
-    { id: 'p109', name: 'Minimalist Leather Wallet', description: 'Slim leather wallet, hand-stitched.', price: 50.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6' },
+    { id: 'p107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6', stock: 15 },
+    { id: 'p109', name: 'Minimalist Leather Wallet', description: 'Slim leather wallet, hand-stitched.', price: 50.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6', stock: 8 },
   ];
 
 
