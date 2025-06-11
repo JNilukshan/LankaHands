@@ -9,20 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import type { Order, OrderItem } from '@/types';
-import { ListOrdered, Search, Filter, Eye, ChevronDown } from 'lucide-react';
-import Link from 'next/link';
+import { ListOrdered, Search, Filter, Eye, ChevronDown, ShoppingCart, UserCircle2 } from 'lucide-react';
+import Image from 'next/image'; // Import Image
 
 // More comprehensive mock data for all orders
 const initialMockOrders: Order[] = [
-  { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-  { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
-  { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
-  { id: 'order004', userId: 'cust4', customerName: 'David L.', items: [{productId: 'p4', productName: 'Spiced Tea Pack', quantity:3, price: 15}], totalAmount: 45.00, orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '10 Palm Grove, Jaffna' },
-  { id: 'order005', userId: 'cust5', customerName: 'Sarah W.', items: [{productId: 'p5', productName: 'Handloom Table Runner', quantity:1, price: 35}], totalAmount: 35.00, orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '22 Flower Rd, Nuwara Eliya' },
-  { id: 'order006', userId: 'cust6', customerName: 'Kumar R.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:2, price: 45}], totalAmount: 90.00, orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '33 Hill Street, Badulla' },
-  { id: 'order007', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:1, price: 30}], totalAmount: 30.00, orderDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-  { id: 'order008', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:3, price: 20}], totalAmount: 60.00, orderDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), status: 'Cancelled', shippingAddress: '456 Kandy Rd, Kandy' },
+  { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
+  { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
+  { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
+  { id: 'order004', userId: 'cust4', customerName: 'David L.', items: [{productId: 'p4', productName: 'Spiced Tea Pack', quantity:3, price: 15, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '10 Palm Grove, Jaffna' },
+  { id: 'order005', userId: 'cust5', customerName: 'Sarah W.', items: [{productId: 'p5', productName: 'Handloom Table Runner', quantity:1, price: 35, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 35.00, orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '22 Flower Rd, Nuwara Eliya' },
+  { id: 'order006', userId: 'cust6', customerName: 'Kumar R.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:2, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 90.00, orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '33 Hill Street, Badulla' },
+  { id: 'order007', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:1, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 30.00, orderDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
+  { id: 'order008', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:3, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), status: 'Cancelled', shippingAddress: '456 Kandy Rd, Kandy' },
 ];
 
 const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
@@ -34,12 +35,20 @@ export default function AllOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
 
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
+
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
     setOrders(prevOrders =>
       prevOrders.map(order =>
         order.id === orderId ? { ...order, status: newStatus } : order
       )
     );
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsViewOrderDialogOpen(true);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -54,7 +63,6 @@ export default function AllOrdersPage() {
     return matchesSearchTerm && matchesStatus;
   });
 
-  // Pagination logic
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
@@ -131,7 +139,7 @@ export default function AllOrdersPage() {
                   <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8">
+                        <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8 min-w-[100px] justify-center">
                           <Badge 
                             variant={
                               order.status === 'Delivered' ? 'default' : 
@@ -139,10 +147,10 @@ export default function AllOrdersPage() {
                               order.status === 'Cancelled' ? 'destructive' : 'secondary'
                             }
                             className={
-                              `pointer-events-none ${ order.status === 'Delivered' ? 'bg-green-500 text-white' : 
-                              order.status === 'Shipped' ? 'border-blue-500 text-blue-500' : 
-                              order.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
-                              order.status === 'Cancelled' ? 'bg-red-500 text-white' : '' }`
+                              `pointer-events-none text-xs ${ order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' : 
+                              order.status === 'Shipped' ? 'border-blue-500 text-blue-500 hover:bg-blue-500/10' : 
+                              order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
+                              order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' : '' }`
                             }
                           >
                             {order.status}
@@ -164,7 +172,7 @@ export default function AllOrdersPage() {
                     </DropdownMenu>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => handleViewOrder(order)}>
                       <Eye className="h-4 w-4" />
                        <span className="sr-only">View Order</span>
                     </Button>
@@ -191,6 +199,79 @@ export default function AllOrdersPage() {
         </CardContent>
         )}
       </Card>
+
+      {selectedOrder && (
+        <Dialog open={isViewOrderDialogOpen} onOpenChange={setIsViewOrderDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-headline text-primary">Order Details: #{selectedOrder.id.substring(0,8)}</DialogTitle>
+              <DialogDescription>
+                Placed on: {new Date(selectedOrder.orderDate).toLocaleDateString()} by {selectedOrder.customerName || `Customer ${selectedOrder.userId}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2 text-foreground">Items Ordered:</h4>
+                <ul className="space-y-3 max-h-60 overflow-y-auto">
+                  {selectedOrder.items.map(item => (
+                    <li key={item.productId} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <Image 
+                          src={typeof item.productImage === 'string' ? item.productImage : "https://placehold.co/60x60.png"} 
+                          alt={item.productName} 
+                          width={50} height={50} 
+                          className="rounded-md object-cover border"
+                          data-ai-hint="product thumbnail"
+                        />
+                        <div>
+                          <p className="font-medium text-sm text-foreground">{item.productName}</p>
+                          <p className="text-xs text-muted-foreground">Qty: {item.quantity} · Price: ${item.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-primary">${(item.quantity * item.price).toFixed(2)}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between font-semibold text-md text-primary">
+                  <span>Total Amount:</span>
+                  <span>${selectedOrder.totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+              {selectedOrder.shippingAddress && (
+                <div className="border-t pt-3">
+                  <h4 className="font-semibold text-sm text-foreground mb-1">Shipping Address:</h4>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.shippingAddress}</p>
+                </div>
+              )}
+              <div className="border-t pt-3">
+                <h4 className="font-semibold text-sm text-foreground mb-1">Order Status:</h4>
+                <Badge 
+                    variant={
+                        selectedOrder.status === 'Delivered' ? 'default' : 
+                        selectedOrder.status === 'Shipped' ? 'outline' : 
+                        selectedOrder.status === 'Cancelled' ? 'destructive' : 'secondary'
+                    }
+                    className={
+                        `${ selectedOrder.status === 'Delivered' ? 'bg-green-500 text-white' : 
+                        selectedOrder.status === 'Shipped' ? 'border-blue-500 text-blue-500' : 
+                        selectedOrder.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
+                        selectedOrder.status === 'Cancelled' ? 'bg-red-500 text-white' : '' }`
+                    }
+                >
+                    {selectedOrder.status}
+                </Badge>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
