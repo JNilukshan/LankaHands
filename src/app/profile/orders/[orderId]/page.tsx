@@ -1,6 +1,7 @@
 
 "use client"; // Added to enable client-side interactivity for window.print()
 
+import React from 'react'; // Import React
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
