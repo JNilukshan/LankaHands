@@ -100,8 +100,10 @@ export default function ManageProductsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" /> Edit Product
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/seller/products/${product.id}/edit`} className="flex items-center w-full">
+                            <Edit className="mr-2 h-4 w-4" /> Edit Product
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" /> Delete Product
