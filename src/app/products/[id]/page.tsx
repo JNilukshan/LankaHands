@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext'; // Import useCart
-import { useState, useEffect } from 'react'; // For client-side data fetching simulation
+import React, { useState, useEffect } from 'react'; // For client-side data fetching simulation
 
 // Placeholder data - in a real app, this would be fetched based on [id]
 const getProductDetails = async (id: string): Promise<Product | null> => {
@@ -180,6 +180,8 @@ const getProductDetails = async (id: string): Promise<Product | null> => {
 
 
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const resolvedParams = React.use(params);
+  const productId = resolvedParams.id;
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
@@ -187,12 +189,12 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
-      const fetchedProduct = await getProductDetails(params.id);
+      const fetchedProduct = await getProductDetails(productId);
       setProduct(fetchedProduct);
       setIsLoading(false);
     };
     fetchProduct();
-  }, [params.id]);
+  }, [productId]);
 
   if (isLoading) {
     // Basic loading state, can be replaced with skeletons
@@ -361,3 +363,4 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
+
