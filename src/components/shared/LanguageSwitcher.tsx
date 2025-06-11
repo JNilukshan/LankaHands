@@ -19,9 +19,9 @@ const languages = [
 ];
 
 // Helper to get the initial language based on search params or default
-function getInitialLanguage(searchParams: URLSearchParams | null): { code: string; name: string; } {
-  if (!searchParams) return languages[0]; // Should not happen in client component
-  const langCode = searchParams.get('lang');
+function getInitialLanguage(searchParamsLocal: URLSearchParams | null): { code: string; name: string; } {
+  if (!searchParamsLocal) return languages[0]; 
+  const langCode = searchParamsLocal.get('lang');
   return languages.find(l => l.code === langCode) || languages[0];
 }
 
@@ -30,8 +30,6 @@ const LanguageSwitcher: FC = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Initialize state from URL search params or default to English
-  // The function passed to useState ensures this runs only on initial mount client-side
   const [selectedLanguage, setSelectedLanguage] = useState(() => getInitialLanguage(searchParams));
 
   // Effect to update selectedLanguage if searchParams change from external navigation or router.push
@@ -42,7 +40,7 @@ const LanguageSwitcher: FC = () => {
     if (targetLang.code !== selectedLanguage.code) {
       setSelectedLanguage(targetLang);
     }
-  }, [searchParams, selectedLanguage.code]);
+  }, [searchParams.toString(), selectedLanguage.code]); // Use searchParams.toString() as dependency
 
 
   const changeLanguage = useCallback((langCode: string) => {
@@ -63,7 +61,7 @@ const LanguageSwitcher: FC = () => {
       
       router.push(newUrl, { scroll: false }); // scroll: false prevents jumping to top
     }
-  }, [router, pathname, searchParams]);
+  }, [router, pathname, searchParams.toString()]); // Use searchParams.toString() as dependency
 
   return (
     <DropdownMenu>
