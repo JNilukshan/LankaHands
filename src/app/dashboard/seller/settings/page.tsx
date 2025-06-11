@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle } from 'lucide-react'; 
+import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle, Image as ImageIcon } from 'lucide-react'; 
 
 export default function StoreSettingsPage() {
   // In a real app, form state would be managed with react-hook-form or similar
@@ -47,6 +47,11 @@ export default function StoreSettingsPage() {
               <div className="space-y-2">
                   <Label htmlFor="artisanBio">Full Artisan Bio (Public)</Label>
                   <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." defaultValue="Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics." />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="artisanBannerImage" className="flex items-center"><ImageIcon size={16} className="mr-2"/>Profile Banner Image</Label>
+                  <Input id="artisanBannerImage" type="file" accept="image/*" />
+                  <p className="text-xs text-muted-foreground">Recommended size: 1200x400px. Max 2MB.</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanProfilePic" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Profile Picture</Label>
