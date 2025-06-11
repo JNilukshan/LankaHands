@@ -8,12 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Order, OrderItem } from '@/types';
-import { ListOrdered, Search, Filter, Eye } from 'lucide-react';
+import { ListOrdered, Search, Filter, Eye, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 // More comprehensive mock data for all orders
-const mockAllOrders: Order[] = [
+const initialMockOrders: Order[] = [
   { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
   { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
   { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
@@ -24,14 +25,24 @@ const mockAllOrders: Order[] = [
   { id: 'order008', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:3, price: 20}], totalAmount: 60.00, orderDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), status: 'Cancelled', shippingAddress: '456 Kandy Rd, Kandy' },
 ];
 
+const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function AllOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>(initialMockOrders);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
 
-  const filteredOrders = mockAllOrders.filter(order => {
+  const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+  };
+
+  const filteredOrders = orders.filter(order => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     const matchesSearchTerm =
       order.id.toLowerCase().includes(lowerSearchTerm) ||
@@ -91,10 +102,9 @@ export default function AllOrdersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                {orderStatuses.map(status => (
+                  <SelectItem key={status} value={status.toLowerCase()}>{status}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -119,28 +129,45 @@ export default function AllOrdersPage() {
                   <TableCell>{order.customerName || `Customer ${order.userId}`}</TableCell>
                   <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
                   <TableCell className="text-center">
-                    <Badge 
-                      variant={
-                        order.status === 'Delivered' ? 'default' : 
-                        order.status === 'Shipped' ? 'outline' : 
-                        order.status === 'Cancelled' ? 'destructive' : 'secondary'
-                      }
-                      className={
-                        order.status === 'Delivered' ? 'bg-green-500 text-white' : 
-                        order.status === 'Shipped' ? 'border-blue-500 text-blue-500' : 
-                        order.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
-                        order.status === 'Cancelled' ? 'bg-red-500 text-white' : ''
-                      }
-                    >
-                      {order.status}
-                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8">
+                          <Badge 
+                            variant={
+                              order.status === 'Delivered' ? 'default' : 
+                              order.status === 'Shipped' ? 'outline' : 
+                              order.status === 'Cancelled' ? 'destructive' : 'secondary'
+                            }
+                            className={
+                              `pointer-events-none ${ order.status === 'Delivered' ? 'bg-green-500 text-white' : 
+                              order.status === 'Shipped' ? 'border-blue-500 text-blue-500' : 
+                              order.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
+                              order.status === 'Cancelled' ? 'bg-red-500 text-white' : '' }`
+                            }
+                          >
+                            {order.status}
+                          </Badge>
+                          <ChevronDown className="h-3 w-3 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {orderStatuses.map(statusOption => (
+                          <DropdownMenuItem 
+                            key={statusOption} 
+                            onClick={() => handleStatusChange(order.id, statusOption)}
+                            disabled={order.status === statusOption}
+                          >
+                            {statusOption}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10">
                       <Eye className="h-4 w-4" />
                        <span className="sr-only">View Order</span>
                     </Button>
-                    {/* Add more actions like Print Invoice, etc. later */}
                   </TableCell>
                 </TableRow>
               ))}
@@ -167,3 +194,4 @@ export default function AllOrdersPage() {
     </div>
   );
 }
+
