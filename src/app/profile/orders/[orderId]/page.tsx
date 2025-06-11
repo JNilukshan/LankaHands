@@ -60,14 +60,13 @@ const mockAllOrders: Order[] = [
 
 const getOrderDetails = async (orderId: string): Promise<Order | null> => {
   // In a real app, you would fetch this. For now, simulating it.
-  // To ensure client component can also "fetch" or use this, we make it available.
   // No actual "await new Promise" needed if this function is called client-side directly or if data is passed.
   const order = mockAllOrders.find(o => o.id === orderId);
   return order || null;
 };
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  const { orderId } = params;
+  const orderId = params.orderId;
   // State for the order might be useful if we were truly fetching client-side.
   // For now, assuming params.orderId is used to fetch data on server and passed or re-fetched.
   // This component is now a client component, so direct async/await in the component body for data fetching isn't the pattern.
@@ -144,14 +143,14 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                 variant={
                     order.status === 'Delivered' ? 'default' :
                     order.status === 'Shipped' ? 'secondary' :
-                    order.status === 'Pending' ? 'secondary' : // Using secondary for Pending as well
+                    order.status === 'Pending' ? 'secondary' : 
                     order.status === 'Cancelled' ? 'destructive' :
-                    'default' // Fallback, though all defined statuses are covered
+                    'default'
                 }
                  className={`text-sm px-3 py-1 ${
                     order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-primary-foreground' :
                     order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-primary-foreground' : 
-                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' : // Ensure text color is legible
+                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' :
                     order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-destructive-foreground' :
                     ''
                 }`}
