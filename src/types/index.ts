@@ -1,3 +1,4 @@
+
 import type { StaticImageData } from 'next/image';
 
 export interface Artisan {
@@ -50,6 +51,7 @@ export interface User {
 export interface Order {
   id: string;
   userId: string;
+  customerName?: string; // Added for easier display
   items: OrderItem[];
   totalAmount: number;
   orderDate: string; // ISO date string
@@ -73,3 +75,6 @@ export interface SellerStats {
   productsCount: number;
   pendingOrders: number;
 }
+
+
+    
