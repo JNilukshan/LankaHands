@@ -48,6 +48,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
+  const { id: productId } = params; // Destructure id from params
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
@@ -68,8 +69,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     // Simulate fetching product data
-    // In a real app, fetch product data based on params.id
-    if (params.id === mockProductToEdit.id) { // Example: only prefill for a specific mock ID
+    // In a real app, fetch product data based on productId
+    if (productId === mockProductToEdit.id) { 
         setProductData(mockProductToEdit);
         form.reset({
             productName: mockProductToEdit.name,
@@ -85,12 +86,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         // Handle case where product is not found or for other IDs
         toast({ title: "Product not found", description: "Could not load product data for editing.", variant: "destructive"});
     }
-  }, [params.id, form, toast]);
+  }, [productId, form, toast]); // Use productId in dependency array
 
 
   const onSubmit = async (data: ProductFormValues) => {
     setIsLoading(true);
-    console.log("Updated product data for ID:", params.id, data);
+    console.log("Updated product data for ID:", productId, data);
     // Simulate API call for product update
     await new Promise(resolve => setTimeout(resolve, 2000));
     toast({
@@ -101,7 +102,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     // router.push('/dashboard/seller/products'); // redirect to product list
   };
 
-  if (!productData && params.id === mockProductToEdit.id) { // Basic loading state if we expect data
+  if (!productData && productId === mockProductToEdit.id) { // Basic loading state if we expect data
     return (
         <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -262,4 +263,3 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
