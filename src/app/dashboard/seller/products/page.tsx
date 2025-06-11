@@ -1,4 +1,6 @@
 
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +11,7 @@ import type { Product } from '@/types';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useState } from 'react';
 
 // Mock data for products
 const mockProducts: Product[] = [
@@ -19,6 +22,13 @@ const mockProducts: Product[] = [
 ];
 
 export default function ManageProductsPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = mockProducts.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -42,6 +52,8 @@ export default function ManageProductsPage() {
               type="search" 
               placeholder="Search products by name or ID..." 
               className="pl-10 w-full sm:w-1/2 lg:w-1/3"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardHeader>
@@ -51,7 +63,6 @@ export default function ManageProductsPage() {
               <TableRow>
                 <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-center">Stock</TableHead>
                 <TableHead className="text-center">Status</TableHead>
@@ -59,7 +70,7 @@ export default function ManageProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockProducts.map((product) => (
+              {filteredProducts.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <Image 
@@ -72,7 +83,6 @@ export default function ManageProductsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
                   <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
                   <TableCell className="text-center">{product.stock}</TableCell>
                   <TableCell className="text-center">
@@ -103,6 +113,11 @@ export default function ManageProductsPage() {
               ))}
             </TableBody>
           </Table>
+          {mockProducts.length > 0 && filteredProducts.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No products found matching your search criteria.
+            </div>
+          )}
           {mockProducts.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No products listed yet. <Link href="/dashboard/seller/products/new" className="text-primary hover:underline">Add your first product!</Link>
