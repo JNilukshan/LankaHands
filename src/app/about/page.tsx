@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Leaf, HandHeart, Globe } from "lucide-react";
@@ -18,8 +19,8 @@ export default function AboutPage() {
         <Image
           src="https://placehold.co/1200x600.png"
           alt="Diverse Sri Lankan crafts collage"
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: 'cover' }}
           data-ai-hint="crafts collage"
         />
       </section>
@@ -38,8 +39,8 @@ export default function AboutPage() {
             <Image
             src="https://placehold.co/600x600.png"
             alt="Artisan working on a craft"
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: 'cover' }}
             data-ai-hint="artisan working"
             />
         </div>

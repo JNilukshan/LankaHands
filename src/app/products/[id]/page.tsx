@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import StarRating from '@/components/shared/StarRating';
@@ -61,12 +62,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         {/* Image Gallery */}
         <div>
           <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-xl mb-4">
-            <Image src={product.images[0]} alt={product.name} layout="fill" objectFit="cover" data-ai-hint="product lifestyle" />
+            <Image src={product.images[0]} alt={product.name} fill style={{ objectFit: 'cover' }} data-ai-hint="product lifestyle" />
           </div>
           <div className="grid grid-cols-3 gap-2">
             {product.images.slice(1).map((img, index) => (
               <div key={index} className="relative aspect-square rounded overflow-hidden shadow-md">
-                <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} layout="fill" objectFit="cover" data-ai-hint="product detail" />
+                <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} fill style={{ objectFit: 'cover' }} data-ai-hint="product detail" />
               </div>
             ))}
             {product.images.length < 2 && <div className="aspect-square bg-muted rounded"></div>}

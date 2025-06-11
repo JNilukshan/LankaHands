@@ -1,10 +1,11 @@
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/shared/ProductCard';
 import StarRating from '@/components/shared/StarRating';
 import type { Artisan, Product, Review } from '@/types';
 import Link from 'next/link';
-import { Award, MapPin, MessageCircle, UserPlus, Users } from 'lucide-react';
+import { Award, MapPin, MessageCircle, UserPlus, Users, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -58,8 +59,8 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
           <Image 
             src={"https://placehold.co/1200x400.png"} // Generic banner for artisan
             alt={`${artisan.name} banner`} 
-            layout="fill" 
-            objectFit="cover" 
+            fill
+            style={{ objectFit: 'cover' }} 
             className="opacity-70"
             data-ai-hint="craft workshop"
           />

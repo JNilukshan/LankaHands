@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Loader2, PackageEdit, ImagePlus, Tag, DollarSign, Save } from "lucide-react";
+import { Loader2, Edit3, ImagePlus, Tag, DollarSign, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Product } from "@/types"; // Assuming you might fetch product data
 
@@ -115,7 +115,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader>
           <CardTitle className="font-headline text-2xl text-primary flex items-center">
-            <PackageEdit size={28} className="mr-3" /> Edit Product: {form.getValues("productName") || "Loading..."}
+            <Edit3 size={28} className="mr-3" /> Edit Product: {form.getValues("productName") || "Loading..."}
           </CardTitle>
           <CardDescription>Update the details for your product.</CardDescription>
         </CardHeader>

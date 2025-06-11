@@ -1,3 +1,4 @@
+
 import ArtisanCard from '@/components/shared/ArtisanCard';
 import ProductCard from '@/components/shared/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -27,8 +28,8 @@ export default function HomePage() {
         <Image 
           src="https://placehold.co/1200x600.png" 
           alt="Sri Lankan crafts hero banner" 
-          layout="fill" 
-          objectFit="cover" 
+          fill
+          style={{ objectFit: 'cover' }} 
           className="absolute inset-0 z-0 opacity-50"
           data-ai-hint="crafts market"
           priority

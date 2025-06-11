@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Artisan } from '@/types';
@@ -17,8 +18,8 @@ const ArtisanCard: React.FC<ArtisanCardProps> = ({ artisan }) => {
           <Image
             src={artisan.profileImageUrl}
             alt={artisan.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: 'cover' }}
             data-ai-hint="artisan portrait"
           />
         </div>

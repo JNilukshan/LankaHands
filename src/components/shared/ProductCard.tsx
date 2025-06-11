@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/types';
@@ -21,8 +22,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <Image
             src={product.images[0]}
             alt={product.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: 'cover' }}
             data-ai-hint="handicraft product"
           />
         </Link>
