@@ -1,8 +1,9 @@
+"use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, DollarSign, TrendingUp, Users, ShoppingBag, Eye, Percent } from 'lucide-react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'; // Assuming these exist for ShadCN charts
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Legend, Tooltip } from 'recharts'; // Using recharts directly for now
+import { BarChart3, DollarSign, TrendingUp, Users, ShoppingBag, Eye, Percent, Package } from 'lucide-react'; // Added Package back, it's valid
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'; 
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Legend, Tooltip } from 'recharts'; 
 
 // Mock data for analytics
 const totalSales = 12560.75;
