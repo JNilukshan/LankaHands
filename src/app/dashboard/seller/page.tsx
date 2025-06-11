@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown } from "lucide-react";
+import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell } from "lucide-react"; // Added Bell
 import type { SellerStats, Product, Order, OrderItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -36,6 +36,7 @@ export default function SellerDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
+  const unreadNotificationsCount = 5; // Example count
 
   useEffect(() => {
     // Initialize with a fresh set of dates each time the component mounts on client
@@ -65,6 +66,17 @@ export default function SellerDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold text-primary">Seller Dashboard</h1>
+        <Link href="/dashboard/seller/notifications" passHref>
+            <Button variant="outline" className="relative">
+                <Bell size={20} className="mr-2 text-primary" />
+                Notifications
+                {unreadNotificationsCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs">
+                    {unreadNotificationsCount}
+                </Badge>
+                )}
+            </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -276,3 +288,6 @@ const QuickLinkItem: React.FC<QuickLinkItemProps> = ({ href, icon: Icon, label }
         </Link>
     </Button>
 );
+
+
+    
