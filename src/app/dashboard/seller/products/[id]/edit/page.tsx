@@ -48,7 +48,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
-  const { id: productId } = params; 
+  const productId = params.id; 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
@@ -263,5 +263,3 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-    
