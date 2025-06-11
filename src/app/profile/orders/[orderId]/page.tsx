@@ -4,34 +4,54 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { Order, OrderItem } from '@/types';
-import { CalendarDays, MapPin, ShoppingBag, Tag, Package, Hash, DollarSign, ListOrdered } from 'lucide-react';
+import { CalendarDays, MapPin, ShoppingBag, Tag, Package, Hash, DollarSign, ListOrdered, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
 // Placeholder data - in a real app, this would be fetched based on params.orderId
 const mockAllOrders: Order[] = [
-  { 
-    id: 'order1', 
-    userId: 'user123', 
+  {
+    id: 'order1',
+    userId: 'user123',
     customerName: 'Chandana Silva',
     items: [
         { productId: '101', productName: 'Ocean Breeze Batik Saree', quantity: 1, price: 120.00, productImage: 'https://placehold.co/80x80.png' },
         { productId: '103', productName: 'Sunset Hues Handloom Shawl', quantity: 2, price: 55.00, productImage: 'https://placehold.co/80x80.png' },
-    ], 
-    totalAmount: 230.00, 
-    orderDate: '2023-05-10T10:00:00Z', 
-    status: 'Delivered', 
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka' 
+    ],
+    totalAmount: 230.00,
+    orderDate: '2023-05-10T10:00:00Z',
+    status: 'Delivered',
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
   },
-  { 
-    id: 'order2', 
-    userId: 'user123', 
+  {
+    id: 'order2',
+    userId: 'user123',
     customerName: 'Chandana Silva',
-    items: [{ productId: '102', productName: 'Hand-Carved Elephant Statue', quantity: 1, price: 75.00, productImage: 'https://placehold.co/80x80.png' }], 
-    totalAmount: 75.00, 
-    orderDate: '2023-05-20T14:30:00Z', 
-    status: 'Shipped', 
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka' 
+    items: [{ productId: '102', productName: 'Hand-Carved Elephant Statue', quantity: 1, price: 75.00, productImage: 'https://placehold.co/80x80.png' }],
+    totalAmount: 75.00,
+    orderDate: '2023-05-20T14:30:00Z',
+    status: 'Shipped',
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+  },
+  {
+    id: 'order3', // Example for Pending
+    userId: 'user123',
+    customerName: 'Chandana Silva',
+    items: [{ productId: '104', productName: 'Lotus Bloom Batik Wall Hanging', quantity: 1, price: 90.00, productImage: 'https://placehold.co/80x80.png' }],
+    totalAmount: 90.00,
+    orderDate: '2023-05-25T11:00:00Z',
+    status: 'Pending',
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+  },
+  {
+    id: 'order4', // Example for Cancelled
+    userId: 'user123',
+    customerName: 'Chandana Silva',
+    items: [{ productId: '105', productName: 'Terracotta Clay Vase Set', quantity: 1, price: 45.00, productImage: 'https://placehold.co/80x80.png' }],
+    totalAmount: 45.00,
+    orderDate: '2023-05-22T09:00:00Z',
+    status: 'Cancelled',
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
   },
 ];
 
@@ -68,7 +88,7 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                 </Link>
             </Button>
         </div>
-      
+
       <Card className="shadow-xl">
         <CardHeader className="bg-muted/30">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -79,14 +99,15 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     Placed on: {new Date(order.orderDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </CardDescription>
             </div>
-            <Badge 
-                variant={order.status === 'Delivered' ? 'default' : order.status === 'Shipped' ? 'outline' : 'secondary'}
-                className={`mt-2 sm:mt-0 text-sm px-3 py-1 ${
-                    order.status === 'Delivered' ? 'bg-green-500 text-white' : 
-                    order.status === 'Shipped' ? 'border-blue-500 text-blue-500 bg-blue-500/10' : 
-                    order.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' : 
-                    order.status === 'Cancelled' ? 'bg-red-500 text-white' : ''
-                }`}
+            <Badge
+                variant={
+                    order.status === 'Delivered' ? 'default' :
+                    order.status === 'Shipped' ? 'secondary' :
+                    order.status === 'Pending' ? 'secondary' :
+                    order.status === 'Cancelled' ? 'destructive' :
+                    'default' // Fallback
+                }
+                className="mt-2 sm:mt-0 text-sm px-3 py-1"
             >
                 {order.status}
             </Badge>
@@ -104,7 +125,7 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     <p className="text-sm text-muted-foreground">{order.shippingAddress || "Not specified"}</p>
                 </div>
             </div>
-          
+
             <Separator />
 
             <div>
@@ -113,10 +134,10 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     {order.items.map(item => (
                     <li key={item.productId} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-background border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                            <Image 
-                                src={typeof item.productImage === 'string' ? item.productImage : "https://placehold.co/80x80.png"} 
-                                alt={item.productName} 
-                                width={70} height={70} 
+                            <Image
+                                src={typeof item.productImage === 'string' ? item.productImage : "https://placehold.co/80x80.png"}
+                                alt={item.productName}
+                                width={70} height={70}
                                 className="rounded-md object-cover border"
                                 data-ai-hint="product thumbnail"
                             />
