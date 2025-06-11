@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card'; // Added Card and CardContent
 
 // Placeholder data
 const allProducts: Product[] = [
@@ -49,7 +49,8 @@ export default function ProductsPage() {
     if (filters.categories.length > 0) {
       products = products.filter(p => filters.categories.includes(p.category));
     }
-    products = products.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
+    // Price range filtering is removed from ProductFilters, so this part is no longer needed
+    // products = products.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
     
     setTimeout(() => { // Simulate filtering delay
       setFilteredProducts(products);
@@ -78,35 +79,42 @@ export default function ProductsPage() {
     });
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      <section className="lg:w-3/4 xl:w-4/5">
-        <div className="mb-6 p-4 bg-card rounded-lg shadow">
-          <h1 className="text-3xl font-headline font-semibold mb-4 text-primary">Our Collection</h1>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative flex-grow w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                type="search" 
-                placeholder="Search products..." 
-                value={searchTerm}
-                onChange={handleSearch}
-                className="pl-10 w-full"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                <SelectItem value="price-asc">Price (Low-High)</SelectItem>
-                <SelectItem value="price-desc">Price (High-Low)</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="flex flex-col gap-8"> {/* Main container, always vertical */}
+      {/* "Our Collection" info box (Title, Search, Sort) */}
+      <div className="p-4 bg-card rounded-lg shadow">
+        <h1 className="text-3xl font-headline font-semibold mb-4 text-primary">Our Collection</h1>
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="relative flex-grow w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+              type="search" 
+              placeholder="Search products..." 
+              value={searchTerm}
+              onChange={handleSearch}
+              className="pl-10 w-full"
+            />
           </div>
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+              <SelectItem value="price-asc">Price (Low-High)</SelectItem>
+              <SelectItem value="price-desc">Price (High-Low)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        
+      </div>
+      
+      {/* Filter Products Section */}
+      <div> {/* Container for ProductFilters, allows it to take necessary width */}
+        <ProductFilters onFilterChange={handleFilterChange} />
+      </div>
+
+      {/* Product Grid Section */}
+      <section>
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             {[...Array(6)].map((_, i) => (
@@ -132,9 +140,6 @@ export default function ProductsPage() {
           </div>
         )}
       </section>
-      <aside className="lg:w-1/4 xl:w-1/5">
-        <ProductFilters onFilterChange={handleFilterChange} />
-      </aside>
     </div>
   );
 }
