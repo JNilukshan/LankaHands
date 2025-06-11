@@ -95,22 +95,56 @@ export default function StoreSettingsPage() {
           <Card className="shadow-lg mt-4">
             <CardHeader>
               <CardTitle className="font-headline text-xl text-primary">Shipping Configuration</CardTitle>
-              <CardDescription>Set up your shipping rates and options.</CardDescription>
+              <CardDescription>Define your shipping rates, delivery estimates, and free shipping thresholds.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">Shipping settings are currently managed globally by LankaHands. If you have specific shipping needs or offer custom shipping, please contact support.</p>
-              <div>
-                <h4 className="font-semibold text-foreground">Standard Shipping Policy:</h4>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 mt-2">
-                    <li>Local (Sri Lanka): $5 (3-5 business days)</li>
-                    <li>International: $25 (7-21 business days, varies by destination)</li>
-                    <li>Free shipping on orders over $100 (local) / $200 (international).</li>
-                </ul>
+            <CardContent className="space-y-8">
+              
+              <div className="space-y-4">
+                <h4 className="font-semibold text-md text-foreground">Local Shipping (Sri Lanka)</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="localShippingRate">Local Shipping Rate (USD)</Label>
+                    <Input id="localShippingRate" type="number" placeholder="e.g., 5.00" defaultValue="5.00" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="localDeliveryTime">Local Estimated Delivery Time</Label>
+                    <Input id="localDeliveryTime" placeholder="e.g., 3-5 business days" defaultValue="3-5 business days" />
+                  </div>
+                </div>
               </div>
+
+              <div className="space-y-4">
+                <h4 className="font-semibold text-md text-foreground">International Shipping</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="internationalShippingRate">International Shipping Rate (USD)</Label>
+                    <Input id="internationalShippingRate" type="number" placeholder="e.g., 25.00" defaultValue="25.00" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="internationalDeliveryTime">International Estimated Delivery Time</Label>
+                    <Input id="internationalDeliveryTime" placeholder="e.g., 7-21 business days" defaultValue="7-21 business days" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-semibold text-md text-foreground">Free Shipping Thresholds</h4>
+                 <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="freeLocalShippingThreshold">Free Local Shipping on Orders Over (USD)</Label>
+                        <Input id="freeLocalShippingThreshold" type="number" placeholder="e.g., 100" defaultValue="100" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="freeInternationalShippingThreshold">Free International Shipping on Orders Over (USD)</Label>
+                        <Input id="freeInternationalShippingThreshold" type="number" placeholder="e.g., 200" defaultValue="200" />
+                    </div>
+                 </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="processingTime">Typical Order Processing Time</Label>
                 <Input id="processingTime" placeholder="e.g., 1-3 business days" defaultValue="1-2 business days"/>
-                 <p className="text-xs text-muted-foreground">This helps set customer expectations.</p>
+                 <p className="text-xs text-muted-foreground">This is the time it takes you to prepare an order before shipping. It helps set customer expectations.</p>
               </div>
             </CardContent>
              <CardFooter>
@@ -149,3 +183,6 @@ export default function StoreSettingsPage() {
     </div>
   );
 }
+
+
+    
