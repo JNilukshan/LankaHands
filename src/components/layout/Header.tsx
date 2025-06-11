@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase } from 'lucide-react'; // Added Briefcase
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info } from 'lucide-react'; // Added Briefcase, Info
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -19,21 +19,27 @@ import { useState, type FC } from 'react';
 const mainNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
+  { href: '/about', label: 'About Us' }, // Added About Us link
 ];
 
 // Adjusted accountNavLinks for mobile
+const mobileNavLinks = [ // Renamed to mobileNavLinks for clarity as it includes main nav too
+    { href: '/', label: 'Home', icon: Info }, // Using Info as a generic icon for main links
+    { href: '/products', label: 'Products', icon: ShoppingCart }, // Example icon change
+    { href: '/about', label: 'About Us', icon: Info }, // Added About Us link
+];
+
 const mobileAccountNavLinks = [
     { href: '/login', label: 'Sign In', icon: LogIn },
     { href: '/register', label: 'Register', icon: UserPlus },
     { href: '/profile', label: 'Profile', icon: User },
     { href: '/become-seller', label: 'Become a Seller', icon: Briefcase },
-    { href: '/dashboard/seller', label: 'Seller Dashboard', icon: Briefcase }, // Added Seller Dashboard
+    { href: '/dashboard/seller', label: 'Seller Dashboard', icon: Briefcase },
 ];
 
 
 const Header: FC = () => {
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  // Removed hover-related state and refs
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,14 +64,12 @@ const Header: FC = () => {
               <Button
                 variant="ghost"
                 className="text-sm"
-                // Removed onMouseEnter, onMouseLeave, onClick (DropdownMenuTrigger handles click by default)
               >
                 Welcome
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              // Removed onMouseEnter, onMouseLeave
             >
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -89,7 +93,7 @@ const Header: FC = () => {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/seller" className="flex items-center w-full">
-                  <Briefcase className="mr-2 h-4 w-4" /> 
+                  <Briefcase className="mr-2 h-4 w-4" />
                   Seller Dashboard
                 </Link>
               </DropdownMenuItem>
@@ -120,9 +124,9 @@ const Header: FC = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col space-y-4 mt-8">
-                {mainNavLinks.map(link => (
-                  <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors">
-                    {link.label}
+                {mobileNavLinks.map(link => ( // Changed to mobileNavLinks
+                  <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
+                     <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
                   </Link>
                 ))}
                 <hr/>
