@@ -15,7 +15,7 @@ import { ListOrdered, Search, Filter, Eye, ChevronDown, ShoppingCart, UserCircle
 import Image from 'next/image'; // Import Image
 
 // More comprehensive mock data for all orders
-const initialMockOrders: Order[] = [
+const getInitialMockOrders = (): Order[] => [
   { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
   { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
   { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
@@ -29,7 +29,7 @@ const initialMockOrders: Order[] = [
 const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function AllOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(initialMockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +37,10 @@ export default function AllOrdersPage() {
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setOrders(getInitialMockOrders());
+  }, []);
 
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
     setOrders(prevOrders =>
