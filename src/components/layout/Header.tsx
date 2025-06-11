@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info } from 'lucide-react'; // Added Briefcase, Info
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -14,19 +14,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, type FC } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { useState, type FC, useEffect } from 'react';
+import { useCart } from '@/context/CartContext';
 
 const mainNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
-  { href: '/about', label: 'About Us' }, // Added About Us link
+  { href: '/about', label: 'About Us' },
 ];
 
-// Adjusted accountNavLinks for mobile
-const mobileNavLinks = [ // Renamed to mobileNavLinks for clarity as it includes main nav too
-    { href: '/', label: 'Home', icon: Info }, // Using Info as a generic icon for main links
-    { href: '/products', label: 'Products', icon: ShoppingCart }, // Example icon change
-    { href: '/about', label: 'About Us', icon: Info }, // Added About Us link
+const mobileNavLinks = [
+    { href: '/', label: 'Home', icon: Info },
+    { href: '/products', label: 'Products', icon: ShoppingCart },
+    { href: '/about', label: 'About Us', icon: Info },
 ];
 
 const mobileAccountNavLinks = [
@@ -40,6 +41,14 @@ const mobileAccountNavLinks = [
 
 const Header: FC = () => {
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const { getCartItemCount } = useCart();
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    // Update cart count on client-side after hydration
+    setCartItemCount(getCartItemCount());
+  }, [getCartItemCount]);
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -106,15 +115,33 @@ const Header: FC = () => {
                 </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="ghost" size="icon" disabled> {/* Cart not in scope, but common */}
-            <ShoppingCart className="h-5 w-5 text-primary" />
-            <span className="sr-only">Shopping Cart</span>
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/cart">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              {cartItemCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-accent text-accent-foreground text-xs">
+                  {cartItemCount}
+                </Badge>
+              )}
+              <span className="sr-only">Shopping Cart</span>
+            </Link>
           </Button>
         </div>
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center">
           <LanguageSwitcher />
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/cart">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              {cartItemCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center rounded-full bg-accent text-accent-foreground text-[0.6rem]">
+                  {cartItemCount}
+                </Badge>
+              )}
+              <span className="sr-only">Shopping Cart</span>
+            </Link>
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -124,7 +151,7 @@ const Header: FC = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col space-y-4 mt-8">
-                {mobileNavLinks.map(link => ( // Changed to mobileNavLinks
+                {mobileNavLinks.map(link => (
                   <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
                      <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
                   </Link>
@@ -135,10 +162,7 @@ const Header: FC = () => {
                      <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
                    </Link>
                 ))}
-                <hr/>
-                <Button variant="ghost" size="icon" className="text-lg text-foreground hover:text-primary transition-colors flex items-center justify-start w-full" disabled>
-                  <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Shopping Cart
-                </Button>
+                {/* Cart link removed from here as it's an icon button now */}
               </nav>
             </SheetContent>
           </Sheet>

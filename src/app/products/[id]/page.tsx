@@ -1,4 +1,6 @@
 
+"use client"; // Required for hooks like useCart
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import StarRating from '@/components/shared/StarRating';
@@ -9,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-
+import { useCart } from '@/context/CartContext'; // Import useCart
+import { useState, useEffect } from 'react'; // For client-side data fetching simulation
 
 // Placeholder data - in a real app, this would be fetched based on [id]
 const getProductDetails = async (id: string): Promise<Product | null> => {
@@ -71,7 +74,7 @@ const getProductDetails = async (id: string): Promise<Product | null> => {
     ]
   };
 
-  const products: Record<string, Product> = {
+  const productsData: Record<string, Product> = {
     '101': { 
       id: '101', name: 'Ocean Breeze Batik Saree', 
       description: 'Elegant silk saree with hand-painted Batik motifs depicting ocean waves.',
@@ -172,12 +175,29 @@ const getProductDetails = async (id: string): Promise<Product | null> => {
         stock: 0, dimensions: "Approx. 10 inches height", materials: ["Kaduru Wood", "Acrylic Paints"]
     }
   };
-  return products[id] || null;
+  return productsData[id] || null;
 };
 
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-  const product = await getProductDetails(params.id);
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      const fetchedProduct = await getProductDetails(params.id);
+      setProduct(fetchedProduct);
+      setIsLoading(false);
+    };
+    fetchProduct();
+  }, [params.id]);
+
+  if (isLoading) {
+    // Basic loading state, can be replaced with skeletons
+    return <div className="text-center py-10">Loading product details...</div>;
+  }
 
   if (!product) {
     return <div className="text-center py-10">Product not found.</div>;
@@ -186,6 +206,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
   const averageRating = product.reviews && product.reviews.length > 0
     ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
     : 0;
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product, 1); // Add 1 unit by default
+    }
+  };
 
   return (
     <div className="space-y-12">
@@ -196,13 +222,13 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             <Image src={product.images[0]} alt={product.name} fill style={{ objectFit: 'cover' }} data-ai-hint="product lifestyle" priority />
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {product.images.slice(1).map((img, index) => (
+            {product.images.slice(1, 4).map((img, index) => ( // Show up to 3 thumbnails
               <div key={index} className="relative aspect-square rounded overflow-hidden shadow-md">
                 <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} fill style={{ objectFit: 'cover' }} data-ai-hint="product detail" />
               </div>
             ))}
             {/* Add placeholders if fewer than 3 thumbnails to maintain grid structure */}
-            {Array.from({ length: Math.max(0, 3 - product.images.slice(1).length) }).map((_, i) => (
+            {Array.from({ length: Math.max(0, 3 - product.images.slice(1,4).length) }).map((_, i) => (
                 <div key={`placeholder-${i}`} className="aspect-square bg-muted/30 rounded"></div>
             ))}
           </div>
@@ -251,7 +277,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 flex-grow" disabled={!product.stock || product.stock === 0}>
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 flex-grow" 
+              onClick={handleAddToCart}
+              disabled={!product.stock || product.stock === 0}
+            >
               <ShoppingCart size={20} className="mr-2"/> Add to Cart
             </Button>
             <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 flex-grow">
@@ -330,4 +361,3 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     </div>
   );
 }
-

@@ -19,7 +19,7 @@ export interface StorePolicies {
 
 export interface Artisan {
   id: string;
-  name: string;
+  name:string;
   bio: string;
   profileImageUrl: string | StaticImageData;
   products?: Product[];
@@ -40,9 +40,9 @@ export interface Product {
   category: string;
   images: (string | StaticImageData)[];
   artisanId: string;
-  artisan?: Artisan;
+  artisan?: Artisan; // Optional: For direct access if product data includes full artisan details
   reviews?: Review[];
-  stock?: number;
+  stock?: number; // Number of items in stock
   dimensions?: string; 
   materials?: string[];
 }
@@ -78,13 +78,27 @@ export interface Order {
   artisan?: Artisan; // Artisan fulfilling this order
 }
 
+// Represents an item *within an order* after it's placed
 export interface OrderItem {
   productId: string;
   productName: string;
   productImage?: string | StaticImageData;
   quantity: number;
-  price: number;
+  price: number; // Price per unit at the time of order
 }
+
+// Represents an item *in the shopping cart* before an order is placed
+export interface CartItem {
+  id: string; // Product ID
+  name: string;
+  price: number; // Current price per unit
+  image: string | StaticImageData; // Main product image
+  quantity: number;
+  artisanId?: string;
+  artisanName?: string;
+  stock?: number; // Available stock for the product
+}
+
 
 export interface SellerStats {
   totalSales: number;
