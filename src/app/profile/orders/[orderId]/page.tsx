@@ -66,13 +66,10 @@ const getOrderDetails = async (orderId: string): Promise<Order | null> => {
 };
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  const orderId = params.orderId;
-  // State for the order might be useful if we were truly fetching client-side.
-  // For now, assuming params.orderId is used to fetch data on server and passed or re-fetched.
-  // This component is now a client component, so direct async/await in the component body for data fetching isn't the pattern.
-  // Typically, you'd use a useEffect for client-side fetching or pass data as props if server-rendered.
-  // Given the structure, we'll simulate fetching the order directly in the component for simplicity as it's using mock data.
-
+  // "Unwrap" params using React.use() as suggested by the Next.js warning
+  const resolvedParams = React.use(params);
+  const orderId = resolvedParams.orderId;
+  
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -83,7 +80,9 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
       setOrder(orderDetails);
       setLoading(false);
     };
-    fetchOrder();
+    if (orderId) { // Ensure orderId is present before fetching
+        fetchOrder();
+    }
   }, [orderId]);
 
   const handlePrint = () => {
@@ -142,17 +141,17 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
             <Badge
                 variant={
                     order.status === 'Delivered' ? 'default' :
-                    order.status === 'Shipped' ? 'secondary' :
-                    order.status === 'Pending' ? 'secondary' : 
+                    order.status === 'Shipped' ? 'secondary' : // Using 'secondary' for a filled look
+                    order.status === 'Pending' ? 'secondary' : // Using 'secondary' for a filled look
                     order.status === 'Cancelled' ? 'destructive' :
-                    'default'
+                    'default' // Fallback
                 }
                  className={`text-sm px-3 py-1 ${
                     order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-primary-foreground' :
                     order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-primary-foreground' : 
-                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' :
+                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' : // Or text-yellow-900 if specific needed
                     order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-destructive-foreground' :
-                    ''
+                    '' // Ensure no default class if one of above applies
                 }`}
             >
                 {order.status}
