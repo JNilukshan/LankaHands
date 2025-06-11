@@ -1,4 +1,6 @@
 
+"use client"; // Added to enable client-side interactivity for window.print()
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -56,13 +58,44 @@ const mockAllOrders: Order[] = [
 ];
 
 const getOrderDetails = async (orderId: string): Promise<Order | null> => {
-  await new Promise(resolve => setTimeout(resolve, 100)); // Simulate API call
+  // In a real app, you would fetch this. For now, simulating it.
+  // To ensure client component can also "fetch" or use this, we make it available.
+  // No actual "await new Promise" needed if this function is called client-side directly or if data is passed.
   const order = mockAllOrders.find(o => o.id === orderId);
   return order || null;
 };
 
-export default async function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  const order = await getOrderDetails(params.orderId);
+export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
+  // State for the order might be useful if we were truly fetching client-side.
+  // For now, assuming params.orderId is used to fetch data on server and passed or re-fetched.
+  // This component is now a client component, so direct async/await in the component body for data fetching isn't the pattern.
+  // Typically, you'd use a useEffect for client-side fetching or pass data as props if server-rendered.
+  // Given the structure, we'll simulate fetching the order directly in the component for simplicity as it's using mock data.
+
+  const [order, setOrder] = React.useState<Order | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchOrder = async () => {
+      setLoading(true);
+      const orderDetails = await getOrderDetails(params.orderId);
+      setOrder(orderDetails);
+      setLoading(false);
+    };
+    fetchOrder();
+  }, [params.orderId]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (loading) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-lg text-muted-foreground">Loading order details...</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -113,12 +146,12 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
                     order.status === 'Cancelled' ? 'destructive' :
                     'default'
                 }
-                className={`text-sm px-3 py-1 ${
-                    order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' :
-                    order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-white' : // Changed from border-blue to bg-blue for consistency
-                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
-                    order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' :
-                    '' // Fallback class if needed, or remove if variants cover all
+                 className={`text-sm px-3 py-1 ${
+                    order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-primary-foreground' :
+                    order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-primary-foreground' : 
+                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' :
+                    order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-destructive-foreground' :
+                    ''
                 }`}
             >
                 {order.status}
@@ -228,7 +261,7 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
 
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex flex-col sm:flex-row justify-end gap-3">
-            <Button variant="outline">Print Invoice</Button>
+            <Button variant="outline" onClick={handlePrint}>Print Invoice</Button>
             <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Track Package</Button>
         </CardFooter>
       </Card>
