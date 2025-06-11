@@ -94,3 +94,18 @@ export interface SellerStats {
   productsCount: number;
   pendingOrders: number;
 }
+
+// This type is for the seller dashboard notifications
+export type NotificationType = 'new_order' | 'new_message' | 'new_review' | 'low_stock' | 'general';
+
+export interface SellerNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  description: string;
+  timestamp: string; // Stored as ISO string, converted to Date object in component
+  read: boolean;
+  link?: string; 
+  sender?: string; 
+  artisanId?: string; // To associate notification with a specific artisan (for multi-seller platforms)
+}
