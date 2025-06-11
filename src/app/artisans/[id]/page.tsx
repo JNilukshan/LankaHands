@@ -82,7 +82,7 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
             data-ai-hint="craft workshop"
           />
         </div>
-        <CardContent className="p-6 -mt-16 md:-mt-20 relative z-10">
+        <CardContent className="p-8 -mt-20 md:-mt-24 relative z-10">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <Avatar className="h-36 w-36 md:h-44 md:w-44 border-4 border-background shadow-lg bg-muted">
               <AvatarImage src={typeof artisan.profileImageUrl === 'string' ? artisan.profileImageUrl : undefined} alt={artisan.name} data-ai-hint="artisan portrait"/>
