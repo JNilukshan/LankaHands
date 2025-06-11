@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell } from "lucide-react"; // Added Bell
+import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell, UserCircle2 } from "lucide-react"; // Added UserCircle2
 import type { SellerStats, Product, Order, OrderItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -66,17 +66,25 @@ export default function SellerDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold text-primary">Seller Dashboard</h1>
-        <Link href="/dashboard/seller/notifications" passHref>
-            <Button variant="outline" className="relative">
-                <Bell size={20} className="mr-2 text-primary" />
-                Notifications
-                {unreadNotificationsCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs">
-                    {unreadNotificationsCount}
-                </Badge>
-                )}
-            </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+            <Link href="/artisans/1" passHref> {/* Assuming seller is artisan ID '1' for prototype */}
+              <Button variant="outline">
+                <UserCircle2 size={20} className="mr-2 text-primary" />
+                View Public Profile
+              </Button>
+            </Link>
+            <Link href="/dashboard/seller/notifications" passHref>
+                <Button variant="outline" className="relative">
+                    <Bell size={20} className="mr-2 text-primary" />
+                    Notifications
+                    {unreadNotificationsCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs">
+                        {unreadNotificationsCount}
+                    </Badge>
+                    )}
+                </Button>
+            </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -166,7 +174,7 @@ export default function SellerDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions / Links */}
+        {/* Quick Links / Links */}
         <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl font-headline text-primary">Quick Links</CardTitle>
@@ -288,6 +296,4 @@ const QuickLinkItem: React.FC<QuickLinkItemProps> = ({ href, icon: Icon, label }
         </Link>
     </Button>
 );
-
-
     
