@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card'; // Added Card and CardContent import
 
 // Placeholder data
 const allProducts: Product[] = [
