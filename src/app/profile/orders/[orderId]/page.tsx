@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { Order, OrderItem } from '@/types';
+import type { Order, OrderItem, Artisan, ShippingSettings, StorePolicies } from '@/types';
 import { CalendarDays, MapPin, ShoppingBag, Package, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck, Ban } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,45 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
+// Mock Artisan with policies
+const mockArtisanWithPolicies: Artisan = {
+  id: 'artisan1',
+  name: 'Nimali Perera - Batik Artistry',
+  bio: 'Master Batik artist from Kandy.',
+  profileImageUrl: 'https://placehold.co/100x100.png',
+  shippingSettings: {
+    localRate: 4.50,
+    localDeliveryTime: "2-4 business days",
+    internationalRate: 22.00,
+    internationalDeliveryTime: "10-15 business days",
+    freeShippingLocalThreshold: 75,
+    freeShippingInternationalThreshold: 150,
+    processingTime: "1-3 business days",
+  },
+  storePolicies: {
+    returnPolicy: "Returns accepted within 10 days for unused items in original packaging. Customer pays return shipping.",
+    exchangePolicy: "Exchanges available for items of the same value if stock permits. Contact within 7 days.",
+    cancellationPolicy: "Orders can be cancelled if they are still in 'Pending' status and have not yet started processing (typically within 12 hours).",
+  }
+};
+
+const mockArtisanMinimalPolicies: Artisan = {
+    id: 'artisan2',
+    name: 'Ravi Sculptures',
+    bio: 'Wood carving specialist.',
+    profileImageUrl: 'https://placehold.co/100x100.png',
+    shippingSettings: {
+      processingTime: "3-5 business days (custom orders)",
+      localRate: 10.00,
+      localDeliveryTime: "5-7 business days",
+    },
+    storePolicies: {
+      returnPolicy: "No returns on custom carved items unless damaged in transit.",
+      cancellationPolicy: "Custom orders cannot be cancelled once carving has begun (typically after 24 hours).",
+    }
+  };
+
+
 // Placeholder data - in a real app, this would be fetched based on params.orderId
 const mockAllOrders: Order[] = [
   {
@@ -36,7 +75,8 @@ const mockAllOrders: Order[] = [
     totalAmount: 230.00,
     orderDate: '2023-05-10T10:00:00Z',
     status: 'Delivered',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
+    artisan: mockArtisanWithPolicies,
   },
   {
     id: 'order2',
@@ -46,7 +86,8 @@ const mockAllOrders: Order[] = [
     totalAmount: 75.00,
     orderDate: '2023-05-20T14:30:00Z',
     status: 'Shipped',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
+    artisan: mockArtisanMinimalPolicies,
   },
   {
     id: 'order3', 
@@ -56,7 +97,8 @@ const mockAllOrders: Order[] = [
     totalAmount: 90.00,
     orderDate: '2023-05-25T11:00:00Z',
     status: 'Pending',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
+    artisan: mockArtisanWithPolicies,
   },
   {
     id: 'order4', 
@@ -66,11 +108,14 @@ const mockAllOrders: Order[] = [
     totalAmount: 45.00,
     orderDate: '2023-05-22T09:00:00Z',
     status: 'Cancelled',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
+    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
+    artisan: mockArtisanMinimalPolicies,
   },
 ];
 
 const getOrderDetails = async (orderId: string): Promise<Order | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
   const order = mockAllOrders.find(o => o.id === orderId);
   return order || null;
 };
@@ -102,7 +147,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
 
   const handleConfirmCancellation = async () => {
     if (!order) return;
-    // Simulate API call for cancellation
+    
     console.log(`Cancelling order ${order.id}`);
     await new Promise(resolve => setTimeout(resolve, 1000)); 
 
@@ -110,6 +155,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     toast({
       title: "Order Cancelled",
       description: `Order #${order.id.substring(0,8)} has been successfully cancelled.`,
+      variant: "default"
     });
     setIsCancelDialogOpen(false);
   };
@@ -133,13 +179,11 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
         </div>
     );
   }
+  
+  const artisanShipping = order.artisan?.shippingSettings;
+  const artisanPolicies = order.artisan?.storePolicies;
+  const isCancellable = order.status === 'Pending' && (artisanPolicies?.cancellationPolicy ? true : false);
 
-  const typicalProcessingTime = "1-2 business days";
-  const returnPolicy = "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.";
-  const exchangePolicy = "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.";
-  const cancellationPolicy = "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped, or if the order status is 'Pending'.";
-
-  const isCancellable = order.status === 'Pending';
 
   return (
     <div className="py-8 space-y-8">
@@ -185,6 +229,13 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
+            {order.artisan && (
+                 <div className="mb-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
+                    <h3 className="font-semibold text-md text-primary mb-1">Fulfilled by:</h3>
+                    <Link href={`/artisans/${order.artisan.id}`} className="text-accent hover:underline font-medium">{order.artisan.name}</Link>
+                    <p className="text-xs text-muted-foreground">{order.artisan.speciality}</p>
+                </div>
+            )}
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
                     <h3 className="font-semibold text-md text-foreground mb-2 flex items-center"><UserCircle2 size={18} className="mr-2 text-accent"/>Customer Information</h3>
@@ -233,8 +284,8 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                         <span>${order.totalAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Shipping:</span>
-                        <span>$0.00</span> 
+                        <span className="text-muted-foreground">Shipping (Artisan):</span>
+                        <span>${artisanShipping?.localRate?.toFixed(2) || 'Calculated at checkout'}</span> 
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Tax:</span>
@@ -243,7 +294,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                     <Separator className="my-2"/>
                     <div className="flex justify-between font-bold text-lg text-primary">
                         <span>Order Total:</span>
-                        <span>${order.totalAmount.toFixed(2)}</span>
+                        <span>${(order.totalAmount + (artisanShipping?.localRate || 0)).toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -251,37 +302,47 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
             <Separator />
             
             <div>
-                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><Truck size={18} className="mr-2 text-accent"/>Shipping Information & Policies</h3>
+                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><Truck size={18} className="mr-2 text-accent"/>Artisan&apos;s Shipping Information</h3>
                 <div className="space-y-3 text-sm text-muted-foreground">
-                    <p><strong>Typical Order Processing Time:</strong> {typicalProcessingTime}</p>
-                    <div>
-                        <h4 className="font-medium text-foreground mb-1">Standard Shipping Policy:</h4>
-                        <ul className="list-disc list-inside pl-4 space-y-1">
-                            <li>Local (Sri Lanka): $5 (3-5 business days)</li>
-                            <li>International: $25 (7-21 business days, varies by destination)</li>
-                            <li>Free shipping on orders over $100 (local) / $200 (international).</li>
-                        </ul>
-                    </div>
+                    {artisanShipping ? (
+                        <>
+                            {artisanShipping.processingTime && <p><strong>Typical Order Processing Time:</strong> {artisanShipping.processingTime}</p>}
+                            <div>
+                                <h4 className="font-medium text-foreground mb-1">Shipping Rates & Times:</h4>
+                                <ul className="list-disc list-inside pl-4 space-y-1">
+                                    {artisanShipping.localRate !== undefined && artisanShipping.localDeliveryTime && 
+                                        <li>Local (Sri Lanka): ${artisanShipping.localRate.toFixed(2)} ({artisanShipping.localDeliveryTime})</li>}
+                                    {artisanShipping.internationalRate !== undefined && artisanShipping.internationalDeliveryTime && 
+                                        <li>International: ${artisanShipping.internationalRate.toFixed(2)} ({artisanShipping.internationalDeliveryTime})</li>}
+                                    {artisanShipping.freeShippingLocalThreshold && 
+                                        <li>Free local shipping on orders over ${artisanShipping.freeShippingLocalThreshold.toFixed(2)}.</li>}
+                                    {artisanShipping.freeShippingInternationalThreshold && 
+                                        <li>Free international shipping on orders over ${artisanShipping.freeShippingInternationalThreshold.toFixed(2)}.</li>}
+                                </ul>
+                                {(artisanShipping.localRate === undefined && artisanShipping.internationalRate === undefined) && <p>Shipping details provided by artisan upon request or at checkout.</p>}
+                            </div>
+                        </>
+                    ) : (
+                        <p>Shipping policies are set by the artisan. Contact them for details if not specified here.</p>
+                    )}
                 </div>
             </div>
 
             <Separator />
 
             <div>
-                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><ShieldCheck size={18} className="mr-2 text-accent"/>Store Policies</h3>
+                <h3 className="font-semibold text-md text-foreground mb-3 flex items-center"><ShieldCheck size={18} className="mr-2 text-accent"/>Artisan&apos;s Store Policies</h3>
                 <div className="space-y-3 text-sm text-muted-foreground">
-                    <div>
-                        <h4 className="font-medium text-foreground mb-1">Return & Refund Policy:</h4>
-                        <p>{returnPolicy}</p>
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-foreground mb-1">Exchange Policy:</h4>
-                        <p>{exchangePolicy}</p>
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-foreground mb-1">Order Cancellation Policy:</h4>
-                        <p>{cancellationPolicy}</p>
-                    </div>
+                    {artisanPolicies ? (
+                        <>
+                            {artisanPolicies.returnPolicy && <div><h4 className="font-medium text-foreground mb-1">Return & Refund Policy:</h4><p>{artisanPolicies.returnPolicy}</p></div>}
+                            {artisanPolicies.exchangePolicy && <div><h4 className="font-medium text-foreground mb-1">Exchange Policy:</h4><p>{artisanPolicies.exchangePolicy}</p></div>}
+                            {artisanPolicies.cancellationPolicy && <div><h4 className="font-medium text-foreground mb-1">Order Cancellation Policy:</h4><p>{artisanPolicies.cancellationPolicy}</p></div>}
+                            {(!artisanPolicies.returnPolicy && !artisanPolicies.exchangePolicy && !artisanPolicies.cancellationPolicy) && <p>Store policies not specified by artisan.</p>}
+                        </>
+                    ) : (
+                         <p>Store policies are set by the artisan. Please check their profile or contact them for details.</p>
+                    )}
                 </div>
             </div>
 
@@ -298,13 +359,15 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Order Cancellation</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to cancel this order? This action cannot be undone.
+                    {artisanPolicies?.cancellationPolicy ? 
+                     `Artisan's policy: "${artisanPolicies.cancellationPolicy}" ` : ''}
+                    Are you sure you want to request cancellation for this order? This action cannot be undone if approved by the artisan.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep Order</AlertDialogCancel>
                   <AlertDialogAction onClick={handleConfirmCancellation} className="bg-destructive hover:bg-destructive/90">
-                    Confirm Cancellation
+                    Request Cancellation
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

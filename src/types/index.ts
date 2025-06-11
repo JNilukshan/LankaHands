@@ -1,16 +1,34 @@
 
 import type { StaticImageData } from 'next/image';
 
+export interface ShippingSettings {
+  localRate?: number;
+  localDeliveryTime?: string;
+  internationalRate?: number;
+  internationalDeliveryTime?: string;
+  freeShippingLocalThreshold?: number;
+  freeShippingInternationalThreshold?: number;
+  processingTime?: string;
+}
+
+export interface StorePolicies {
+  returnPolicy?: string;
+  exchangePolicy?: string;
+  cancellationPolicy?: string;
+}
+
 export interface Artisan {
   id: string;
   name: string;
   bio: string;
   profileImageUrl: string | StaticImageData;
-  products?: Product[]; // Optional, linking back might be complex for simple display
+  products?: Product[];
   followers?: number;
   averageRating?: number;
   location?: string;
   speciality?: string;
+  shippingSettings?: ShippingSettings;
+  storePolicies?: StorePolicies;
 }
 
 export interface Product {
@@ -25,7 +43,7 @@ export interface Product {
   artisan?: Artisan;
   reviews?: Review[];
   stock?: number;
-  dimensions?: string; // e.g., "10cm x 15cm x 5cm"
+  dimensions?: string; 
   materials?: string[];
 }
 
@@ -35,9 +53,9 @@ export interface Review {
   userName: string;
   userAvatar?: string | StaticImageData;
   productId: string;
-  rating: number; // 1-5 stars
+  rating: number; 
   comment: string;
-  createdAt: string; // ISO date string
+  createdAt: string; 
 }
 
 export interface User {
@@ -51,12 +69,13 @@ export interface User {
 export interface Order {
   id: string;
   userId: string;
-  customerName?: string; // Added for easier display
+  customerName?: string; 
   items: OrderItem[];
   totalAmount: number;
-  orderDate: string; // ISO date string
+  orderDate: string; 
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress?: string;
+  artisan?: Artisan; // Artisan fulfilling this order
 }
 
 export interface OrderItem {
@@ -75,6 +94,3 @@ export interface SellerStats {
   productsCount: number;
   pendingOrders: number;
 }
-
-
-    
