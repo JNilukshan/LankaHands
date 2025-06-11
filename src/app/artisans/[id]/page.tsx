@@ -30,7 +30,7 @@ const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
   const artisans: Record<string, Artisan> = {
     '1': { 
       id: '1', name: 'Nimali Perera', 
-      bio: 'Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka\'s lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics. Each piece is a labor of love, meticulously handcrafted to bring a touch of Sri Lankan heritage into modern life. Nimali is passionate about sustainable practices, using eco-friendly dyes and materials in her creations. She also mentors young aspiring artists, helping to preserve and evolve the ancient art of Batik.', 
+      bio: 'Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka\'s lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics.', 
       profileImageUrl: 'https://placehold.co/600x400.png', 
       speciality: 'Master Batik Artist',
       location: 'Kandy, Sri Lanka',
