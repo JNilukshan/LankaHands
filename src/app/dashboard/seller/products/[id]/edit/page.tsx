@@ -48,7 +48,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
-  const { id: productId } = params; // Destructure id from params
+  const { id: productId } = params; 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
@@ -86,7 +86,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         // Handle case where product is not found or for other IDs
         toast({ title: "Product not found", description: "Could not load product data for editing.", variant: "destructive"});
     }
-  }, [productId, form, toast]); // Use productId in dependency array
+  }, [productId, form, toast]); 
 
 
   const onSubmit = async (data: ProductFormValues) => {
@@ -263,3 +263,5 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    
