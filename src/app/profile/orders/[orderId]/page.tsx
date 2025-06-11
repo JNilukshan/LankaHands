@@ -1,15 +1,27 @@
 
-"use client"; // Added to enable client-side interactivity for window.print()
+"use client"; 
 
-import React from 'react'; // Import React
+import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { Order, OrderItem } from '@/types';
-import { CalendarDays, MapPin, ShoppingBag, Tag, Package, Hash, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck } from 'lucide-react';
+import { CalendarDays, MapPin, ShoppingBag, Package, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck, Ban } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder data - in a real app, this would be fetched based on params.orderId
 const mockAllOrders: Order[] = [
@@ -37,7 +49,7 @@ const mockAllOrders: Order[] = [
     shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
   },
   {
-    id: 'order3', // Example for Pending
+    id: 'order3', 
     userId: 'user123',
     customerName: 'Chandana Silva',
     items: [{ productId: '104', productName: 'Lotus Bloom Batik Wall Hanging', quantity: 1, price: 90.00, productImage: 'https://placehold.co/80x80.png' }],
@@ -47,7 +59,7 @@ const mockAllOrders: Order[] = [
     shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka'
   },
   {
-    id: 'order4', // Example for Cancelled
+    id: 'order4', 
     userId: 'user123',
     customerName: 'Chandana Silva',
     items: [{ productId: '105', productName: 'Terracotta Clay Vase Set', quantity: 1, price: 45.00, productImage: 'https://placehold.co/80x80.png' }],
@@ -59,19 +71,18 @@ const mockAllOrders: Order[] = [
 ];
 
 const getOrderDetails = async (orderId: string): Promise<Order | null> => {
-  // In a real app, you would fetch this. For now, simulating it.
-  // No actual "await new Promise" needed if this function is called client-side directly or if data is passed.
   const order = mockAllOrders.find(o => o.id === orderId);
   return order || null;
 };
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  // "Unwrap" params using React.use() as suggested by the Next.js warning
   const resolvedParams = React.use(params);
   const orderId = resolvedParams.orderId;
   
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const fetchOrder = async () => {
@@ -80,13 +91,27 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
       setOrder(orderDetails);
       setLoading(false);
     };
-    if (orderId) { // Ensure orderId is present before fetching
+    if (orderId) {
         fetchOrder();
     }
   }, [orderId]);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleConfirmCancellation = async () => {
+    if (!order) return;
+    // Simulate API call for cancellation
+    console.log(`Cancelling order ${order.id}`);
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+    setOrder(prevOrder => prevOrder ? { ...prevOrder, status: 'Cancelled' } : null);
+    toast({
+      title: "Order Cancelled",
+      description: `Order #${order.id.substring(0,8)} has been successfully cancelled.`,
+    });
+    setIsCancelDialogOpen(false);
   };
 
   if (loading) {
@@ -112,8 +137,9 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
   const typicalProcessingTime = "1-2 business days";
   const returnPolicy = "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.";
   const exchangePolicy = "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.";
-  const cancellationPolicy = "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped.";
+  const cancellationPolicy = "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped, or if the order status is 'Pending'.";
 
+  const isCancellable = order.status === 'Pending';
 
   return (
     <div className="py-8 space-y-8">
@@ -141,17 +167,17 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
             <Badge
                 variant={
                     order.status === 'Delivered' ? 'default' :
-                    order.status === 'Shipped' ? 'secondary' : // Using 'secondary' for a filled look
-                    order.status === 'Pending' ? 'secondary' : // Using 'secondary' for a filled look
+                    order.status === 'Shipped' ? 'secondary' : 
+                    order.status === 'Pending' ? 'secondary' : 
                     order.status === 'Cancelled' ? 'destructive' :
-                    'default' // Fallback
+                    'default'
                 }
                  className={`text-sm px-3 py-1 ${
                     order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-primary-foreground' :
                     order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-primary-foreground' : 
-                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' : // Or text-yellow-900 if specific needed
+                    order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' : 
                     order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-destructive-foreground' :
-                    '' // Ensure no default class if one of above applies
+                    ''
                 }`}
             >
                 {order.status}
@@ -208,11 +234,11 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipping:</span>
-                        <span>$0.00</span> {/* Placeholder */}
+                        <span>$0.00</span> 
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Tax:</span>
-                        <span>$0.00</span> {/* Placeholder */}
+                        <span>$0.00</span> 
                     </div>
                     <Separator className="my-2"/>
                     <div className="flex justify-between font-bold text-lg text-primary">
@@ -262,10 +288,29 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex flex-col sm:flex-row justify-end gap-3">
             <Button variant="outline" onClick={handlePrint}>Print Invoice</Button>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Track Package</Button>
+            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={!isCancellable}>
+                  <Ban size={16} className="mr-2" /> Cancel Order
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Order Cancellation</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to cancel this order? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleConfirmCancellation} className="bg-destructive hover:bg-destructive/90">
+                    Confirm Cancellation
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </CardFooter>
       </Card>
     </div>
   );
 }
-
