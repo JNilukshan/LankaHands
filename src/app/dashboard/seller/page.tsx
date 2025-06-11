@@ -1,12 +1,17 @@
 
+"use client";
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Bell, Settings, BarChart3, ListOrdered, Package } from "lucide-react";
-import type { SellerStats, Product, Order } from "@/types";
+import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown } from "lucide-react";
+import type { SellerStats, Product, Order, OrderItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 // Placeholder data
 const mockSellerStats: SellerStats = {
@@ -18,14 +23,43 @@ const mockSellerStats: SellerStats = {
   pendingOrders: 3,
 };
 
-const mockRecentOrders: Order[] = [
-  { id: 'order001', userId: 'cust1', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending' },
-  { id: 'order002', userId: 'cust2', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped' },
-  { id: 'order003', userId: 'cust3', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered' },
+const initialMockRecentOrders: Order[] = [
+  { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
+  { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
+  { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
 ];
+
+const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function SellerDashboardPage() {
   const stats = mockSellerStats;
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
+
+  useEffect(() => {
+    // Initialize with a fresh set of dates each time the component mounts on client
+    const generateInitialOrders = (): Order[] => [
+        { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
+        { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
+        { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
+      ];
+    setRecentOrders(generateInitialOrders());
+  }, []);
+
+
+  const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
+    setRecentOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsViewOrderDialogOpen(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -45,7 +79,7 @@ export default function SellerDashboardPage() {
         {/* Recent Orders */}
         <Card className="lg:col-span-2 shadow-lg">
           <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats.pendingOrders} pending)</CardTitle>
+            <CardTitle className="text-xl font-headline text-primary">Recent Orders ({recentOrders.filter(o => o.status === 'Pending').length} pending)</CardTitle>
             <Button variant="link" className="text-sm text-primary p-0 h-auto" asChild><Link href="/dashboard/seller/orders">View All Orders</Link></Button>
           </CardHeader>
           <CardContent>
@@ -54,30 +88,69 @@ export default function SellerDashboardPage() {
                 <TableRow>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRecentOrders.map(order => (
+                {recentOrders.map(order => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.id.substring(0,6)}</TableCell>
+                    <TableCell className="font-medium">#{order.id.substring(0,8)}</TableCell>
                     <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                    <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
-                    <TableCell>
-                        <Badge variant={order.status === 'Delivered' ? 'default' : order.status === 'Shipped' ? 'outline' : 'secondary'} 
-                               className={order.status === 'Delivered' ? 'bg-green-500 text-white' : order.status === 'Shipped' ? 'border-blue-500 text-blue-500' : order.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' : ''}>
-                            {order.status}
-                        </Badge>
+                    <TableCell>{order.customerName || `Customer ${order.userId}`}</TableCell>
+                    <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-center">
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8 min-w-[100px] justify-center">
+                            <Badge 
+                                variant={
+                                order.status === 'Delivered' ? 'default' : 
+                                order.status === 'Shipped' ? 'outline' : 
+                                order.status === 'Cancelled' ? 'destructive' : 'secondary'
+                                }
+                                className={
+                                `pointer-events-none text-xs ${ order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' : 
+                                order.status === 'Shipped' ? 'border-blue-500 text-blue-500 hover:bg-blue-500/10' : 
+                                order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
+                                order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' : '' }`
+                                }
+                            >
+                                {order.status}
+                            </Badge>
+                            <ChevronDown className="h-3 w-3 opacity-70" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {orderStatuses.map(statusOption => (
+                            <DropdownMenuItem 
+                                key={statusOption} 
+                                onClick={() => handleStatusChange(order.id, statusOption)}
+                                disabled={order.status === statusOption}
+                            >
+                                {statusOption}
+                            </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                        </DropdownMenu>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">View</Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => handleViewOrder(order)}>
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">View Order</span>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            {recentOrders.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                No recent orders.
+                </div>
+            )}
           </CardContent>
         </Card>
 
@@ -94,6 +167,79 @@ export default function SellerDashboardPage() {
             </CardContent>
         </Card>
       </div>
+
+      {selectedOrder && (
+        <Dialog open={isViewOrderDialogOpen} onOpenChange={setIsViewOrderDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-headline text-primary">Order Details: #{selectedOrder.id.substring(0,8)}</DialogTitle>
+              <DialogDescription>
+                Placed on: {new Date(selectedOrder.orderDate).toLocaleDateString()} by {selectedOrder.customerName || `Customer ${selectedOrder.userId}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2 text-foreground">Items Ordered:</h4>
+                <ul className="space-y-3 max-h-60 overflow-y-auto">
+                  {selectedOrder.items.map(item => (
+                    <li key={item.productId} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <Image 
+                          src={typeof item.productImage === 'string' ? item.productImage : "https://placehold.co/60x60.png"} 
+                          alt={item.productName} 
+                          width={50} height={50} 
+                          className="rounded-md object-cover border"
+                          data-ai-hint="product thumbnail"
+                        />
+                        <div>
+                          <p className="font-medium text-sm text-foreground">{item.productName}</p>
+                          <p className="text-xs text-muted-foreground">Qty: {item.quantity} · Price: ${item.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-primary">${(item.quantity * item.price).toFixed(2)}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between font-semibold text-md text-primary">
+                  <span>Total Amount:</span>
+                  <span>${selectedOrder.totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+              {selectedOrder.shippingAddress && (
+                <div className="border-t pt-3">
+                  <h4 className="font-semibold text-sm text-foreground mb-1">Shipping Address:</h4>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.shippingAddress}</p>
+                </div>
+              )}
+              <div className="border-t pt-3">
+                <h4 className="font-semibold text-sm text-foreground mb-1">Order Status:</h4>
+                <Badge 
+                    variant={
+                        selectedOrder.status === 'Delivered' ? 'default' : 
+                        selectedOrder.status === 'Shipped' ? 'outline' : 
+                        selectedOrder.status === 'Cancelled' ? 'destructive' : 'secondary'
+                    }
+                    className={
+                        `${ selectedOrder.status === 'Delivered' ? 'bg-green-500 text-white' : 
+                        selectedOrder.status === 'Shipped' ? 'border-blue-500 text-blue-500' : 
+                        selectedOrder.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
+                        selectedOrder.status === 'Cancelled' ? 'bg-red-500 text-white' : '' }`
+                    }
+                >
+                    {selectedOrder.status}
+                </Badge>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -130,4 +276,3 @@ const QuickLinkItem: React.FC<QuickLinkItemProps> = ({ href, icon: Icon, label }
         </Link>
     </Button>
 );
-
