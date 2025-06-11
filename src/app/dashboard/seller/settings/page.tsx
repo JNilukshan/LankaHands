@@ -8,9 +8,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle, Image as ImageIcon } from 'lucide-react'; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState } from "react";
+
+const craftCategories = [
+  "Batik Artist",
+  "Wood Carver",
+  "Handloom Weaver",
+  "Potter",
+  "Jewelry Designer",
+  "Leather Crafter",
+  "Painter",
+  "Sculptor",
+  "Textile Artist",
+  "Mixed Media Artist",
+  "Other"
+];
 
 export default function StoreSettingsPage() {
   // In a real app, form state would be managed with react-hook-form or similar
+  const [speciality, setSpeciality] = useState("Master Batik Artist"); // Initialize with current or common default
+  const [otherSpecialityText, setOtherSpecialityText] = useState("");
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-headline font-bold text-primary flex items-center">
@@ -36,10 +55,42 @@ export default function StoreSettingsPage() {
                   <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
                   <Input id="artisanName" defaultValue="Nimali Perera - Batik Artistry" />
               </div>
+              
               <div className="space-y-2">
-                  <Label htmlFor="artisanSpeciality">Speciality / Craft Type</Label>
-                  <Input id="artisanSpeciality" placeholder="e.g., Batik Artist, Wood Carver" defaultValue="Master Batik Artist" />
+                <Label htmlFor="artisanSpecialitySelect">Speciality / Craft Type</Label>
+                <Select
+                  value={speciality}
+                  onValueChange={(value) => {
+                    setSpeciality(value);
+                    if (value !== "Other") {
+                      setOtherSpecialityText(""); // Clear other text if a predefined option is chosen
+                    }
+                  }}
+                >
+                  <SelectTrigger id="artisanSpecialitySelect">
+                    <SelectValue placeholder="Select your craft type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {craftCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {speciality === "Other" && (
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="otherSpecialityInput">Please specify your speciality:</Label>
+                    <Input
+                      id="otherSpecialityInput"
+                      placeholder="e.g., Glass Blower, Upcycled Art Creator"
+                      value={otherSpecialityText}
+                      onChange={(e) => setOtherSpecialityText(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
+
               <div className="space-y-2">
                   <Label htmlFor="artisanLocation">Location</Label>
                   <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" defaultValue="Kandy, Sri Lanka" />
@@ -188,6 +239,3 @@ export default function StoreSettingsPage() {
     </div>
   );
 }
-
-
-    
