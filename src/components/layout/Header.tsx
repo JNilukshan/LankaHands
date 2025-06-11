@@ -21,9 +21,12 @@ const mainNavLinks = [
   { href: '/products', label: 'Products' },
 ];
 
-const accountNavLinks = [
+// Adjusted accountNavLinks for mobile, desktop uses dropdown
+const mobileAccountNavLinks = [
     { href: '/login', label: 'Sign In', icon: LogIn },
-    { href: '/become-seller', label: 'Become a Seller', icon: UserPlus },
+    { href: '/register', label: 'Register', icon: UserPlus }, // Assuming register is also useful here
+    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/become-seller', label: 'Become a Seller', icon: UserPlus }, // Kept for consistency if needed
 ];
 
 
@@ -79,16 +82,16 @@ const Header: FC = () => {
                 className="text-sm"
                 onMouseEnter={handleOpenDropdown}
                 onMouseLeave={handleCloseDropdown}
-                onFocus={handleOpenDropdown} // Also open on focus for keyboard users
-                onBlur={handleCloseDropdown}  // Close on blur for keyboard users
+                // onFocus removed to simplify and prioritize hover logic
+                // onClick={() => setIsAccountDropdownOpen(prev => !prev)} // Allow click to toggle
               >
                 Welcome
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              onMouseEnter={handleOpenDropdown}
-              onMouseLeave={handleCloseDropdown}
+              onMouseEnter={handleOpenDropdown} // Keep open if mouse enters content
+              onMouseLeave={handleCloseDropdown} // Start close timer if mouse leaves content
             >
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -98,9 +101,15 @@ const Header: FC = () => {
                   Sign In
                 </Link>
               </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/register" className="flex items-center w-full">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Register
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/become-seller" className="flex items-center w-full">
-                  <UserPlus className="mr-2 h-4 w-4" />
+                  <UserPlus className="mr-2 h-4 w-4" /> {/* Icon can be differentiated or kept same */}
                   Become a Seller
                 </Link>
               </DropdownMenuItem>
@@ -137,14 +146,11 @@ const Header: FC = () => {
                   </Link>
                 ))}
                 <hr/>
-                {accountNavLinks.map(link => (
+                {mobileAccountNavLinks.map(link => (
                    <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
                      <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
                    </Link>
                 ))}
-                 <Link href="/profile" className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
-                   <User className="mr-2 h-5 w-5 text-primary" /> Profile
-                </Link>
                 <hr/>
                 <Button variant="ghost" size="icon" className="text-lg text-foreground hover:text-primary transition-colors flex items-center justify-start w-full" disabled>
                   <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Shopping Cart
