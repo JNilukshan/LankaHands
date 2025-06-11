@@ -1,4 +1,7 @@
 
+"use client";
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -23,11 +26,40 @@ const mockAllOrders: Order[] = [
 
 
 export default function AllOrdersPage() {
-  // Placeholder for search and filter state
-  // const [searchTerm, setSearchTerm] = useState('');
-  // const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
-  const orders = mockAllOrders; // Later, this would be filtered based on state
+  const filteredOrders = mockAllOrders.filter(order => {
+    const matchesSearchTerm =
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.customerName && order.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearchTerm && matchesStatus;
+  });
+
+  // Pagination logic
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -48,10 +80,11 @@ export default function AllOrdersPage() {
                 type="search" 
                 placeholder="Search by Order ID, Customer..." 
                 className="pl-10 w-full"
-                // onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
                 />
             </div>
-            <Select defaultValue="all">
+            <Select value={statusFilter} onValueChange={(value) => {setStatusFilter(value); setCurrentPage(1);}}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
@@ -63,9 +96,6 @@ export default function AllOrdersPage() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="text-primary border-primary hover:bg-primary/10 w-full sm:w-auto">
-                <Filter size={16} className="mr-2"/> Apply Filters
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -81,7 +111,7 @@ export default function AllOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map(order => (
+              {currentOrders.map(order => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">#{order.id.substring(0,8)}</TableCell>
                   <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
@@ -115,23 +145,27 @@ export default function AllOrdersPage() {
               ))}
             </TableBody>
           </Table>
-          {orders.length === 0 && (
+          {filteredOrders.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              No orders found.
+              No orders found matching your criteria.
             </div>
           )}
         </CardContent>
-        {/* Basic Pagination Placeholder */}
-        <CardContent className="border-t pt-4 flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Showing 1 to {orders.length > 10 ? 10 : orders.length} of {orders.length} orders</span>
+        {filteredOrders.length > 0 && (
+           <CardContent className="border-t pt-4 flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">
+                Showing {Math.min(indexOfFirstOrder + 1, filteredOrders.length)} to {Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
+            </span>
             <div className="space-x-2">
-                <Button variant="outline" size="sm" disabled={true}>Previous</Button>
-                <Button variant="outline" size="sm" disabled={orders.length <= 10}>Next</Button>
+                <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</Button>
             </div>
         </CardContent>
+        )}
       </Card>
     </div>
   );
 }
+    
 
     
