@@ -1,6 +1,8 @@
+
 "use client";
 
-import { useState, type FC } from 'react';
+import { useState, type FC, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,18 +18,52 @@ const languages = [
   { code: 'ta', name: 'தமிழ் (Tamil)' },
 ];
 
-const LanguageSwitcher: FC = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
+// Helper to get the initial language based on search params or default
+function getInitialLanguage(searchParams: URLSearchParams | null): { code: string; name: string; } {
+  if (!searchParams) return languages[0]; // Should not happen in client component
+  const langCode = searchParams.get('lang');
+  return languages.find(l => l.code === langCode) || languages[0];
+}
 
-  // In a real app, this would call i18n library functions
-  const changeLanguage = (langCode: string) => {
+const LanguageSwitcher: FC = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Initialize state from URL search params or default to English
+  // The function passed to useState ensures this runs only on initial mount client-side
+  const [selectedLanguage, setSelectedLanguage] = useState(() => getInitialLanguage(searchParams));
+
+  // Effect to update selectedLanguage if searchParams change from external navigation or router.push
+  useEffect(() => {
+    const currentLangCode = searchParams.get('lang');
+    const targetLang = languages.find(l => l.code === currentLangCode) || languages[0];
+    
+    if (targetLang.code !== selectedLanguage.code) {
+      setSelectedLanguage(targetLang);
+    }
+  }, [searchParams, selectedLanguage.code]);
+
+
+  const changeLanguage = useCallback((langCode: string) => {
     const lang = languages.find(l => l.code === langCode);
     if (lang) {
-      setSelectedLanguage(lang);
-      // console.log(`Language changed to: ${lang.name}`);
-      // Here you would typically use router.push with locale or i18n.changeLanguage()
+      const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
+
+      if (langCode === languages[0].code) { // Default language (English)
+        currentParams.delete('lang');
+      } else {
+        currentParams.set('lang', langCode);
+      }
+
+      const queryString = currentParams.toString();
+      // Preserve existing hash if any
+      const currentHash = window.location.hash;
+      const newUrl = (queryString ? `${pathname}?${queryString}` : pathname) + currentHash;
+      
+      router.push(newUrl, { scroll: false }); // scroll: false prevents jumping to top
     }
-  };
+  }, [router, pathname, searchParams]);
 
   return (
     <DropdownMenu>
@@ -43,7 +79,7 @@ const LanguageSwitcher: FC = () => {
           <DropdownMenuItem
             key={lang.code}
             onClick={() => changeLanguage(lang.code)}
-            className={selectedLanguage.code === lang.code ? "bg-accent" : ""}
+            className={selectedLanguage.code === lang.code ? "bg-accent text-accent-foreground" : ""}
           >
             {lang.name}
           </DropdownMenuItem>
