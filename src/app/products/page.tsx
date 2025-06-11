@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import { useState, useEffect, useCallback } from 'react';
 import ProductCard from '@/components/shared/ProductCard';
 import ProductFilters from '@/components/products/ProductFilters';
-import type { Product } from '@/types';
+import type { Product, Artisan } from '@/types'; // Added Artisan
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import {
@@ -17,8 +17,18 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 
-// Placeholder data
-const allProducts: Product[] = [
+// Placeholder data for Artisans (to be associated with products)
+const mockArtisans: Artisan[] = [
+  { id: '1', name: 'Nimali Perera', bio: 'Batik artist.', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: '2', name: 'Ravi Fernando', bio: 'Wood carver.', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: '3', name: 'Sita Devi', bio: 'Handloom weaver.', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: '4', name: 'Kamal Pottery', bio: 'Pottery artisan.', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: '5', name: 'Anusha Silvercraft', bio: 'Jewelry designer.', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: '6', name: 'Sustainable Leather Co.', bio: 'Leather crafter.', profileImageUrl: 'https://placehold.co/100x100.png' },
+];
+
+// Placeholder data for products, now without the artisan object directly
+const allProductsData: Omit<Product, 'artisan'>[] = [
   { id: '101', name: 'Ocean Breeze Batik Saree', description: 'Elegant silk saree with hand-painted Batik motifs.', price: 120.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 5, reviews: [{id:'r1', userId:'u1', userName:'Aisha K.', productId:'101', rating:5, comment:'Beautiful!', createdAt: new Date().toISOString()}] },
   { id: '102', name: 'Hand-Carved Elephant Statue', description: 'Detailed wooden elephant statue.', price: 75.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2', stock: 10 },
   { id: '103', name: 'Sunset Hues Handloom Shawl', description: 'Soft and warm handloom shawl.', price: 55.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '3', stock: 0, reviews: [{id:'r2', userId:'u2', userName:'Ben S.', productId:'103', rating:4, comment:'Great quality.', createdAt: new Date().toISOString()}] },
@@ -29,7 +39,17 @@ const allProducts: Product[] = [
   { id: '108', name: 'Painted Wooden Mask', description: 'Traditional Sri Lankan wooden mask, hand-painted.', price: 60.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2', stock: 0 },
 ];
 
+// Function to combine product data with artisan details
+const getProductsWithArtisanDetails = (): Product[] => {
+  return allProductsData.map(product => {
+    const artisan = mockArtisans.find(a => a.id === product.artisanId);
+    return { ...product, artisan };
+  });
+};
+
+
 export default function ProductsPage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
@@ -38,24 +58,26 @@ export default function ProductsPage() {
   useEffect(() => {
     // Simulate API call for initial load
     setTimeout(() => {
-      setFilteredProducts(allProducts);
+      const productsWithDetails = getProductsWithArtisanDetails();
+      setAllProducts(productsWithDetails);
+      setFilteredProducts(productsWithDetails);
       setIsLoading(false);
     }, 500);
-  }, []); // Runs once on mount
+  }, []);
 
   const handleFilterChange = useCallback((filters: { categories: string[]; priceRange: [number, number] }) => {
     setIsLoading(true);
-    let productsToSet = [...allProducts];
+    let productsToSet = [...allProducts]; // Use the state that holds products with artisan details
     if (filters.categories.length > 0) {
       productsToSet = productsToSet.filter(p => filters.categories.includes(p.category));
     }
     // Price range filtering is currently not used based on ProductFilters component
     
-    setTimeout(() => { // Simulate filtering delay
+    setTimeout(() => { 
       setFilteredProducts(productsToSet);
       setIsLoading(false);
     }, 300);
-  }, []); // Empty dependency array as allProducts is a module-level constant and setIsLoading/setFilteredProducts are stable
+  }, [allProducts]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -78,8 +100,7 @@ export default function ProductsPage() {
     });
 
   return (
-    <div className="flex flex-col gap-8"> {/* Main container, always vertical */}
-      {/* "Our Collection" info box (Title, Search, Sort) */}
+    <div className="flex flex-col gap-8"> 
       <div className="p-4 bg-card rounded-lg shadow">
         <h1 className="text-3xl font-headline font-semibold mb-4 text-primary">Our Collection</h1>
         <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -107,12 +128,10 @@ export default function ProductsPage() {
         </div>
       </div>
       
-      {/* Filter Products Section */}
-      <div> {/* Container for ProductFilters, allows it to take necessary width */}
+      <div> 
         <ProductFilters onFilterChange={handleFilterChange} />
       </div>
 
-      {/* Product Grid Section */}
       <section>
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
