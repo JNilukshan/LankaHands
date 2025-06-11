@@ -46,7 +46,7 @@ export default function CartPage() {
         <p className="text-lg text-foreground/80">Looks like you haven't added anything to your cart yet.</p>
         <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/products">
-            <Package className="mr-2" /> Continue Shopping
+            <Package className="mr-2" /> Start Shopping
           </Link>
         </Button>
       </div>
@@ -163,11 +163,6 @@ export default function CartPage() {
                 onClick={handleCheckout}
               >
                 <CheckCircle size={20} className="mr-2" /> Proceed to Checkout
-              </Button>
-              <Button variant="outline" size="lg" className="w-full" asChild>
-                <Link href="/products">
-                  <ArrowLeft size={18} className="mr-2" /> Continue Shopping
-                </Link>
               </Button>
               <Button variant="link" className="text-sm text-destructive p-0 h-auto" onClick={clearCart}>
                 Clear Cart
