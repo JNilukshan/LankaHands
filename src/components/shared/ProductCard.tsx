@@ -40,6 +40,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-sm text-foreground/80 line-clamp-2 mb-2">
           {product.description}
         </p>
+        {product.stock !== undefined && (
+          <p className={`text-xs mb-2 ${product.stock > 0 ? 'text-muted-foreground' : 'text-destructive font-semibold'}`}>
+            {product.stock > 0 ? `Availability: In Stock (${product.stock})` : 'Availability: Out of Stock'}
+          </p>
+        )}
         <div className="flex items-center justify-between mb-2">
           <p className="text-lg font-semibold text-primary">
             ${product.price.toFixed(2)}
@@ -62,3 +67,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
+

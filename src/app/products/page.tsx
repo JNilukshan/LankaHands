@@ -19,14 +19,14 @@ import { Card, CardContent } from '@/components/ui/card'; // Added Card and Card
 
 // Placeholder data
 const allProducts: Product[] = [
-  { id: '101', name: 'Ocean Breeze Batik Saree', description: 'Elegant silk saree with hand-painted Batik motifs.', price: 120.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', reviews: [{id:'r1', userId:'u1', userName:'Aisha K.', productId:'101', rating:5, comment:'Beautiful!', createdAt: new Date().toISOString()}] },
-  { id: '102', name: 'Hand-Carved Elephant Statue', description: 'Detailed wooden elephant statue.', price: 75.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2' },
-  { id: '103', name: 'Sunset Hues Handloom Shawl', description: 'Soft and warm handloom shawl.', price: 55.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '3', reviews: [{id:'r2', userId:'u2', userName:'Ben S.', productId:'103', rating:4, comment:'Great quality.', createdAt: new Date().toISOString()}] },
-  { id: '104', name: 'Lotus Bloom Batik Wall Hanging', description: 'Stunning Batik wall art.', price: 90.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1' },
-  { id: '105', name: 'Terracotta Clay Vase Set', description: 'Set of 3 handcrafted terracotta vases.', price: 45.00, category: 'Pottery', images: ['https://placehold.co/600x400.png'], artisanId: '4' },
-  { id: '106', name: 'Silver Filigree Earrings', description: 'Intricate silver filigree earrings.', price: 150.00, category: 'Jewelry', images: ['https://placehold.co/600x400.png'], artisanId: '5', reviews: [{id:'r3', userId:'u3', userName:'Chloe T.', productId:'106', rating:5, comment:'Absolutely gorgeous!', createdAt: new Date().toISOString()}] },
-  { id: '107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6' },
-  { id: '108', name: 'Painted Wooden Mask', description: 'Traditional Sri Lankan wooden mask, hand-painted.', price: 60.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2' },
+  { id: '101', name: 'Ocean Breeze Batik Saree', description: 'Elegant silk saree with hand-painted Batik motifs.', price: 120.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 5, reviews: [{id:'r1', userId:'u1', userName:'Aisha K.', productId:'101', rating:5, comment:'Beautiful!', createdAt: new Date().toISOString()}] },
+  { id: '102', name: 'Hand-Carved Elephant Statue', description: 'Detailed wooden elephant statue.', price: 75.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2', stock: 10 },
+  { id: '103', name: 'Sunset Hues Handloom Shawl', description: 'Soft and warm handloom shawl.', price: 55.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '3', stock: 0, reviews: [{id:'r2', userId:'u2', userName:'Ben S.', productId:'103', rating:4, comment:'Great quality.', createdAt: new Date().toISOString()}] },
+  { id: '104', name: 'Lotus Bloom Batik Wall Hanging', description: 'Stunning Batik wall art.', price: 90.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 7 },
+  { id: '105', name: 'Terracotta Clay Vase Set', description: 'Set of 3 handcrafted terracotta vases.', price: 45.00, category: 'Pottery', images: ['https://placehold.co/600x400.png'], artisanId: '4', stock: 12 },
+  { id: '106', name: 'Silver Filigree Earrings', description: 'Intricate silver filigree earrings.', price: 150.00, category: 'Jewelry', images: ['https://placehold.co/600x400.png'], artisanId: '5', stock: 3, reviews: [{id:'r3', userId:'u3', userName:'Chloe T.', productId:'106', rating:5, comment:'Absolutely gorgeous!', createdAt: new Date().toISOString()}] },
+  { id: '107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6', stock: 20 },
+  { id: '108', name: 'Painted Wooden Mask', description: 'Traditional Sri Lankan wooden mask, hand-painted.', price: 60.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2', stock: 0 },
 ];
 
 export default function ProductsPage() {
@@ -143,3 +143,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+
