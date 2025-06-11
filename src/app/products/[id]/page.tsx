@@ -35,7 +35,12 @@ const getProductDetails = async (id: string): Promise<Product | null> => {
       description: 'Elegant silk saree with hand-painted Batik motifs depicting ocean waves.',
       longDescription: "This exquisite Ocean Breeze Batik Saree is crafted from the finest silk, featuring intricate hand-painted Batik motifs that evoke the serene beauty of Sri Lankan coastlines. The flowing design and vibrant blues and greens make it a perfect statement piece for any special occasion. Each saree is a unique work of art, reflecting hours of meticulous craftsmanship.",
       price: 120.00, category: 'Apparel', 
-      images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'], 
+      images: [
+        'https://placehold.co/600x800.png', // Main image
+        'https://placehold.co/600x400.png', // Thumbnail 1
+        'https://placehold.co/400x600.png', // Thumbnail 2
+        'https://placehold.co/800x600.png'  // Thumbnail 3
+      ], 
       artisanId: '1', artisan: sampleArtisan, reviews: sampleReviews,
       stock: 5, dimensions: "6 yards length", materials: ["Pure Silk", "Natural Dyes"]
     },
