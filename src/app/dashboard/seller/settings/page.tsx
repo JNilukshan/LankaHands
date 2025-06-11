@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Store, CreditCard, Truck, ShieldCheck, RotateCcw, ImagePlus, Save } from 'lucide-react';
+import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save } from 'lucide-react'; // Removed RotateCcw
 
 export default function StoreSettingsPage() {
   // In a real app, form state would be managed with react-hook-form or similar
@@ -18,19 +18,18 @@ export default function StoreSettingsPage() {
       </h1>
 
       <Tabs defaultValue="store-info" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1"> {/* Adjusted md:grid-cols-4 */}
           <TabsTrigger value="store-info" className="flex items-center gap-2 py-2"><Store size={16}/> Store Info</TabsTrigger>
           <TabsTrigger value="payment" className="flex items-center gap-2 py-2"><CreditCard size={16}/> Payments</TabsTrigger>
           <TabsTrigger value="shipping" className="flex items-center gap-2 py-2"><Truck size={16}/> Shipping</TabsTrigger>
           <TabsTrigger value="policies" className="flex items-center gap-2 py-2"><ShieldCheck size={16}/> Policies</TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center gap-2 py-2"><RotateCcw size={16}/> Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="store-info">
           <Card className="shadow-lg mt-4">
             <CardHeader>
-              <CardTitle className="font-headline text-xl text-primary">Store Information</CardTitle>
-              <CardDescription>Manage your store&apos;s public details and branding.</CardDescription>
+              <CardTitle className="font-headline text-xl text-primary">Store & Artisan Information</CardTitle>
+              <CardDescription>Manage your store's public details, branding, and artisan profile.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -51,9 +50,35 @@ export default function StoreSettingsPage() {
                 <Input id="storeLogo" type="file" accept="image/*" />
                 <p className="text-xs text-muted-foreground">Recommended size: 200x200px. Max 1MB.</p>
               </div>
+
+              <hr className="my-6 border-border" />
+              <h3 className="text-lg font-semibold text-primary">Artisan Profile Details</h3>
+              <CardDescription>This information appears on your store and product pages.</CardDescription>
+              
+              <div className="space-y-2">
+                  <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
+                  <Input id="artisanName" defaultValue="Nimali Perera - Batik Artistry" />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="artisanSpeciality">Speciality / Craft Type</Label>
+                  <Input id="artisanSpeciality" placeholder="e.g., Batik Artist, Wood Carver" defaultValue="Master Batik Artist" />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="artisanLocation">Location</Label>
+                  <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" defaultValue="Kandy, Sri Lanka" />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="artisanBio">Full Artisan Bio (Public)</Label>
+                  <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." defaultValue="Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics." />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="artisanProfilePic" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Profile Picture</Label>
+                  <Input id="artisanProfilePic" type="file" accept="image/*" />
+                  <p className="text-xs text-muted-foreground">Recommended size: 400x400px. Max 1MB.</p>
+              </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Store Info</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Information</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -141,41 +166,6 @@ export default function StoreSettingsPage() {
               <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Policies</Button>
             </CardFooter>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="profile">
-            <Card className="shadow-lg mt-4">
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl text-primary">Artisan Profile Details</CardTitle>
-                    <CardDescription>Manage your public artisan profile information that appears on your store and product pages.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
-                        <Input id="artisanName" defaultValue="Nimali Perera - Batik Artistry" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="artisanSpeciality">Speciality / Craft Type</Label>
-                        <Input id="artisanSpeciality" placeholder="e.g., Batik Artist, Wood Carver" defaultValue="Master Batik Artist" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="artisanLocation">Location</Label>
-                        <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" defaultValue="Kandy, Sri Lanka" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="artisanBio">Full Artisan Bio (Public)</Label>
-                        <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." defaultValue="Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics." />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="artisanProfilePic" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Profile Picture</Label>
-                        <Input id="artisanProfilePic" type="file" accept="image/*" />
-                        <p className="text-xs text-muted-foreground">Recommended size: 400x400px. Max 1MB.</p>
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Profile Details</Button>
-                </CardFooter>
-            </Card>
         </TabsContent>
 
       </Tabs>
