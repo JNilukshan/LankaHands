@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus } from 'lucide-react';
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase } from 'lucide-react'; // Added Briefcase
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -14,48 +14,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useRef, useEffect, type FC } from 'react';
+import { useState, type FC } from 'react';
 
 const mainNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
 ];
 
-// Adjusted accountNavLinks for mobile, desktop uses dropdown
+// Adjusted accountNavLinks for mobile
 const mobileAccountNavLinks = [
     { href: '/login', label: 'Sign In', icon: LogIn },
-    { href: '/register', label: 'Register', icon: UserPlus }, // Assuming register is also useful here
+    { href: '/register', label: 'Register', icon: UserPlus },
     { href: '/profile', label: 'Profile', icon: User },
-    { href: '/become-seller', label: 'Become a Seller', icon: UserPlus }, // Kept for consistency if needed
+    { href: '/become-seller', label: 'Become a Seller', icon: Briefcase },
+    { href: '/dashboard/seller', label: 'Seller Dashboard', icon: Briefcase }, // Added Seller Dashboard
 ];
 
 
 const Header: FC = () => {
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleOpenDropdown = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    setIsAccountDropdownOpen(true);
-  };
-
-  const handleCloseDropdown = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsAccountDropdownOpen(false);
-    }, 150); // ms delay to allow cursor to move to content
-  };
-
-  useEffect(() => {
-    // Clear timeout on component unmount
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Removed hover-related state and refs
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -80,18 +58,14 @@ const Header: FC = () => {
               <Button
                 variant="ghost"
                 className="text-sm"
-                onMouseEnter={handleOpenDropdown}
-                onMouseLeave={handleCloseDropdown}
-                // onFocus removed to simplify and prioritize hover logic
-                // onClick={() => setIsAccountDropdownOpen(prev => !prev)} // Allow click to toggle
+                // Removed onMouseEnter, onMouseLeave, onClick (DropdownMenuTrigger handles click by default)
               >
                 Welcome
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              onMouseEnter={handleOpenDropdown} // Keep open if mouse enters content
-              onMouseLeave={handleCloseDropdown} // Start close timer if mouse leaves content
+              // Removed onMouseEnter, onMouseLeave
             >
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -109,8 +83,14 @@ const Header: FC = () => {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/become-seller" className="flex items-center w-full">
-                  <UserPlus className="mr-2 h-4 w-4" /> {/* Icon can be differentiated or kept same */}
+                  <Briefcase className="mr-2 h-4 w-4" />
                   Become a Seller
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/seller" className="flex items-center w-full">
+                  <Briefcase className="mr-2 h-4 w-4" /> 
+                  Seller Dashboard
                 </Link>
               </DropdownMenuItem>
                <DropdownMenuSeparator />
