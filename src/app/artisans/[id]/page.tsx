@@ -14,11 +14,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API call
 
-  const sampleProducts: Product[] = [
-    { id: 'p1', name: 'Sunrise Batik Kaftan', description: 'Flowy kaftan with sunrise motifs.', price: 85.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: id, reviews: [{id:'r1', userId:'u1', userName:'Aisha',productId:'p1', rating:5,comment:'Lovely!', createdAt: new Date().toISOString()}]},
-    { id: 'p2', name: 'Tropical Leaf Batik Cushion Cover', description: 'Vibrant cushion cover.', price: 30.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: id, reviews: [{id:'r2', userId:'u2', userName:'Ben',productId:'p2', rating:4,comment:'Nice design.', createdAt: new Date().toISOString()}]},
-    { id: 'p3', name: 'Floral Batik Scarf', description: 'Lightweight silk scarf with floral batik.', price: 45.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: id},
+  const sampleProductsForNimali: Product[] = [
+    { id: 'p1', name: 'Sunrise Batik Kaftan', description: 'Flowy kaftan with sunrise motifs.', price: 85.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', reviews: [{id:'r1', userId:'u1', userName:'Aisha',productId:'p1', rating:5,comment:'Lovely!', createdAt: new Date().toISOString()}]},
+    { id: 'p2', name: 'Tropical Leaf Batik Cushion Cover', description: 'Vibrant cushion cover.', price: 30.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', reviews: [{id:'r2', userId:'u2', userName:'Ben',productId:'p2', rating:4,comment:'Nice design.', createdAt: new Date().toISOString()}]},
+    { id: 'p3', name: 'Floral Batik Scarf', description: 'Lightweight silk scarf with floral batik.', price: 45.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '1'},
   ];
+  
+  const sampleProductsForLeatherCo: Product[] = [
+    { id: 'p107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6' },
+    { id: 'p109', name: 'Minimalist Leather Wallet', description: 'Slim leather wallet, hand-stitched.', price: 50.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6' },
+  ];
+
 
   const artisans: Record<string, Artisan> = {
     '1': { 
@@ -29,8 +35,18 @@ const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
       location: 'Kandy, Sri Lanka',
       followers: 1250,
       averageRating: 4.9,
-      products: sampleProducts,
+      products: sampleProductsForNimali,
     },
+    '6': {
+        id: '6', name: 'Sustainable Leather Co.',
+        bio: 'Makers of fine, hand-stitched leather goods using ethically sourced materials and recycled paper. We believe in minimalist design and maximum durability, creating timeless pieces that age beautifully. Our workshop in Negombo focuses on empowering local craftspeople and promoting sustainable practices within the leather industry.',
+        profileImageUrl: 'https://placehold.co/600x400.png',
+        speciality: 'Leather Craft & Accessories',
+        location: 'Negombo, Sri Lanka',
+        followers: 450,
+        averageRating: 4.7,
+        products: sampleProductsForLeatherCo,
+    }
     // Add more artisans if needed for testing different IDs
   };
   return artisans[id] || null;
