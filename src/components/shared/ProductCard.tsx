@@ -4,16 +4,18 @@ import Link from 'next/link';
 import type { Product } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import StarRating from './StarRating';
+// StarRating import is no longer needed if we remove it completely
+// import StarRating from './StarRating';
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const averageRating = product.reviews && product.reviews.length > 0
-    ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
-    : 0;
+  // averageRating calculation is no longer needed if not displayed
+  // const averageRating = product.reviews && product.reviews.length > 0
+  //   ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
+  //   : 0;
 
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
@@ -49,12 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <p className="text-lg font-semibold text-primary">
             ${product.price.toFixed(2)}
           </p>
-          {averageRating > 0 && (
-            <div className="flex items-center">
-              <StarRating rating={averageRating} size={16} />
-              <span className="ml-1 text-xs text-muted-foreground">({product.reviews?.length})</span>
-            </div>
-          )}
+          {/* Star rating and review count removed from here */}
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
@@ -67,4 +64,3 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
-
