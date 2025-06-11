@@ -100,9 +100,6 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-center mt-4 md:mt-0">
                 <ArtisanFollowButton artisanId={artisan.id} artisanName={artisan.name} />
-                <Button variant="outline" className="text-primary border-primary hover:bg-primary/10">
-                    <MessageCircle size={18} className="mr-2" /> Message Artisan
-                </Button>
             </div>
           </div>
         </CardContent>
