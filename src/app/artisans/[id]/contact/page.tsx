@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
+import React from "react"; // Ensure React is imported for React.use()
 import { Loader2, Send, ImageUp, UserCircle2 } from "lucide-react";
 import type { Artisan } from "@/types";
 import Link from "next/link";
+import Image from "next/image";
 
 // Simplified mock artisan data fetching for this page
 const getArtisanName = async (id: string): Promise<Pick<Artisan, 'id' | 'name'> | null> => {
@@ -35,6 +37,9 @@ const contactArtisanSchema = z.object({
 type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
 
 export default function ContactArtisanPage({ params }: { params: { id: string } }) {
+  const resolvedParams = React.use(params); // Unwrap params
+  const artisanId = resolvedParams.id;
+
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [artisan, setArtisan] = useState<Pick<Artisan, 'id' | 'name'> | null>(null);
@@ -49,7 +54,8 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
 
   useEffect(() => {
     const fetchArtisan = async () => {
-      const artisanData = await getArtisanName(params.id);
+      if (!artisanId) return; // Guard clause if artisanId is not yet available
+      const artisanData = await getArtisanName(artisanId);
       if (artisanData) {
         setArtisan(artisanData);
       } else {
@@ -61,9 +67,9 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
       }
     };
     fetchArtisan();
-  }, [params.id, toast]);
+  }, [artisanId, toast]);
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setImagePreview(URL.createObjectURL(file));
@@ -76,7 +82,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
 
   const onSubmit = async (data: ContactArtisanFormValues) => {
     setIsLoading(true);
-    console.log("Contact artisan form data:", { artisanId: params.id, ...data });
+    console.log("Contact artisan form data:", { artisanId: artisanId, ...data });
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     toast({
@@ -86,7 +92,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
     setIsLoading(false);
     form.reset();
     setImagePreview(null);
-    // router.push(`/artisans/${params.id}`); // Optional: redirect back to artisan profile
+    // router.push(`/artisans/${artisanId}`); // Optional: redirect back to artisan profile
   };
 
   if (!artisan) {
@@ -157,7 +163,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
                   Send Message
                 </Button>
                  <Button variant="outline" className="w-full sm:w-auto" asChild>
-                   <Link href={`/artisans/${params.id}`}>Cancel</Link>
+                   <Link href={`/artisans/${artisanId}`}>Cancel</Link>
                 </Button>
               </div>
             </form>
