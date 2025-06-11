@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,6 +8,7 @@ import type { User, Order, Product, OrderItem } from '@/types';
 import { Edit3, History, Heart, LogOut, UserCircle2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/shared/ProductCard'; // Re-use for saved items
+import { Badge } from '@/components/ui/badge'; // Added import for Badge
 
 // Placeholder data
 const mockUser: User = {
