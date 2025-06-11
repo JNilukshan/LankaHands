@@ -31,14 +31,6 @@ export default function SellerDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold text-primary">Seller Dashboard</h1>
-        <div className="flex gap-2">
-            <Button variant="outline" className="text-primary border-primary hover:bg-primary/10">
-                <Bell size={18} className="mr-2" /> Notifications <Badge className="ml-2 bg-destructive text-destructive-foreground">2</Badge>
-            </Button>
-            <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
-                <Link href="/dashboard/seller/products/new"><Package size={18} className="mr-2" /> Add New Product</Link>
-            </Button>
-        </div>
       </div>
 
       {/* Stats Grid */}
