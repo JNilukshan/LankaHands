@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import ProductCard from '@/components/shared/ProductCard';
 import ProductFilters from '@/components/products/ProductFilters';
 import type { Product } from '@/types';
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card'; // Added Card and CardContent
+import { Card, CardContent } from '@/components/ui/card';
 
 // Placeholder data
 const allProducts: Product[] = [
@@ -36,27 +36,26 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
+    // Simulate API call for initial load
     setTimeout(() => {
       setFilteredProducts(allProducts);
       setIsLoading(false);
     }, 500);
-  }, []);
+  }, []); // Runs once on mount
 
-  const handleFilterChange = (filters: { categories: string[]; priceRange: [number, number] }) => {
+  const handleFilterChange = useCallback((filters: { categories: string[]; priceRange: [number, number] }) => {
     setIsLoading(true);
-    let products = [...allProducts];
+    let productsToSet = [...allProducts];
     if (filters.categories.length > 0) {
-      products = products.filter(p => filters.categories.includes(p.category));
+      productsToSet = productsToSet.filter(p => filters.categories.includes(p.category));
     }
-    // Price range filtering is removed from ProductFilters, so this part is no longer needed
-    // products = products.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
+    // Price range filtering is currently not used based on ProductFilters component
     
     setTimeout(() => { // Simulate filtering delay
-      setFilteredProducts(products);
+      setFilteredProducts(productsToSet);
       setIsLoading(false);
     }, 300);
-  };
+  }, []); // Empty dependency array as allProducts is a module-level constant and setIsLoading/setFilteredProducts are stable
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -143,4 +142,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
