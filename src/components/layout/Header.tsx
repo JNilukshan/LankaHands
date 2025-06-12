@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, UserCircle2, Store } from 'lucide-react';
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, Store } from 'lucide-react'; // Removed UserCircle2
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -206,8 +206,8 @@ const Header: FC = () => {
             <div className="hidden md:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" size="icon" className="rounded-full">
-                     <UserCircle2 className="h-6 w-6 text-primary"/>
+                   <Button variant="ghost" size="default" className="px-3"> {/* Changed from icon to text "Welcome" */}
+                     Welcome
                    </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -257,3 +257,5 @@ const Header: FC = () => {
 };
 
 export default Header;
+
+    
