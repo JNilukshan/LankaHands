@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -37,6 +37,16 @@ const LoginForm = () => {
     },
   });
 
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      if (currentUser.role === 'seller') {
+        router.push('/dashboard/seller');
+      } else {
+        router.push('/profile');
+      }
+    }
+  }, [currentUser, authLoading, router]);
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     const success = await login(data.email, data.password);
@@ -47,14 +57,12 @@ const LoginForm = () => {
         title: "Login Successful",
         description: "Welcome back!",
       });
-      // Redirect after state update ensures currentUser is available
-      // We check currentUser in a useEffect or rely on router.refresh() if needed
-      // For now, let's check role after login for redirect
-      if (data.email.toLowerCase() === "nimali.perera@example.com") { // Mock seller email
-         router.push('/dashboard/seller');
-      } else {
-         router.push('/profile');
-      }
+      // Redirection is now handled by the useEffect hook
+      // if (data.email.toLowerCase() === "nimali.perera@example.com") { 
+      //    router.push('/dashboard/seller');
+      // } else {
+      //    router.push('/profile');
+      // }
 
     } else {
       toast({
@@ -67,11 +75,10 @@ const LoginForm = () => {
     }
   };
   
-  // If user is already logged in, redirect them
-  if (!authLoading && currentUser) {
-    if (currentUser.role === 'seller') router.push('/dashboard/seller');
-    else router.push('/profile');
-    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Redirecting...</p></div>;
+  // If user is already logged in and loading is finished, useEffect will handle redirect.
+  // We can show a loading indicator while that check happens.
+  if (authLoading || (!authLoading && currentUser)) {
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading...</p></div>;
   }
 
 
@@ -110,8 +117,8 @@ const LoginForm = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting || authLoading}>
-              {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
           </form>
