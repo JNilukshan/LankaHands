@@ -8,90 +8,99 @@ body {
 
 @layer base {
   :root {
-    --background: 40 43% 92.2%; /* Antique Beige #F4EEE2 */
-    --foreground: 25 30% 20%; /* Dark Brown (derived for text) */
+    /* Matt White Theme (Default/Light Mode) */
+    --background: 0 0% 97%; /* Near White (e.g., #F7F7F7) */
+    --foreground: 0 0% 10%; /* Near Black (e.g., #1A1A1A) */
 
-    --card: 40 43% 92.2%; /* Antique Beige */
-    --card-foreground: 25 30% 20%; /* Dark Brown */
+    --card: 0 0% 100% / 0.65; /* White with transparency */
+    --card-foreground: 0 0% 10%; /* Near Black */
 
-    --popover: 40 43% 92.2%; /* Antique Beige */
-    --popover-foreground: 25 30% 20%; /* Dark Brown */
+    --popover: 0 0% 100% / 0.75; /* White with more transparency */
+    --popover-foreground: 0 0% 10%; /* Near Black */
 
-    --primary: 25 49.5% 36.3%; /* Deep Clay #8B4E2E */
-    --primary-foreground: 40 43% 95%; /* Lighter beige/off-white for contrast on primary */
+    --primary: 0 0% 10%; /* Near Black */
+    --primary-foreground: 0 0% 97%; /* Near White */
 
-    --secondary: 30 40% 85%; /* A lighter, muted clay for secondary elements */
-    --secondary-foreground: 25 49.5% 36.3%; /* Deep Clay */
+    --secondary: 0 0% 92%; /* Lighter Gray (e.g., #EBEBEB) */
+    --secondary-foreground: 0 0% 10%; /* Near Black */
 
-    --muted: 40 30% 88%; /* Muted beige */
-    --muted-foreground: 25 25% 40%; /* Slightly lighter dark brown */
+    --muted: 0 0% 94%; /* Very Light Gray (e.g., #F0F0F0) */
+    --muted-foreground: 0 0% 40%; /* Medium Gray (e.g., #666666) */
 
-    --accent: 87 20.4% 29.4%; /* Muted Forest #4F5A3A */
-    --accent-foreground: 40 43% 95%; /* Lighter beige/off-white for contrast on accent */
+    --accent: 0 0% 20%; /* Dark Gray (e.g., #333333) */
+    --accent-foreground: 0 0% 97%; /* Near White */
 
-    --destructive: 0 70% 50%; /* A standard red for destructive actions */
+    --destructive: 0 84% 60%; /* Standard Red (e.g., #FF4D4D) */
     --destructive-foreground: 0 0% 100%; /* White */
 
-    --border: 25 30% 70%; /* Border color, derived from primary/background */
-    --input: 25 30% 80%; /* Input background, slightly darker than background or lighter primary */
-    --ring: 25 49.5% 36.3%; /* Deep Clay for focus rings */
+    --border: 0 0% 85% / 0.5; /* Light Gray border with transparency (e.g., #D9D9D9) */
+    --input: 0 0% 100% / 0.4; /* White with transparency for inputs */
+    --ring: 0 0% 10%; /* Near Black for focus rings */
 
-    --chart-1: 25 49.5% 36.3%; /* Deep Clay */
-    --chart-2: 87 20.4% 29.4%; /* Muted Forest */
-    --chart-3: 30 50% 50%; 
-    --chart-4: 40 60% 60%;
-    --chart-5: 20 40% 40%;
+    --chart-1: 0 0% 30%; 
+    --chart-2: 0 0% 45%;
+    --chart-3: 0 0% 60%;
+    --chart-4: 0 0% 75%;
+    --chart-5: 0 0% 85%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 38 30% 88%; /* Slightly darker beige for sidebar */
-    --sidebar-foreground: 25 30% 20%; /* Dark Brown */
-    --sidebar-primary: 25 49.5% 36.3%; /* Deep Clay */
-    --sidebar-primary-foreground: 40 43% 95%;
-    --sidebar-accent: 87 20.4% 29.4%; /* Muted Forest */
-    --sidebar-accent-foreground: 40 43% 95%;
-    --sidebar-border: 25 30% 70%;
-    --sidebar-ring: 25 49.5% 36.3%;
+    /* Matt White Sidebar */
+    --sidebar-background: 0 0% 94%; /* Slightly off-white, distinct from main bg */
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 0 0% 97%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 97%;
+    --sidebar-border: 0 0% 85% / 0.5;
+    --sidebar-ring: 0 0% 10%;
   }
 
   .dark {
-    /* For dark mode, we'll invert and adjust. This is a basic dark theme. */
-    --background: 25 15% 15%; /* Dark Clay/Brown */
-    --foreground: 40 30% 88%; /* Muted Beige */
+    /* Matt Black Theme */
+    --background: 0 0% 8%; /* Very Dark Gray / Near Black (e.g., #141414) */
+    --foreground: 0 0% 92%; /* Near White (e.g., #EBEBEB) */
 
-    --card: 25 15% 18%; /* Darker Clay/Brown */
-    --card-foreground: 40 30% 88%; /* Muted Beige */
+    --card: 0 0% 15% / 0.65; /* Dark Gray with transparency */
+    --card-foreground: 0 0% 92%; /* Near White */
 
-    --popover: 25 10% 10%; /* Very Dark Clay/Brown */
-    --popover-foreground: 40 30% 88%; /* Muted Beige */
+    --popover: 0 0% 12% / 0.75; /* Darker Gray with transparency */
+    --popover-foreground: 0 0% 92%; /* Near White */
 
-    --primary: 25 49.5% 45%; /* Slightly lighter Deep Clay */
-    --primary-foreground: 40 43% 95%; /* Lighter beige/off-white */
+    --primary: 0 0% 92%; /* Near White */
+    --primary-foreground: 0 0% 8%; /* Near Black */
 
-    --secondary: 25 20% 25%; /* Darker Muted Clay */
-    --secondary-foreground: 40 30% 88%; /* Muted Beige */
+    --secondary: 0 0% 20%; /* Medium-Dark Gray (e.g., #333333) */
+    --secondary-foreground: 0 0% 92%; /* Near White */
 
-    --muted: 25 15% 22%; /* Muted Dark Clay */
-    --muted-foreground: 40 25% 70%; /* Lighter Muted Beige */
+    --muted: 0 0% 15%; /* Dark Gray (e.g., #262626) */
+    --muted-foreground: 0 0% 65%; /* Lighter Gray for muted text (e.g., #A6A6A6) */
 
-    --accent: 87 20.4% 38%; /* Slightly lighter Muted Forest */
-    --accent-foreground: 40 43% 95%; /* Lighter beige/off-white */
+    --accent: 0 0% 85%; /* Light Gray (e.g., #D9D9D9) */
+    --accent-foreground: 0 0% 8%; /* Near Black */
 
-    --destructive: 0 60% 55%; /* Consistent Red */
+    --destructive: 0 70% 55%; /* Adjusted Red for dark mode (e.g., #CC3333) */
     --destructive-foreground: 0 0% 100%; /* White */
 
-    --border: 25 20% 30%; /* Dark border */
-    --input: 25 20% 35%; /* Dark input */
-    --ring: 25 49.5% 45%; /* Lighter Deep Clay for focus rings */
+    --border: 0 0% 30% / 0.5; /* Dark Gray border with transparency (e.g., #4D4D4D) */
+    --input: 0 0% 18% / 0.4; /* Dark Gray with transparency for inputs */
+    --ring: 0 0% 92%; /* Near White for focus rings */
     
-    --sidebar-background: 25 10% 12%;
-    --sidebar-foreground: 40 30% 88%;
-    --sidebar-primary: 25 49.5% 45%;
-    --sidebar-primary-foreground: 40 43% 95%;
-    --sidebar-accent: 87 20.4% 38%;
-    --sidebar-accent-foreground: 40 43% 95%;
-    --sidebar-border: 25 20% 30%;
-    --sidebar-ring: 25 49.5% 45%;
+    --chart-1: 0 0% 80%;
+    --chart-2: 0 0% 65%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 35%;
+    --chart-5: 0 0% 25%;
+
+    /* Matt Black Sidebar */
+    --sidebar-background: 0 0% 12%; /* Slightly different dark shade for sidebar */
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 0 0% 92%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 85%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 30% / 0.5;
+    --sidebar-ring: 0 0% 92%;
   }
 }
 
