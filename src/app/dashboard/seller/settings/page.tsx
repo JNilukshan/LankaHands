@@ -1,5 +1,5 @@
 
-"use client"; // Needed for Tabs and client-side form components
+"use client";
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle, Image as ImageIcon } from 'lucide-react'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller for dashboard settings
+import type { Artisan } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const craftCategories = [
-  "Batik Artist",
-  "Wood Carver",
+  "Batik Artist", "Master Batik Artist",
+  "Wood Carver", "Wood Sculptor & Carver",
   "Handloom Weaver",
   "Potter",
   "Jewelry Designer",
@@ -25,10 +28,54 @@ const craftCategories = [
   "Other"
 ];
 
+// For this prototype, settings page will reflect Nimali Perera's data
+const sellerData: Artisan = mockArtisanNimali;
+
 export default function StoreSettingsPage() {
-  // In a real app, form state would be managed with react-hook-form or similar
-  const [speciality, setSpeciality] = useState("Master Batik Artist"); // Initialize with current or common default
-  const [otherSpecialityText, setOtherSpecialityText] = useState("");
+  const { toast } = useToast();
+  const [artisanName, setArtisanName] = useState(sellerData.name);
+  const [speciality, setSpeciality] = useState(sellerData.speciality || "Batik Artist");
+  const [otherSpecialityText, setOtherSpecialityText] = useState(
+    craftCategories.includes(sellerData.speciality || "") ? "" : sellerData.speciality || ""
+  );
+  const [location, setLocation] = useState(sellerData.location || "");
+  const [bio, setBio] = useState(sellerData.bio);
+
+  // Shipping settings state
+  const [localRate, setLocalRate] = useState(sellerData.shippingSettings?.localRate?.toString() || "5.00");
+  const [localDeliveryTime, setLocalDeliveryTime] = useState(sellerData.shippingSettings?.localDeliveryTime || "3-5 business days");
+  const [internationalRate, setInternationalRate] = useState(sellerData.shippingSettings?.internationalRate?.toString() || "25.00");
+  const [internationalDeliveryTime, setInternationalDeliveryTime] = useState(sellerData.shippingSettings?.internationalDeliveryTime || "7-21 business days");
+  const [freeLocalShippingThreshold, setFreeLocalShippingThreshold] = useState(sellerData.shippingSettings?.freeShippingLocalThreshold?.toString() || "100");
+  const [freeInternationalShippingThreshold, setFreeInternationalShippingThreshold] = useState(sellerData.shippingSettings?.freeShippingInternationalThreshold?.toString() || "200");
+  const [processingTime, setProcessingTime] = useState(sellerData.shippingSettings?.processingTime || "1-2 business days");
+  
+  // Policy settings state
+  const [returnPolicy, setReturnPolicy] = useState(sellerData.storePolicies?.returnPolicy || "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.");
+  const [exchangePolicy, setExchangePolicy] = useState(sellerData.storePolicies?.exchangePolicy || "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.");
+  const [cancellationPolicy, setCancellationPolicy] = useState(sellerData.storePolicies?.cancellationPolicy || "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped.");
+
+
+  useEffect(() => {
+    if (sellerData.speciality && !craftCategories.includes(sellerData.speciality)) {
+      setSpeciality("Other");
+      setOtherSpecialityText(sellerData.speciality);
+    }
+  }, []);
+
+  const handleSave = (section: string) => {
+    toast({
+        title: `${section} Settings Saved!`,
+        description: `Your ${section.toLowerCase()} information has been updated (simulated).`
+    });
+    // In a real app, you'd send this data to your backend.
+    console.log(`Saving ${section}:`, {
+        ...(section === "Profile" && {artisanName, speciality: speciality === "Other" ? otherSpecialityText : speciality, location, bio}),
+        ...(section === "Shipping" && {localRate, localDeliveryTime, internationalRate, internationalDeliveryTime, freeLocalShippingThreshold, freeInternationalShippingThreshold, processingTime}),
+        ...(section === "Policies" && {returnPolicy, exchangePolicy, cancellationPolicy})
+    });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -53,7 +100,7 @@ export default function StoreSettingsPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                   <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
-                  <Input id="artisanName" defaultValue="Nimali Perera - Batik Artistry" />
+                  <Input id="artisanName" value={artisanName} onChange={(e) => setArtisanName(e.target.value)} />
               </div>
               
               <div className="space-y-2">
@@ -63,7 +110,7 @@ export default function StoreSettingsPage() {
                   onValueChange={(value) => {
                     setSpeciality(value);
                     if (value !== "Other") {
-                      setOtherSpecialityText(""); // Clear other text if a predefined option is chosen
+                      setOtherSpecialityText(""); 
                     }
                   }}
                 >
@@ -93,11 +140,11 @@ export default function StoreSettingsPage() {
 
               <div className="space-y-2">
                   <Label htmlFor="artisanLocation">Location</Label>
-                  <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" defaultValue="Kandy, Sri Lanka" />
+                  <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" value={location} onChange={(e) => setLocation(e.target.value)} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanBio">Full Artisan Bio (Public)</Label>
-                  <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." defaultValue="Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics." />
+                  <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." value={bio} onChange={(e) => setBio(e.target.value)} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanBannerImage" className="flex items-center"><ImageIcon size={16} className="mr-2"/>Profile Banner Image</Label>
@@ -111,7 +158,7 @@ export default function StoreSettingsPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Profile Information</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Profile")}><Save size={16} className="mr-2"/> Save Profile Information</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -142,7 +189,7 @@ export default function StoreSettingsPage() {
               <p className="text-sm text-muted-foreground">Ensure all details are accurate to avoid payment delays. Payments are processed monthly.</p>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Payment Details</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Payment")}><Save size={16} className="mr-2"/> Save Payment Details</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -160,11 +207,11 @@ export default function StoreSettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="localShippingRate">Local Shipping Rate (USD)</Label>
-                    <Input id="localShippingRate" type="number" placeholder="e.g., 5.00" defaultValue="5.00" />
+                    <Input id="localShippingRate" type="number" placeholder="e.g., 5.00" value={localRate} onChange={(e) => setLocalRate(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="localDeliveryTime">Local Estimated Delivery Time</Label>
-                    <Input id="localDeliveryTime" placeholder="e.g., 3-5 business days" defaultValue="3-5 business days" />
+                    <Input id="localDeliveryTime" placeholder="e.g., 3-5 business days" value={localDeliveryTime} onChange={(e) => setLocalDeliveryTime(e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -174,11 +221,11 @@ export default function StoreSettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="internationalShippingRate">International Shipping Rate (USD)</Label>
-                    <Input id="internationalShippingRate" type="number" placeholder="e.g., 25.00" defaultValue="25.00" />
+                    <Input id="internationalShippingRate" type="number" placeholder="e.g., 25.00" value={internationalRate} onChange={(e) => setInternationalRate(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="internationalDeliveryTime">International Estimated Delivery Time</Label>
-                    <Input id="internationalDeliveryTime" placeholder="e.g., 7-21 business days" defaultValue="7-21 business days" />
+                    <Input id="internationalDeliveryTime" placeholder="e.g., 7-21 business days" value={internationalDeliveryTime} onChange={(e) => setInternationalDeliveryTime(e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -188,23 +235,23 @@ export default function StoreSettingsPage() {
                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="freeLocalShippingThreshold">Free Local Shipping on Orders Over (USD)</Label>
-                        <Input id="freeLocalShippingThreshold" type="number" placeholder="e.g., 100" defaultValue="100" />
+                        <Input id="freeLocalShippingThreshold" type="number" placeholder="e.g., 100" value={freeLocalShippingThreshold} onChange={(e) => setFreeLocalShippingThreshold(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="freeInternationalShippingThreshold">Free International Shipping on Orders Over (USD)</Label>
-                        <Input id="freeInternationalShippingThreshold" type="number" placeholder="e.g., 200" defaultValue="200" />
+                        <Input id="freeInternationalShippingThreshold" type="number" placeholder="e.g., 200" value={freeInternationalShippingThreshold} onChange={(e) => setFreeInternationalShippingThreshold(e.target.value)} />
                     </div>
                  </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="processingTime">Typical Order Processing Time</Label>
-                <Input id="processingTime" placeholder="e.g., 1-3 business days" defaultValue="1-2 business days"/>
+                <Input id="processingTime" placeholder="e.g., 1-3 business days" value={processingTime} onChange={(e) => setProcessingTime(e.target.value)}/>
                  <p className="text-xs text-muted-foreground">This is the time it takes you to prepare an order before shipping. It helps set customer expectations.</p>
               </div>
             </CardContent>
              <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Shipping Settings</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Shipping")}><Save size={16} className="mr-2"/> Save Shipping Settings</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -218,24 +265,25 @@ export default function StoreSettingsPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="returnPolicy">Return & Refund Policy</Label>
-                <Textarea id="returnPolicy" rows={5} placeholder="Detail your return and refund process, conditions, and timeframe." defaultValue="We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty." />
+                <Textarea id="returnPolicy" rows={5} placeholder="Detail your return and refund process, conditions, and timeframe." value={returnPolicy} onChange={(e) => setReturnPolicy(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="exchangePolicy">Exchange Policy</Label>
-                <Textarea id="exchangePolicy" rows={3} placeholder="Specify if you offer exchanges and under what conditions." defaultValue="Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss."/>
+                <Textarea id="exchangePolicy" rows={3} placeholder="Specify if you offer exchanges and under what conditions." value={exchangePolicy} onChange={(e) => setExchangePolicy(e.target.value)}/>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="cancellationPolicy">Order Cancellation Policy</Label>
-                <Textarea id="cancellationPolicy" rows={2} placeholder="When can customers cancel an order?" defaultValue="Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped."/>
+                <Textarea id="cancellationPolicy" rows={2} placeholder="When can customers cancel an order?" value={cancellationPolicy} onChange={(e) => setCancellationPolicy(e.target.value)}/>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground"><Save size={16} className="mr-2"/> Save Policies</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Policies")}><Save size={16} className="mr-2"/> Save Policies</Button>
             </CardFooter>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );
 }
+
+    

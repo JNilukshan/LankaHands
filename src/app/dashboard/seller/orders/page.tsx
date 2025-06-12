@@ -9,45 +9,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import type { Order, OrderItem } from '@/types';
-import { ListOrdered, Search, Filter, Eye, ChevronDown, ShoppingCart, UserCircle2 } from 'lucide-react';
-import Image from 'next/image'; // Import Image
-
-// More comprehensive mock data for all orders
-const getInitialMockOrders = (): Order[] => [
-  { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-  { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
-  { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
-  { id: 'order004', userId: 'cust4', customerName: 'David L.', items: [{productId: 'p4', productName: 'Spiced Tea Pack', quantity:3, price: 15, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '10 Palm Grove, Jaffna' },
-  { id: 'order005', userId: 'cust5', customerName: 'Sarah W.', items: [{productId: 'p5', productName: 'Handloom Table Runner', quantity:1, price: 35, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 35.00, orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '22 Flower Rd, Nuwara Eliya' },
-  { id: 'order006', userId: 'cust6', customerName: 'Kumar R.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:2, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 90.00, orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '33 Hill Street, Badulla' },
-  { id: 'order007', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:1, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 30.00, orderDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-  { id: 'order008', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:3, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), status: 'Cancelled', shippingAddress: '456 Kandy Rd, Kandy' },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import type { Order } from '@/types';
+import { ListOrdered, Search, Eye, ChevronDown } from 'lucide-react';
+import Image from 'next/image';
+import { getMockAllOrdersForNimali } from '@/lib/mock-data'; // Import from new mock data source
 
 const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function AllOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
 
   useEffect(() => {
-    setOrders(getInitialMockOrders());
+    const fetchOrders = async () => {
+        setIsLoading(true);
+        const ordersData = await getMockAllOrdersForNimali(); // Fetch orders for Nimali
+        setAllOrders(ordersData);
+        setIsLoading(false);
+    };
+    fetchOrders();
   }, []);
 
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
-    setOrders(prevOrders =>
+    setAllOrders(prevOrders =>
       prevOrders.map(order =>
         order.id === orderId ? { ...order, status: newStatus } : order
       )
     );
+    // In a real app, update backend here
   };
 
   const handleViewOrder = (order: Order) => {
@@ -55,7 +52,7 @@ export default function AllOrdersPage() {
     setIsViewOrderDialogOpen(true);
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = allOrders.filter(order => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     const matchesSearchTerm =
       order.id.toLowerCase().includes(lowerSearchTerm) ||
@@ -84,6 +81,9 @@ export default function AllOrdersPage() {
     }
   };
 
+  if (isLoading) {
+    return <div className="text-center py-10">Loading orders...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -96,7 +96,7 @@ export default function AllOrdersPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Order History</CardTitle>
-          <CardDescription>Browse and manage all orders placed in your store.</CardDescription>
+          <CardDescription>Browse and manage all orders placed for your products.</CardDescription>
           <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
             <div className="relative flex-grow w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -280,3 +280,4 @@ export default function AllOrdersPage() {
   );
 }
 
+    

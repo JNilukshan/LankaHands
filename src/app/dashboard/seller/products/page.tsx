@@ -23,24 +23,26 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getMockProductsByArtisanId, mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller
 
-// Initial Mock data for products
-const initialMockProducts: Product[] = [
-  { id: 'prod1', name: 'Ocean Breeze Batik Saree', price: 120.00, category: 'Apparel', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 5, description: 'Elegant silk saree.'},
-  { id: 'prod2', name: 'Hand-Carved Elephant Statue', price: 75.00, category: 'Decor', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 10, description: 'Detailed wooden elephant.' },
-  { id: 'prod3', name: 'Terracotta Clay Vase Set', price: 45.00, category: 'Pottery', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 0, description: 'Set of 3 vases.' },
-  { id: 'prod4', name: 'Spiced Cinnamon Tea Blend', price: 15.00, category: 'Food', images: ['https://placehold.co/80x80.png'], artisanId: 'seller123', stock: 25, description: 'Aromatic local tea.' },
-];
+const SELLER_ARTISAN_ID = mockArtisanNimali.id;
 
 export default function ManageProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    setProducts(initialMockProducts);
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      const sellerProducts = await getMockProductsByArtisanId(SELLER_ARTISAN_ID);
+      setProducts(sellerProducts);
+      setIsLoading(false);
+    };
+    fetchProducts();
   }, []);
 
   const handleDeleteClick = (productId: string) => {
@@ -56,6 +58,7 @@ export default function ManageProductsPage() {
         title: "Product Deleted",
         description: `${deletedProduct?.name || 'The product'} has been successfully deleted.`,
       });
+      // In a real app, also call backend to delete
     }
     setIsDeleteDialogOpen(false);
     setProductToDeleteId(null);
@@ -65,6 +68,10 @@ export default function ManageProductsPage() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return <div className="text-center py-10">Loading products...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -188,3 +195,5 @@ export default function ManageProductsPage() {
     </div>
   );
 }
+
+    

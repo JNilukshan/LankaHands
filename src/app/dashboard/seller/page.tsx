@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell, UserCircle2 } from "lucide-react"; // Added UserCircle2
-import type { SellerStats, Product, Order, OrderItem } from "@/types";
+import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell, UserCircle2 } from "lucide-react";
+import type { SellerStats, Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,40 +12,29 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-
-// Placeholder data
-const mockSellerStats: SellerStats = {
-  totalSales: 12560.75,
-  averageRating: 4.8,
-  followers: 320,
-  totalReviews: 150,
-  productsCount: 25,
-  pendingOrders: 3,
-};
-
-const initialMockRecentOrders: Order[] = [
-  { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-  { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
-  { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
-];
+import { getMockSellerStatsForNimali, getMockRecentOrdersForNimali, mockArtisanNimali } from '@/lib/mock-data';
 
 const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
+const SELLER_ARTISAN_ID = mockArtisanNimali.id; // Using Nimali for the dashboard
 
 export default function SellerDashboardPage() {
-  const stats = mockSellerStats;
+  const [stats, setStats] = useState<SellerStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
-  const unreadNotificationsCount = 5; // Example count
+  const [isLoading, setIsLoading] = useState(true);
+  const unreadNotificationsCount = 5; // Example count, can be dynamic later
 
   useEffect(() => {
-    // Initialize with a fresh set of dates each time the component mounts on client
-    const generateInitialOrders = (): Order[] => [
-        { id: 'order001', userId: 'cust1', customerName: 'Chandima P.', items: [{productId: 'p1', productName: 'Batik Wall Hanging', quantity:1, price: 45, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 45.00, orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Pending', shippingAddress: '123 Galle Rd, Colombo 3' },
-        { id: 'order002', userId: 'cust2', customerName: 'Rohan S.', items: [{productId: 'p2', productName: 'Clay Vase Set', quantity:2, price: 30, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 60.00, orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Shipped', shippingAddress: '456 Kandy Rd, Kandy' },
-        { id: 'order003', userId: 'cust3', customerName: 'Fathima Z.', items: [{productId: 'p3', productName: 'Wooden Elephant Small', quantity:1, price: 20, productImage: 'https://placehold.co/50x50.png'}], totalAmount: 20.00, orderDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered', shippingAddress: '789 Marine Drive, Wellawatte' },
-      ];
-    setRecentOrders(generateInitialOrders());
+    const fetchData = async () => {
+      setIsLoading(true);
+      const sellerStats = await getMockSellerStatsForNimali();
+      setStats(sellerStats);
+      const orders = await getMockRecentOrdersForNimali();
+      setRecentOrders(orders);
+      setIsLoading(false);
+    };
+    fetchData();
   }, []);
 
 
@@ -55,19 +44,24 @@ export default function SellerDashboardPage() {
         order.id === orderId ? { ...order, status: newStatus } : order
       )
     );
+    // In a real app, this would also trigger a backend update
   };
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsViewOrderDialogOpen(true);
   };
+  
+  if (isLoading || !stats) {
+    return <div className="text-center py-10">Loading seller dashboard...</div>;
+  }
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold text-primary">Seller Dashboard</h1>
         <div className="flex items-center gap-2">
-            <Link href="/artisans/1" passHref> {/* Assuming seller is artisan ID '1' for prototype */}
+            <Link href={`/artisans/${SELLER_ARTISAN_ID}`} passHref> 
               <Button variant="outline">
                 <UserCircle2 size={20} className="mr-2 text-primary" />
                 View Public Profile
@@ -87,7 +81,6 @@ export default function SellerDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard icon={DollarSign} title="Total Sales" value={`$${stats.totalSales.toLocaleString()}`} description="All-time sales" />
         <StatCard icon={Star} title="Average Rating" value={stats.averageRating.toFixed(1)} description={`Based on ${stats.totalReviews} reviews`} />
@@ -96,10 +89,9 @@ export default function SellerDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders */}
         <Card className="lg:col-span-2 shadow-lg">
           <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle className="text-xl font-headline text-primary">Recent Orders ({recentOrders.filter(o => o.status === 'Pending').length} pending)</CardTitle>
+            <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats.pendingOrders} pending)</CardTitle>
             <Button variant="link" className="text-sm text-primary p-0 h-auto" asChild><Link href="/dashboard/seller/orders">View All Orders</Link></Button>
           </CardHeader>
           <CardContent>
@@ -174,7 +166,6 @@ export default function SellerDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Links / Links */}
         <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl font-headline text-primary">Quick Links</CardTitle>
@@ -296,4 +287,5 @@ const QuickLinkItem: React.FC<QuickLinkItemProps> = ({ href, icon: Icon, label }
         </Link>
     </Button>
 );
+
     

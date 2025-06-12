@@ -5,23 +5,15 @@ import { Button } from '@/components/ui/button';
 import type { Artisan, Product } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Added for new section
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getMockAllArtisans, getMockAllProducts } from '@/lib/mock-data';
 
-// Placeholder data
-const featuredArtisans: Artisan[] = [
-  { id: '1', name: 'Nimali Perera', bio: 'Specializing in traditional Batik art with a modern twist. Each piece tells a story of Sri Lankan heritage.', profileImageUrl: 'https://placehold.co/400x400.png', speciality: 'Batik Artist', location: 'Kandy, Sri Lanka', followers: 1200 },
-  { id: '2', name: 'Ravi Fernando', bio: 'Crafting exquisite wooden sculptures inspired by nature and local folklore. Using sustainably sourced timber.', profileImageUrl: 'https://placehold.co/400x400.png', speciality: 'Wood Carver', location: 'Galle, Sri Lanka', followers: 850 },
-  { id: '3', name: 'Sita Devi', bio: 'Weaving vibrant handloom textiles that blend intricate patterns with contemporary designs. Passionate about preserving ancient weaving techniques.', profileImageUrl: 'https://placehold.co/400x400.png', speciality: 'Handloom Weaver', location: 'Jaffna, Sri Lanka', followers: 980 },
-];
 
-const popularProducts: Product[] = [
-  { id: '101', name: 'Ocean Breeze Batik Saree', description: 'Elegant silk saree with hand-painted Batik motifs depicting ocean waves.', price: 120.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', artisan: featuredArtisans[0] },
-  { id: '102', name: 'Hand-Carved Elephant Statue', description: 'Detailed wooden elephant statue, a symbol of wisdom and strength.', price: 75.00, category: 'Decor', images: ['https://placehold.co/600x400.png'], artisanId: '2', artisan: featuredArtisans[1] },
-  { id: '103', name: 'Sunset Hues Handloom Shawl', description: 'Soft and warm handloom shawl in rich sunset colors, perfect for cool evenings.', price: 55.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '3', artisan: featuredArtisans[2] },
-  { id: '104', name: 'Lotus Bloom Batik Wall Hanging', description: 'A stunning wall art piece capturing the serene beauty of a lotus flower in Batik.', price: 90.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', artisan: featuredArtisans[0] },
-];
+export default async function HomePage() {
+  // Fetch new mock data
+  const featuredArtisans = (await getMockAllArtisans()).slice(0, 2); // Take the first two for homepage
+  const popularProducts = (await getMockAllProducts()).slice(0, 4); // Take the first four
 
-export default function HomePage() {
   return (
     <div className="space-y-16">
       {/* Hero Section */}
@@ -47,6 +39,36 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
+
+       {/* Featured Artisans Section */}
+      <section>
+        <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
+          Meet Our Talented Artisans
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {featuredArtisans.map(artisan => (
+            <ArtisanCard key={artisan.id} artisan={artisan} />
+          ))}
+        </div>
+      </section>
+
+      {/* Popular Products Section */}
+      <section>
+        <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
+          Popular Handcrafted Treasures
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {popularProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+        <div className="text-center mt-10">
+          <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
+            <Link href="/products">Explore All Products</Link>
+          </Button>
+        </div>
+      </section>
+
 
       {/* The Essence of Sri Lankan Handicrafts Section */}
       <section>
@@ -109,3 +131,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

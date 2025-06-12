@@ -13,22 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Loader2, Edit3, ImagePlus, Tag, DollarSign, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Product } from "@/types"; // Assuming you might fetch product data
-
-// Mock product data for pre-filling the form - replace with actual data fetching
-const mockProductToEdit: Product = {
-  id: 'prod1',
-  name: 'Ocean Breeze Batik Saree',
-  description: 'Elegant silk saree with hand-painted Batik motifs depicting ocean waves.',
-  longDescription: "This exquisite Ocean Breeze Batik Saree is crafted from the finest silk, featuring intricate hand-painted Batik motifs that evoke the serene beauty of Sri Lankan coastlines. The flowing design and vibrant blues and greens make it a perfect statement piece for any special occasion. Each saree is a unique work of art, reflecting hours of meticulous craftsmanship.",
-  price: 120.00,
-  category: 'Apparel',
-  images: ['https://placehold.co/600x800.png'],
-  artisanId: '1',
-  stock: 5,
-  dimensions: "6 yards length",
-  materials: ["Pure Silk", "Natural Dyes"]
-};
+import type { Product } from "@/types"; 
+import { getMockProductById, mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller
+import React from "react";
 
 
 const productSchema = z.object({
@@ -38,19 +25,22 @@ const productSchema = z.object({
   price: z.coerce.number().min(0.01, { message: "Price must be a positive value." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().min(0, { message: "Stock quantity must be a non-negative integer." }),
-  materials: z.string().optional(), // comma-separated
+  materials: z.string().optional(), 
   dimensions: z.string().optional(),
-  // imageUpload: typeof window === 'undefined' ? z.any() : z.instanceof(FileList).refine(files => files?.length >= 1, 'At least one image is required.'), // TODO: Handle file uploads properly
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
+const SELLER_ARTISAN_ID = mockArtisanNimali.id;
+
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
-  const productId = params.id; 
+  const resolvedParams = React.use(params);
+  const productId = resolvedParams.id; 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [productData, setProductData] = useState<Product | null>(null);
 
   const form = useForm<ProductFormValues>({
@@ -68,24 +58,33 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   });
 
   useEffect(() => {
-    // Simulate fetching product data
-    // In a real app, fetch product data based on productId
-    if (productId === mockProductToEdit.id) { 
-        setProductData(mockProductToEdit);
-        form.reset({
-            productName: mockProductToEdit.name,
-            description: mockProductToEdit.description,
-            longDescription: mockProductToEdit.longDescription || "",
-            price: mockProductToEdit.price,
-            category: mockProductToEdit.category,
-            stock: mockProductToEdit.stock || 0,
-            materials: mockProductToEdit.materials?.join(', ') || "",
-            dimensions: mockProductToEdit.dimensions || "",
-        });
-    } else {
-        // Handle case where product is not found or for other IDs
-        toast({ title: "Product not found", description: "Could not load product data for editing.", variant: "destructive"});
-    }
+    const fetchProductData = async () => {
+      if (!productId) {
+          setIsDataLoading(false);
+          return;
+      };
+      setIsDataLoading(true);
+      const fetchedProduct = await getMockProductById(productId);
+      
+      if (fetchedProduct && fetchedProduct.artisanId === SELLER_ARTISAN_ID) { 
+          setProductData(fetchedProduct);
+          form.reset({
+              productName: fetchedProduct.name,
+              description: fetchedProduct.description,
+              longDescription: fetchedProduct.longDescription || "",
+              price: fetchedProduct.price,
+              category: fetchedProduct.category,
+              stock: fetchedProduct.stock || 0,
+              materials: fetchedProduct.materials?.join(', ') || "",
+              dimensions: fetchedProduct.dimensions || "",
+          });
+      } else {
+          toast({ title: "Product not found or not yours", description: "Could not load product data for editing.", variant: "destructive"});
+          // Consider redirecting or showing an error message
+      }
+      setIsDataLoading(false);
+    };
+    fetchProductData();
   }, [productId, form, toast]); 
 
 
@@ -99,10 +98,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       description: `${data.productName} has been successfully updated.`,
     });
     setIsLoading(false);
-    // router.push('/dashboard/seller/products'); // redirect to product list
+    // router.push('/dashboard/seller/products'); 
   };
 
-  if (!productData && productId === mockProductToEdit.id) { // Basic loading state if we expect data
+  if (isDataLoading) {
     return (
         <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -110,6 +109,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         </div>
     );
   }
+  
+  if (!productData) {
+     return <div className="text-center py-10">Product not found or you do not have permission to edit it.</div>;
+  }
+
 
   return (
     <div className="py-8">
@@ -263,3 +267,5 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    

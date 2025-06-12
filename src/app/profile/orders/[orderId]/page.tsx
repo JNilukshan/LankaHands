@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { Order, OrderItem, Artisan, ShippingSettings, StorePolicies } from '@/types';
+import type { Order } from '@/types';
 import { CalendarDays, MapPin, ShoppingBag, Package, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck, Ban } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -22,105 +22,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getMockOrdersByCustomerId } from '@/lib/mock-data'; // Import from new mock data source
 
-// Mock Artisan with policies
-const mockArtisanWithPolicies: Artisan = {
-  id: 'artisan1',
-  name: 'Nimali Perera - Batik Artistry',
-  bio: 'Master Batik artist from Kandy.',
-  profileImageUrl: 'https://placehold.co/100x100.png',
-  shippingSettings: {
-    localRate: 4.50,
-    localDeliveryTime: "2-4 business days",
-    internationalRate: 22.00,
-    internationalDeliveryTime: "10-15 business days",
-    freeShippingLocalThreshold: 75,
-    freeShippingInternationalThreshold: 150,
-    processingTime: "1-3 business days",
-  },
-  storePolicies: {
-    returnPolicy: "Returns accepted within 10 days for unused items in original packaging. Customer pays return shipping.",
-    exchangePolicy: "Exchanges available for items of the same value if stock permits. Contact within 7 days.",
-    cancellationPolicy: "Orders can be cancelled if they are still in 'Pending' status and have not yet started processing (typically within 12 hours).",
-  }
-};
-
-const mockArtisanMinimalPolicies: Artisan = {
-    id: 'artisan2',
-    name: 'Ravi Sculptures',
-    bio: 'Wood carving specialist.',
-    profileImageUrl: 'https://placehold.co/100x100.png',
-    shippingSettings: {
-      processingTime: "3-5 business days (custom orders)",
-      localRate: 10.00,
-      localDeliveryTime: "5-7 business days",
-    },
-    storePolicies: {
-      returnPolicy: "No returns on custom carved items unless damaged in transit.",
-      cancellationPolicy: "Custom orders cannot be cancelled once carving has begun (typically after 24 hours).",
-    }
-  };
-
-
-// Placeholder data - in a real app, this would be fetched based on params.orderId
-const mockAllOrders: Order[] = [
-  {
-    id: 'order1',
-    userId: 'user123',
-    customerName: 'Chandana Silva',
-    items: [
-        { productId: '101', productName: 'Ocean Breeze Batik Saree', quantity: 1, price: 120.00, productImage: 'https://placehold.co/80x80.png' },
-        { productId: '103', productName: 'Sunset Hues Handloom Shawl', quantity: 2, price: 55.00, productImage: 'https://placehold.co/80x80.png' },
-    ],
-    totalAmount: 230.00,
-    orderDate: '2023-05-10T10:00:00Z',
-    status: 'Delivered',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
-    artisan: mockArtisanWithPolicies,
-  },
-  {
-    id: 'order2',
-    userId: 'user123',
-    customerName: 'Chandana Silva',
-    items: [{ productId: '102', productName: 'Hand-Carved Elephant Statue', quantity: 1, price: 75.00, productImage: 'https://placehold.co/80x80.png' }],
-    totalAmount: 75.00,
-    orderDate: '2023-05-20T14:30:00Z',
-    status: 'Shipped',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
-    artisan: mockArtisanMinimalPolicies,
-  },
-  {
-    id: 'order3', 
-    userId: 'user123',
-    customerName: 'Chandana Silva',
-    items: [{ productId: '104', productName: 'Lotus Bloom Batik Wall Hanging', quantity: 1, price: 90.00, productImage: 'https://placehold.co/80x80.png' }],
-    totalAmount: 90.00,
-    orderDate: '2023-05-25T11:00:00Z',
-    status: 'Pending',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
-    artisan: mockArtisanWithPolicies,
-  },
-  {
-    id: 'order4', 
-    userId: 'user123',
-    customerName: 'Chandana Silva',
-    items: [{ productId: '105', productName: 'Terracotta Clay Vase Set', quantity: 1, price: 45.00, productImage: 'https://placehold.co/80x80.png' }],
-    totalAmount: 45.00,
-    orderDate: '2023-05-22T09:00:00Z',
-    status: 'Cancelled',
-    shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka',
-    artisan: mockArtisanMinimalPolicies,
-  },
-];
-
-const getOrderDetails = async (orderId: string): Promise<Order | null> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-  const order = mockAllOrders.find(o => o.id === orderId);
+const getOrderDetails = async (orderId: string, customerId: string): Promise<Order | null> => {
+  const orders = await getMockOrdersByCustomerId(customerId);
+  const order = orders.find(o => o.id === orderId);
   return order || null;
 };
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
+  // For this prototype, we'll assume the logged-in user is 'chandana-c1'
+  const customerId = 'chandana-c1'; 
   const resolvedParams = React.use(params);
   const orderId = resolvedParams.orderId;
   
@@ -131,15 +43,14 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
 
   React.useEffect(() => {
     const fetchOrder = async () => {
+      if (!orderId) return;
       setLoading(true);
-      const orderDetails = await getOrderDetails(orderId);
+      const orderDetails = await getOrderDetails(orderId, customerId);
       setOrder(orderDetails);
       setLoading(false);
     };
-    if (orderId) {
-        fetchOrder();
-    }
-  }, [orderId]);
+    fetchOrder();
+  }, [orderId, customerId]);
 
   const handlePrint = () => {
     window.print();
@@ -152,6 +63,8 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     await new Promise(resolve => setTimeout(resolve, 1000)); 
 
     setOrder(prevOrder => prevOrder ? { ...prevOrder, status: 'Cancelled' } : null);
+    // Note: This mock data change won't persist beyond this page load.
+    // In a real app, you'd update the backend and likely refetch or update global state.
     toast({
       title: "Order Cancelled",
       description: `Order #${order.id.substring(0,8)} has been successfully cancelled.`,
@@ -233,7 +146,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                  <div className="mb-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
                     <h3 className="font-semibold text-md text-primary mb-1">Fulfilled by:</h3>
                     <Link href={`/artisans/${order.artisan.id}`} className="text-accent hover:underline font-medium">{order.artisan.name}</Link>
-                    <p className="text-xs text-muted-foreground">{order.artisan.speciality}</p>
+                    {order.artisan.speciality && <p className="text-xs text-muted-foreground">{order.artisan.speciality}</p>}
                 </div>
             )}
             <div className="grid md:grid-cols-2 gap-6">
@@ -285,16 +198,16 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipping (Artisan):</span>
-                        <span>${artisanShipping?.localRate?.toFixed(2) || 'Calculated at checkout'}</span> 
+                        <span>${artisanShipping?.localRate?.toFixed(2) || 'Free'}</span> 
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Tax:</span>
-                        <span>$0.00</span> 
+                        <span className="text-muted-foreground">Tax (Estimated):</span>
+                        <span>${(order.totalAmount * 0.08).toFixed(2)}</span> 
                     </div>
                     <Separator className="my-2"/>
                     <div className="flex justify-between font-bold text-lg text-primary">
                         <span>Order Total:</span>
-                        <span>${(order.totalAmount + (artisanShipping?.localRate || 0)).toFixed(2)}</span>
+                        <span>${(order.totalAmount + (artisanShipping?.localRate || 0) + (order.totalAmount * 0.08)).toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -319,7 +232,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                                     {artisanShipping.freeShippingInternationalThreshold && 
                                         <li>Free international shipping on orders over ${artisanShipping.freeShippingInternationalThreshold.toFixed(2)}.</li>}
                                 </ul>
-                                {(artisanShipping.localRate === undefined && artisanShipping.internationalRate === undefined) && <p>Shipping details provided by artisan upon request or at checkout.</p>}
+                                {(artisanShipping.localRate === undefined && artisanShipping.internationalRate === undefined && !artisanShipping.processingTime) && <p>Shipping details provided by artisan upon request or at checkout.</p>}
                             </div>
                         </>
                     ) : (
@@ -377,3 +290,5 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     </div>
   );
 }
+
+    

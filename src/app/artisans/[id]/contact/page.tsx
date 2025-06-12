@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,21 +17,12 @@ import type { Artisan, SellerNotification } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Simplified mock artisan data fetching
-const getArtisanDetails = async (id: string): Promise<Pick<Artisan, 'id' | 'name' | 'profileImageUrl'> | null> => {
-  await new Promise(resolve => setTimeout(resolve, 100)); // Simulate API call
-  const artisans: Record<string, Pick<Artisan, 'id' | 'name' | 'profileImageUrl'>> = {
-    '1': { id: '1', name: 'Nimali Perera', profileImageUrl: 'https://placehold.co/40x40.png' },
-    '6': { id: '6', name: 'Sustainable Leather Co.', profileImageUrl: 'https://placehold.co/40x40.png' },
-  };
-  return artisans[id] || null;
-};
+import { getMockArtisanById } from "@/lib/mock-data"; // Import from new mock data source
 
 const contactArtisanSchema = z.object({
   customerName: z.string().min(2, { message: "Your name must be at least 2 characters."}),
   messageText: z.string().min(10, { message: "Message must be at least 10 characters." }).max(1000),
-  imageFile: z.any().optional(), // For file input
+  imageFile: z.any().optional(), 
 });
 type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
 
@@ -64,7 +55,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
         return;
       }
       setIsPageLoading(true);
-      const artisanData = await getArtisanDetails(artisanId);
+      const artisanData = await getMockArtisanById(artisanId); // Use new mock data function
       if (artisanData) {
         setArtisan(artisanData);
       } else {
@@ -83,7 +74,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setImagePreview(URL.createObjectURL(file));
-      form.setValue("imageFile", file); // Store the File object
+      form.setValue("imageFile", file); 
     } else {
       setImagePreview(null);
       form.setValue("imageFile", undefined);
@@ -94,18 +85,16 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
     setImagePreview(null);
     form.setValue("imageFile", undefined);
     if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Reset file input
+        fileInputRef.current.value = ""; 
     }
   };
 
   const handleSubmitMessage = async (data: ContactArtisanFormValues) => {
     setIsSending(true);
 
-    // Simulate sending message
     console.log("Sending message to artisan:", artisan?.name, data);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Store notification in localStorage
     if (artisan) {
       try {
         const storedNotificationsString = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
@@ -115,12 +104,12 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
           id: `notif_contact_${Date.now()}`,
           type: 'new_message',
           title: `New Message from ${data.customerName || 'Customer'} for ${artisan.name}`,
-          description: data.messageText + (data.imageFile ? ` (Attachment: ${data.imageFile.name})` : ''),
+          description: data.messageText + (data.imageFile ? ` (Attachment: data.imageFile.name)` : ''),
           timestamp: new Date().toISOString(),
           read: false,
           sender: data.customerName || 'Customer',
           artisanId: artisan.id,
-          link: `/dashboard/seller/messages/thread/${artisan.id}/${Date.now()}` // Example link
+          link: `/dashboard/seller/messages/thread/${artisan.id}/${Date.now()}` 
         };
 
         const updatedNotifications = [newNotification, ...existingNotifications];
@@ -269,6 +258,5 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
     </div>
   );
 }
-
 
     

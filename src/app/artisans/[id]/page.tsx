@@ -5,67 +5,29 @@ import ProductCard from '@/components/shared/ProductCard';
 import StarRating from '@/components/shared/StarRating';
 import type { Artisan, Product, Review } from '@/types';
 import Link from 'next/link';
-import { Award, MapPin, MessageCircle, UserPlus, Users, Star } from 'lucide-react';
+import { Award, MapPin, MessageCircle, Users, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; 
-
-// Placeholder data - in a real app, this would be fetched based on [id]
-const getArtisanDetails = async (id: string): Promise<Artisan | null> => {
-  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API call
-
-  const sampleProductsForNimali: Product[] = [
-    { id: 'p1', name: 'Sunrise Batik Kaftan', description: 'Flowy kaftan with sunrise motifs.', price: 85.00, category: 'Apparel', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 7, reviews: [{id:'r1', userId:'u1', userName:'Aisha',productId:'p1', rating:5,comment:'Lovely!', createdAt: new Date().toISOString()}]},
-    { id: 'p2', name: 'Tropical Leaf Batik Cushion Cover', description: 'Vibrant cushion cover.', price: 30.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 12, reviews: [{id:'r2', userId:'u2', userName:'Ben',productId:'p2', rating:4,comment:'Nice design.', createdAt: new Date().toISOString()}]},
-    { id: 'p3', name: 'Floral Batik Scarf', description: 'Lightweight silk scarf with floral batik.', price: 45.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '1', stock: 0},
-  ];
-  
-  const sampleProductsForLeatherCo: Product[] = [
-    { id: 'p107', name: 'Leather Bound Journal', description: 'Hand-stitched leather journal with recycled paper.', price: 35.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6', stock: 15 },
-    { id: 'p109', name: 'Minimalist Leather Wallet', description: 'Slim leather wallet, hand-stitched.', price: 50.00, category: 'Accessories', images: ['https://placehold.co/600x400.png'], artisanId: '6', stock: 8 },
-  ];
-
-
-  const artisans: Record<string, Artisan> = {
-    '1': { 
-      id: '1', name: 'Nimali Perera', 
-      bio: "Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics.", 
-      profileImageUrl: 'https://placehold.co/600x400.png', 
-      speciality: 'Master Batik Artist',
-      location: 'Kandy, Sri Lanka',
-      followers: 1250,
-      averageRating: 4.9,
-      products: sampleProductsForNimali,
-    },
-    '6': {
-        id: '6', name: 'Sustainable Leather Co.',
-        bio: 'Makers of fine, hand-stitched leather goods using ethically sourced materials and recycled paper. We believe in minimalist design and maximum durability, creating timeless pieces that age beautifully. Our workshop in Negombo focuses on empowering local craftspeople and promoting sustainable practices within the leather industry.',
-        profileImageUrl: 'https://placehold.co/600x400.png',
-        speciality: 'Leather Craft & Accessories',
-        location: 'Negombo, Sri Lanka',
-        followers: 450,
-        averageRating: 4.7,
-        products: sampleProductsForLeatherCo,
-    }
-    // Add more artisans if needed for testing different IDs
-  };
-  return artisans[id] || null;
-};
+import { getMockArtisanById, getMockProductsByArtisanId } from '@/lib/mock-data';
 
 export default async function ArtisanProfilePage({ params }: { params: { id: string } }) {
-  const artisan = await getArtisanDetails(params.id);
+  const artisan = await getMockArtisanById(params.id);
 
   if (!artisan) {
     return <div className="text-center py-10">Artisan not found.</div>;
   }
+
+  // Products will be fetched or already part of the artisan object from mock-data
+  const artisanProducts = artisan.products || await getMockProductsByArtisanId(artisan.id);
   
-  const averageRating = artisan.products?.reduce((acc, product) => {
+  const averageRating = artisanProducts?.reduce((acc, product) => {
       const productRating = product.reviews && product.reviews.length > 0
         ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
         : 0;
       return acc + productRating;
-    }, 0) / (artisan.products?.filter(p => p.reviews && p.reviews.length > 0).length || 1) || artisan.averageRating || 0;
+    }, 0) / (artisanProducts?.filter(p => p.reviews && p.reviews.length > 0).length || 1) || artisan.averageRating || 0;
 
 
   return (
@@ -138,9 +100,8 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
             </div>
              <div className="flex items-center">
               <Award size={20} className="mr-2 text-accent" />
-              <span><strong>{artisan.products?.length || 0}</strong> Products Listed</span>
+              <span><strong>{artisanProducts?.length || 0}</strong> Products Listed</span>
             </div>
-            {/* Add more stats if available, e.g., years of experience */}
           </CardContent>
         </Card>
       </div>
@@ -150,10 +111,10 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
       {/* Products by Artisan Section */}
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-6 text-primary">Creations by {artisan.name}</h2>
-        {artisan.products && artisan.products.length > 0 ? (
+        {artisanProducts && artisanProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {artisan.products.map(product => (
-              <ProductCard key={product.id} product={{...product, artisan: {id: artisan.id, name: artisan.name, profileImageUrl: artisan.profileImageUrl, bio: artisan.bio } }} />
+            {artisanProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
@@ -163,3 +124,5 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
     </div>
   );
 }
+
+    

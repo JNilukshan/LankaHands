@@ -14,20 +14,12 @@ import { Loader2, Save, UserCircle, ImagePlus } from "lucide-react";
 import type { User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-
-// Placeholder data for current user - in a real app, this would come from auth state
-const mockCurrentUser: User = {
-  id: 'user123',
-  name: 'Chandana Silva',
-  email: 'chandana.silva@example.com',
-  profileImageUrl: 'https://placehold.co/128x128.png',
-  isSeller: false,
-};
+import { mockCustomerChandana } from '@/lib/mock-data'; // Import from new mock data source
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  // profileImage: typeof window === 'undefined' ? z.any() : z.instanceof(FileList).optional(), // File upload handling is complex for this example
+  // profileImage: typeof window === 'undefined' ? z.any() : z.instanceof(FileList).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -47,14 +39,14 @@ export default function EditProfilePage() {
   });
 
   useEffect(() => {
-    // Simulate fetching current user data
-    setCurrentUser(mockCurrentUser);
+    const userToEdit = mockCustomerChandana; // Use new mock customer
+    setCurrentUser(userToEdit);
     form.reset({
-      name: mockCurrentUser.name,
-      email: mockCurrentUser.email,
+      name: userToEdit.name,
+      email: userToEdit.email,
     });
-    if (typeof mockCurrentUser.profileImageUrl === 'string') {
-      setImagePreview(mockCurrentUser.profileImageUrl);
+    if (typeof userToEdit.profileImageUrl === 'string') {
+      setImagePreview(userToEdit.profileImageUrl);
     }
   }, [form]);
 
@@ -62,21 +54,20 @@ export default function EditProfilePage() {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setImagePreview(URL.createObjectURL(file));
-      // form.setValue("profileImage", event.target.files); // For actual upload
+      // form.setValue("profileImage", event.target.files);
     }
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     console.log("Updated profile data:", data);
-    // Simulate API call for profile update
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     toast({
       title: "Profile Updated!",
       description: "Your profile information has been successfully updated.",
     });
     setIsLoading(false);
-    // Potentially update user state or refetch user data
   };
 
   if (!currentUser) {
@@ -102,8 +93,8 @@ export default function EditProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="profileImage"
-                render={({ field }) => ( // field is not directly used here for input type="file"
+                name="profileImage" // This field is not directly in schema for data, but for UI interaction
+                render={({ field }) => (
                   <FormItem className="flex flex-col items-center">
                     <FormLabel htmlFor="profile-image-upload">
                       <Avatar className="h-32 w-32 cursor-pointer border-4 border-primary/20 hover:border-primary/50 transition-colors">
@@ -120,7 +111,6 @@ export default function EditProfilePage() {
                         accept="image/*" 
                         className="hidden"
                         onChange={handleImageChange}
-                        // {...field} // spread field props for react-hook-form control if it handled files directly
                       />
                     </FormControl>
                     <FormDescription className="mt-2">Click image to change. Max 1MB.</FormDescription>
@@ -174,3 +164,5 @@ export default function EditProfilePage() {
     </div>
   );
 }
+
+    

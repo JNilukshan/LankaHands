@@ -4,14 +4,14 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { User, Order, Product, OrderItem } from '@/types';
 import { Edit3, History, Heart, LogOut, UserCircle2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/shared/ProductCard';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,46 +24,40 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-
-// Placeholder data
-const mockUser: User = {
-  id: 'user123',
-  name: 'Chandana Silva',
-  email: 'chandana.silva@example.com',
-  profileImageUrl: 'https://placehold.co/128x128.png',
-  isSeller: false,
-};
-
-const mockOrderItems: OrderItem[] = [
-    { productId: '101', productName: 'Ocean Breeze Batik Saree', quantity: 1, price: 120.00, productImage: 'https://placehold.co/80x80.png' },
-    { productId: '103', productName: 'Sunset Hues Handloom Shawl', quantity: 2, price: 55.00, productImage: 'https://placehold.co/80x80.png' },
-];
-
-const mockOrders: Order[] = [
-  { id: 'order1', userId: 'user123', items: mockOrderItems, totalAmount: 230.00, orderDate: '2023-05-10T10:00:00Z', status: 'Delivered', shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka' },
-  { id: 'order2', userId: 'user123', items: [{ productId: '102', productName: 'Hand-Carved Elephant Statue', quantity: 1, price: 75.00, productImage: 'https://placehold.co/80x80.png' }], totalAmount: 75.00, orderDate: '2023-05-20T14:30:00Z', status: 'Shipped', shippingAddress: '123 Galle Road, Colombo 3, Sri Lanka' },
-];
-
-const mockSavedProducts: Product[] = [
-  { id: '104', name: 'Lotus Bloom Batik Wall Hanging', description: 'Stunning Batik wall art.', price: 90.00, category: 'Home Decor', images: ['https://placehold.co/600x400.png'], artisanId: '1' },
-  { id: '106', name: 'Silver Filigree Earrings', description: 'Intricate silver filigree earrings.', price: 150.00, category: 'Jewelry', images: ['https://placehold.co/600x400.png'], artisanId: '5' },
-];
+import { mockCustomerChandana, getMockOrdersByCustomerId, getMockWishlistByCustomerId } from '@/lib/mock-data';
 
 export default function ProfilePage() {
-  const user = mockUser; // In a real app, this would come from auth state
+  const user = mockCustomerChandana; 
   const { toast } = useToast();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const userOrders = await getMockOrdersByCustomerId(user.id);
+      setOrders(userOrders);
+      const userWishlist = await getMockWishlistByCustomerId(user.id);
+      setWishlist(userWishlist);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [user.id]);
 
   const handleLogout = () => {
-    // Simulate logout
     setIsLogoutDialogOpen(false);
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
-    // In a real app, you'd redirect or update auth state here
-    // e.g., router.push('/login');
+    // router.push('/login');
   };
+  
+  if (isLoading) {
+    return <div className="text-center py-10">Loading profile data...</div>;
+  }
 
   return (
     <div className="space-y-10">
@@ -110,14 +104,13 @@ export default function ProfilePage() {
         </CardHeader>
       </Card>
 
-      {/* Order History Section */}
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-6 text-primary flex items-center">
           <History size={28} className="mr-3 text-accent" /> Order History
         </h2>
-        {mockOrders.length > 0 ? (
+        {orders.length > 0 ? (
           <div className="space-y-6">
-            {mockOrders.map(order => (
+            {orders.map(order => (
               <Card key={order.id} className="shadow-md">
                 <CardHeader className="flex flex-row justify-between items-center">
                   <div>
@@ -156,11 +149,11 @@ export default function ProfilePage() {
                         <p className="text-sm text-muted-foreground"><strong>Shipping Address:</strong> {order.shippingAddress}</p>
                     </div>
                 </CardContent>
-                <CardContent className="border-t pt-4 flex justify-end">
+                <CardFooter className="border-t pt-4 flex justify-end">
                     <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
                         <Link href={`/profile/orders/${order.id}`}>View Order Details</Link>
                     </Button>
-                </CardContent>
+                </CardFooter>
               </Card>
             ))}
           </div>
@@ -171,14 +164,13 @@ export default function ProfilePage() {
 
       <Separator />
 
-      {/* Saved Items Section */}
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-6 text-primary flex items-center">
           <Heart size={28} className="mr-3 text-accent" /> Saved Items (Wishlist)
         </h2>
-        {mockSavedProducts.length > 0 ? (
+        {wishlist.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockSavedProducts.map(product => (
+            {wishlist.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -197,3 +189,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
