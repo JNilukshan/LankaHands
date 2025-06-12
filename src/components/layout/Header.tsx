@@ -136,12 +136,7 @@ const Header: FC = () => {
               {link.label}
             </Link>
           ))}
-          {!isAuthLoading && !currentUser && (
-             <Link href="/become-seller" className="text-foreground/80 hover:text-primary transition-colors">Become a Seller</Link>
-          )}
-           {!isAuthLoading && currentUser && currentUser.role === 'buyer' && (
-             <Link href="/become-seller" className="text-foreground/80 hover:text-primary transition-colors">Become a Seller</Link>
-          )}
+          {/* "Become a Seller" link logic is handled within the user dropdowns below for desktop now */}
         </nav>
 
         <div className="flex items-center space-x-2">
@@ -195,6 +190,11 @@ const Header: FC = () => {
                       <User className="mr-2 h-4 w-4" /> Profile
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                     <Link href="/become-seller" className="flex items-center w-full">
+                        <Briefcase className="mr-2 h-4 w-4" /> Become a Seller
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                    <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                     <LogOutIcon className="mr-2 h-4 w-4" /> Logout
@@ -202,13 +202,38 @@ const Header: FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             )
-          ) : !isAuthLoading ? ( // Logged out
-            <div className="hidden md:flex items-center space-x-2">
-              <Button variant="ghost" asChild><Link href="/login">Sign In</Link></Button>
-              <Button asChild><Link href="/register">Register</Link></Button>
+          ) : !isAuthLoading ? ( // Logged out - Desktop Dropdown
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" size="icon" className="rounded-full">
+                     <UserCircle2 className="h-6 w-6 text-primary"/>
+                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/login" className="flex items-center w-full">
+                      <LogIn className="mr-2 h-4 w-4" /> Sign In
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/register" className="flex items-center w-full">
+                      <UserPlus className="mr-2 h-4 w-4" /> Register
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                     <Link href="/become-seller" className="flex items-center w-full">
+                        <Briefcase className="mr-2 h-4 w-4" /> Become a Seller
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
-            <div className="h-8 w-20 bg-muted rounded-md animate-pulse hidden md:block"></div> // Skeleton for auth loading
+            <div className="h-8 w-8 bg-muted rounded-full animate-pulse hidden md:block"></div> // Skeleton for auth loading
           )}
 
           <Button variant="ghost" size="icon" asChild className="relative">
