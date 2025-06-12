@@ -1,130 +1,163 @@
 
 // IMPORTANT: This file contains placeholder credentials.
-// You MUST replace them with your actual Firebase project's service account key.
-// 1. Go to your Firebase project settings -> Service accounts.
-// 2. Generate a new private key and download the JSON file.
-// 3. Store this JSON file securely (e.g., outside your repo, use environment variables).
-// 4. For local development, you can point to the file path or set environment variables.
-//    DO NOT commit the service account key directly into your repository.
+// You MUST replace them with your actual Firebase project's service account key
+// by setting the following environment variables in your hosting environment
+// (e.g., Vercel, Firebase App Hosting, local .env.local file):
+// 1. FIREBASE_PROJECT_ID: Your Firebase project ID.
+// 2. FIREBASE_CLIENT_EMAIL: The client email from your service account JSON file.
+// 3. FIREBASE_PRIVATE_KEY: The private key from your service account JSON file.
+//    - If storing as a single-line environment variable, ensure all newline characters
+//      (\n) from the original key are escaped as the two characters: backslash and n (i.e., \\n).
+//    - The key must start with '-----BEGIN PRIVATE KEY-----' and end with '-----END PRIVATE KEY-----\n'.
 
 import admin from 'firebase-admin';
 
 // Attempt to initialize Firebase Admin SDK
 if (!admin.apps.length) {
-  let serviceAccountUsedForAttempt: any; // To log what was actually used
-  try {
-    // For server-side Admin SDK, use non-public environment variables
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKeyInput = process.env.FIREBASE_PRIVATE_KEY; // Raw value from env
+  console.log("Firebase Admin SDK: Starting initialization attempt...");
+  console.log("----------------------------------------------------------------------------------");
+  console.log("INFO: This application requires the following Firebase service account environment variables to be set:");
+  console.log("  - FIREBASE_PROJECT_ID: Your Firebase Project ID.");
+  console.log("  - FIREBASE_CLIENT_EMAIL: The client_email from your Firebase service account JSON.");
+  console.log("  - FIREBASE_PRIVATE_KEY: The private_key from your Firebase service account JSON. Ensure newlines are escaped as '\\\\n' if stored as a single line.");
+  console.log("----------------------------------------------------------------------------------");
 
-    let criticalEnvVarsMissing = false;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKeyInput = process.env.FIREBASE_PRIVATE_KEY;
+
+  // --- Step 1: Pre-flight checks for critical environment variables ---
+  if (!projectId || !clientEmail || !privateKeyInput) {
+    const missingVars = [];
     if (!projectId) {
-      console.warn("Firebase Admin SDK WARNING: Missing required environment variable FIREBASE_PROJECT_ID. Using fallback placeholder: 'your-project-id-placeholder'.");
-      criticalEnvVarsMissing = true;
+      console.error("Firebase Admin SDK PRE-FLIGHT CHECK FAILED: Environment variable 'FIREBASE_PROJECT_ID' is not set or is empty. This is required. Please set it in your server environment.");
+      missingVars.push("FIREBASE_PROJECT_ID");
     }
     if (!clientEmail) {
-      console.warn("Firebase Admin SDK WARNING: Missing required environment variable FIREBASE_CLIENT_EMAIL. Using fallback placeholder: 'your-client-email-placeholder@your-project-id.iam.gserviceaccount.com'.");
-      criticalEnvVarsMissing = true;
+      console.error("Firebase Admin SDK PRE-FLIGHT CHECK FAILED: Environment variable 'FIREBASE_CLIENT_EMAIL' is not set or is empty. This is required. Please set it in your server environment.");
+      missingVars.push("FIREBASE_CLIENT_EMAIL");
     }
     if (!privateKeyInput) {
-      // This specific warning for missing privateKeyInput directly
-      console.warn("Firebase Admin SDK CRITICAL WARNING: Environment variable FIREBASE_PRIVATE_KEY is not set. Using fallback placeholder: 'YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID'. This is critical and will cause initialization failure.");
-      criticalEnvVarsMissing = true;
+      console.error("Firebase Admin SDK PRE-FLIGHT CHECK FAILED: Environment variable 'FIREBASE_PRIVATE_KEY' is not set or is empty. This is required. Please set it in your server environment.");
+      missingVars.push("FIREBASE_PRIVATE_KEY");
     }
 
-    console.log("Firebase Admin SDK: Attempting to initialize with the following (PARTIAL) credentials:");
-    console.log("Project ID from env:", projectId || "MISSING/PLACEHOLDER");
-    console.log("Client Email from env:", clientEmail || "MISSING/PLACEHOLDER");
-    console.log("Private Key provided in env:", (privateKeyInput && privateKeyInput !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") ? "Yes (content will be processed)" : "No or Placeholder (if env var was empty/undefined)");
+    throw new Error(
+      "Firebase Admin SDK Initialization Aborted: One or more critical environment variables are missing or empty: " +
+      missingVars.join(', ') + ". " +
+      "Please set these environment variables to your actual Firebase service account details. " +
+      "Cannot proceed with Firebase Admin SDK initialization."
+    );
+  }
 
-    // Process the private key: trim whitespace and replace escaped newlines.
-    const privateKey = (privateKeyInput || "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID").trim().replace(/\\n/g, '\n');
+  // Process the private key: trim whitespace and replace escaped newlines.
+  const privateKeyProcessed = privateKeyInput
+    .trim()
+    .replace(/\\r\\n/g, '\n') // Handle \r\n first
+    .replace(/\\n/g, '\n');   // Then handle \n
 
-    // Log a snippet of the processed private key for debugging PEM format issues
-    // DO NOT log the full key.
-    if (privateKey && privateKey !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
-        const keySnippetStart = privateKey.substring(0, 30);
-        const keySnippetEnd = privateKey.substring(privateKey.length - 30);
-        console.log(`Firebase Admin SDK: Processed Private Key (Snippet for format check): Starts with [${keySnippetStart}...] and ends with [...${keySnippetEnd}]`);
-        if (!privateKey.startsWith("-----BEGIN PRIVATE KEY-----") || !privateKey.endsWith("-----END PRIVATE KEY-----\n")) {
-            console.warn("Firebase Admin SDK CRITICAL WARNING: Processed private key does NOT strictly start/end with expected PEM headers. This is very likely the cause of the parsing error. Expected format: '-----BEGIN PRIVATE KEY-----' followed by base64 characters and newlines, ending with '-----END PRIVATE KEY-----\\n'. Check your FIREBASE_PRIVATE_KEY environment variable content and ensure newline characters are correctly escaped as '\\\\n' if stored in a single line.");
+  if (privateKeyProcessed === "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID" || privateKeyProcessed === "") {
+    console.error("Firebase Admin SDK PRE-FLIGHT CHECK FAILED: The 'FIREBASE_PRIVATE_KEY' environment variable, after processing, is empty or still resolves to the placeholder string 'YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID'.");
+    throw new Error(
+        "Firebase Admin SDK Initialization Aborted: FIREBASE_PRIVATE_KEY is missing or using a placeholder value. " +
+        "Please set this environment variable to your actual Firebase service account private key. " +
+        "Cannot proceed."
+    );
+  }
+
+  console.log(`Firebase Admin SDK: Using Project ID: ${projectId}`);
+  console.log(`Firebase Admin SDK: Using Client Email: ${clientEmail}`);
+  console.log(`Firebase Admin SDK: Private Key Provided: Yes (format check will follow)`);
+  
+  const serviceAccountUsedForAttempt = {
+    projectId: projectId,
+    clientEmail: clientEmail,
+    privateKey: privateKeyProcessed,
+  };
+  
+  // --- Step 2: Attempt to initialize Firebase with processed credentials ---
+  try {
+    const keySnippetStart = serviceAccountUsedForAttempt.privateKey.substring(0, 30);
+    const keySnippetEnd = serviceAccountUsedForAttempt.privateKey.substring(serviceAccountUsedForAttempt.privateKey.length - 30);
+    console.log(`Firebase Admin SDK: Attempting to use Processed Private Key (Snippet for format check): Starts with [${keySnippetStart}...] and ends with [...${keySnippetEnd}]`);
+    
+    const expectedHeader = "-----BEGIN PRIVATE KEY-----";
+    const expectedFooterEndsWith = "-----END PRIVATE KEY-----\n"; // PEM keys usually end with a newline
+    const expectedFooterWithoutNewline = "-----END PRIVATE KEY-----";
+
+
+    if (!serviceAccountUsedForAttempt.privateKey.startsWith(expectedHeader) || 
+        !(serviceAccountUsedForAttempt.privateKey.includes(expectedFooterWithoutNewline)) ) { // Check if it at least contains the footer
+        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.error("Firebase Admin SDK CRITICAL PEM FORMAT WARNING (Headers/Footers):");
+        console.error(`The PROCESSED private key does NOT start with '${expectedHeader}' OR does not contain '${expectedFooterWithoutNewline}'.`);
+        console.error("This is VERY LIKELY THE CAUSE of an 'Invalid PEM formatted message' error if one occurs.");
+        console.error("Expected format: '-----BEGIN PRIVATE KEY-----<BASE64_CONTENT_WITH_ACTUAL_NEWLINES>-----END PRIVATE KEY-----\\n'.");
+        console.error("Verify your FIREBASE_PRIVATE_KEY environment variable value. If it's a single line, ensure all original newlines from the JSON key file are escaped as '\\\\n'.");
+        console.error("Ensure no extra characters (quotes, spaces) are at the beginning or end of the environment variable value.");
+        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    } else if (!serviceAccountUsedForAttempt.privateKey.endsWith(expectedFooterEndsWith)) {
+         console.warn("Firebase Admin SDK PEM FORMAT WARNING (Footer Newline): The processed private key includes the correct header and footer tags, but does not strictly end with '-----END PRIVATE KEY-----\\n' (i.e., missing the final newline after the footer). This might cause issues with some parsers, though Firebase SDK might be tolerant.");
+    } else {
+        console.log("Firebase Admin SDK: Processed private key appears to have correct PEM headers and ends with the expected newline, based on preliminary checks.");
+    }
+    
+    // Log raw private key characteristics (helpful for \\n vs \n issues)
+    if (privateKeyInput && privateKeyInput !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
+        if (privateKeyInput.includes('\\r\\n')) {
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\r\\\\n' (escaped carriage return + newline).");
+        } else if (privateKeyInput.includes('\\n')) {
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\n' (escaped newlines). This is expected for single-line env vars.");
+        } else if (privateKeyInput.includes('\n')) {
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS actual newlines ('\\n'). This might be okay if your env system supports multi-line vars directly.");
+        } else {
+        console.warn("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input does NOT appear to contain common newline representations. If it's a multi-line key, this could be an issue or indicate the key is not fully set.");
         }
-    } else if (privateKey === "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
-        // This case means privateKeyInput was falsy (undefined, null, empty string) OR it was literally the placeholder string.
-        console.warn("Firebase Admin SDK CRITICAL WARNING: Private key IS THE PLACEHOLDER ('YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID') AFTER processing. This means the FIREBASE_PRIVATE_KEY environment variable was likely missing, empty, or literally contained the placeholder text. Initialization will fail.");
-        criticalEnvVarsMissing = true; // Treat as critical if placeholder is used
     }
 
-
-    serviceAccountUsedForAttempt = {
-      projectId: projectId || "your-project-id-placeholder",
-      clientEmail: clientEmail || "your-client-email-placeholder@your-project-id.iam.gserviceaccount.com",
-      privateKey: privateKey, // This will be the processed key (or placeholder)
-    };
-
-
-    if (criticalEnvVarsMissing || serviceAccountUsedForAttempt.projectId === "your-project-id-placeholder" || serviceAccountUsedForAttempt.privateKey === "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
-        const missingVarsMessage =
-            "Firebase Admin SDK PRE-INITIALIZATION CRITICAL WARNING: Attempting to initialize with placeholder or incomplete credentials because one or more environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) are missing, empty, or using defaults. " +
-            "Firebase functionality will FAIL. " +
-            "Please ensure these environment variables are correctly set with your actual Firebase service account details. " +
-            "The private key MUST be the full '-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----\\n' string. If stored in a single line env var, newlines MUST be escaped as '\\\\n'.";
-        console.error(missingVarsMessage);
-        // Do not throw here yet, let initializeApp attempt and provide a more specific Firebase error if possible.
-    }
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountUsedForAttempt),
-      // databaseURL: `https://\${serviceAccountUsedForAttempt.projectId}.firebaseio.com` // If using Realtime Database
     });
 
     if (admin.apps.length > 0 && admin.apps[0]) {
         const appProjectId = admin.apps[0].options.projectId;
-        if (appProjectId && appProjectId !== "your-project-id-placeholder") {
-            console.log("Firebase Admin SDK initialized successfully. Project ID:", appProjectId);
-        } else if (appProjectId === "your-project-id-placeholder") {
-            console.error("Firebase Admin SDK: Initialized with PLACEHOLDER project ID. This indicates a problem with FIREBASE_PROJECT_ID environment variable.");
-        } else {
-            console.error("Firebase Admin SDK: initializedApp was called, app exists, but project ID is missing from options. This is unexpected.");
-        }
+        console.log("Firebase Admin SDK initialized successfully. Project ID from initialized app:", appProjectId);
     } else {
-        // This case should ideally be caught by initializeApp throwing an error.
-        console.error("Firebase Admin SDK: initializeApp was called but admin.apps is still empty after the call, and no error was thrown by initializeApp. This is highly unexpected.");
+        console.error("Firebase Admin SDK: initializeApp was called but admin.apps is still empty, and no error was thrown by initializeApp. This is highly unexpected. Forcing an error to indicate failure.");
         throw new Error("Firebase Admin SDK failed to initialize an app, and initializeApp did not throw. Check console for earlier warnings.");
     }
 
   } catch (error: any) {
-    console.error("Firebase Admin SDK Initialization CRITICAL Error: Exception during admin.initializeApp() or admin.credential.cert().");
+    console.error("Firebase Admin SDK Initialization CRITICAL Error during admin.initializeApp() or admin.credential.cert().");
     console.error("Error Message:", error.message);
-    console.error("Error Code:", error.code); // Firebase errors often have a code like 'app/invalid-credential'
-    // console.error("Full error object:", error); // Log the full error for more details
+    console.error("Error Code:", error.code);
 
-    console.error("Service Account Object Used for attempt (Private Key REDACTED, check your env vars directly):", {
+    console.error("Service Account Object Used for attempt:", {
         projectId: serviceAccountUsedForAttempt?.projectId,
         clientEmail: serviceAccountUsedForAttempt?.clientEmail,
-        privateKeyProcessedAndAttempted: (serviceAccountUsedForAttempt?.privateKey && serviceAccountUsedForAttempt.privateKey !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") ? "Yes (check format and validity based on snippets logged above)" : "No or Placeholder",
+        privateKeyProcessedAndAttempted: (serviceAccountUsedForAttempt?.privateKey && serviceAccountUsedForAttempt.privateKey !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") ? "Yes (see format check snippets and warnings above)" : "No or Placeholder",
     });
 
     if (error.message && (error.message.toLowerCase().includes("failed to parse private key") || error.message.toLowerCase().includes("invalid pem formatted message"))) {
-        console.error(" Firebase Admin SDK PEM Key Format Hint: The private key could not be parsed. " +
-                      "This means the string provided in the FIREBASE_PRIVATE_KEY environment variable is not a valid PEM-formatted private key. " +
-                      "Ensure it starts with '-----BEGIN PRIVATE KEY-----' and ends with '-----END PRIVATE KEY-----' AND that all newline characters between these headers are correctly represented. " +
-                      "If your environment variable is single-line, newlines typically need to be escaped as '\\\\n'. The code attempts to convert these, " +
-                      "but the original escaping must be correct. Also, ensure no extra characters (like quotes or spaces) are surrounding the key in the env variable. " +
-                      "Review the 'Processed Private Key (Snippet for format check)' log above.");
+        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.error("Firebase Admin SDK PEM Key Format Hint: The private key could not be parsed by Firebase.");
+        console.error("This means the string provided in the FIREBASE_PRIVATE_KEY environment variable, even after processing, is not a valid PEM-formatted private key.");
+        console.error("1. Ensure it starts with '-----BEGIN PRIVATE KEY-----' and ends with '-----END PRIVATE KEY-----\\n' (including the final newline).");
+        console.error("2. Ensure all original newline characters from the JSON key file are correctly represented (e.g., as '\\\\n' in a single-line env var).");
+        console.error("3. Ensure no extra characters (like quotes or spaces) are surrounding the key in the env variable.");
+        console.error("Review the 'Processed Private Key (Snippet for format check)' and 'Raw FIREBASE_PRIVATE_KEY input' logs above for clues.");
+        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     } else if (error.code === 'app/invalid-credential') {
         console.error("Firebase Admin SDK Credential Hint: The Firebase Admin SDK reported an 'invalid-credential' error. This could be due to an incorrect project ID, client email, or an issue with the private key (format, content, or if it's for the wrong project). Double-check all three environment variables: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.");
     }
-    // Re-throw the original error or a new one to ensure the application knows initialization failed.
     throw new Error(`Firebase Admin SDK Initialization Failed: ${error.message}. Check server logs for details.`);
   }
 }
 
-// This check remains as a final guard, but ideally, errors are caught and thrown above.
 if (!admin.apps.length || !admin.apps[0]) {
-  // This error should ideally not be reached if the catch block above throws correctly.
-  // It's a fallback.
+  // This error should ideally not be reached if the pre-flight checks or the try-catch block above throws correctly.
+  // It's a fallback for unexpected scenarios.
   throw new Error(
     "Firebase Admin SDK default app has not been initialized successfully. " +
     "This is critical for backend functionality. " +
@@ -135,8 +168,6 @@ if (!admin.apps.length || !admin.apps[0]) {
   );
 }
 
-
-// If initialization was successful, export the services.
 const adminDb = admin.firestore();
 const adminAuth = admin.auth();
 const adminStorage = admin.storage();
