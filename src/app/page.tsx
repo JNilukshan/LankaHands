@@ -81,55 +81,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-
-      {/* The Essence of Sri Lankan Handicrafts Section */}
-      <section>
-        <h2 className="text-3xl font-headline font-semibold text-center mb-2 text-primary">
-          The Essence of Sri Lankan Handicrafts
-        </h2>
-        <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Journey through a vibrant tapestry of tradition, skill, and cultural expression woven into every Sri Lankan handicraft.
-        </p>
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-4">
-            <p className="text-foreground/80 leading-relaxed">
-              Sri Lanka, an island blessed with rich natural resources and a diverse cultural heritage, boasts an extraordinary legacy of craftsmanship. For centuries, skilled artisans have transformed simple materials into breathtaking works of art, reflecting the island's history, beliefs, and way of life. From the intricate wax-resist dyeing of Batik textiles to the meticulous carving of wood and stone, each craft tells a unique story.
-            </p>
-            <p className="text-foreground/80 leading-relaxed">
-              Discover the vibrant colours of handloom textiles, the earthy charm of traditional pottery, the symbolic power of ceremonial masks, and the delicate beauty of lacework and jewelry. LankaHands brings these timeless traditions to you, connecting you directly with the artisans who keep these invaluable skills alive.
-            </p>
-            <p className="text-foreground/80 leading-relaxed">
-              By choosing a Sri Lankan handicraft, you're not just acquiring a beautiful object; you're supporting a community, preserving a culture, and owning a piece of a story that has been lovingly passed down through generations.
-            </p>
-          </div>
-          <div className="grid grid-rows-2 gap-4">
-            <div className="relative aspect-video rounded-lg overflow-hidden shadow-md">
-              <Image
-                src="https://placehold.co/600x338.png"
-                alt="Assortment of Sri Lankan crafts"
-                fill
-                style={{ objectFit: 'cover' }}
-                data-ai-hint="batik textiles"
-              />
-            </div>
-            <div className="relative aspect-video rounded-lg overflow-hidden shadow-md">
-              <Image
-                src="https://placehold.co/600x338.png"
-                alt="Artisan working on a craft"
-                fill
-                style={{ objectFit: 'cover' }}
-                data-ai-hint="wood carving"
-              />
-            </div>
-          </div>
-        </div>
-         <div className="text-center mt-10">
-          <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
-            <Link href="/about">Learn More About Our Mission</Link>
-          </Button>
-        </div>
-      </section>
-
       {/* Call to Action: Become a Seller */}
       <section className="bg-secondary/30 p-8 md:p-12 rounded-lg text-center">
         <h2 className="text-3xl font-headline font-semibold mb-4 text-primary">Share Your Craft with the World</h2>
@@ -143,4 +94,3 @@ export default async function HomePage() {
     </div>
   );
 }
-
