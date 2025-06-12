@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import React, { useState, useEffect } from 'react';
-import { getMockProductById } from '@/lib/mock-data'; // Import from new mock data source
+import { getMockProductById } from '@/lib/mock-data'; 
+import { cn } from '@/lib/utils';
 
 
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
@@ -22,13 +23,17 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
+  const [mainImage, setMainImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productId) return;
       setIsLoading(true);
-      const fetchedProduct = await getMockProductById(productId); // Use new mock data function
+      const fetchedProduct = await getMockProductById(productId); 
       setProduct(fetchedProduct);
+      if (fetchedProduct && fetchedProduct.images.length > 0) {
+        setMainImage(fetchedProduct.images[0] as string);
+      }
       setIsLoading(false);
     };
     fetchProduct();
@@ -58,16 +63,24 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
         {/* Image Gallery */}
         <div>
           <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-xl mb-4">
-            <Image src={product.images[0]} alt={product.name} fill style={{ objectFit: 'cover' }} data-ai-hint="product lifestyle" priority />
+            {mainImage && <Image src={mainImage} alt={product.name} fill style={{ objectFit: 'cover' }} data-ai-hint="product lifestyle" priority />}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {product.images.slice(1, 4).map((img, index) => ( 
-              <div key={index} className="relative aspect-square rounded overflow-hidden shadow-md">
+            {product.images.map((img, index) => ( 
+              <div 
+                key={index} 
+                className={cn(
+                  "relative aspect-square rounded overflow-hidden shadow-md cursor-pointer transition-all duration-200",
+                  mainImage === img ? "ring-2 ring-primary ring-offset-2" : "hover:opacity-80"
+                )}
+                onClick={() => setMainImage(img as string)}
+              >
                 <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} fill style={{ objectFit: 'cover' }} data-ai-hint="product detail" />
               </div>
             ))}
-            {Array.from({ length: Math.max(0, 3 - product.images.slice(1,4).length) }).map((_, i) => (
-                <div key={`placeholder-${i}`} className="aspect-square bg-muted/30 rounded"></div>
+            {/* Fill remaining slots if less than 3 thumbnails */}
+            {product.images.length < 3 && Array.from({ length: Math.max(0, 3 - product.images.length) }).map((_, i) => (
+                <div key={`placeholder-thumb-${i}`} className="aspect-square bg-muted/30 rounded"></div>
             ))}
           </div>
         </div>
