@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { AuthenticatedUser } from '@/types';
-import { mockCustomerChandana, mockArtisanNimali } from '@/lib/mock-data.ts';
+// Removed: import { mockCustomerChandana, mockArtisanNimali } from '@/lib/mock-data.ts';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -63,28 +63,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback(async (email: string, _pass: string): Promise<boolean> => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500)); 
-    if (email.toLowerCase() === mockCustomerChandana.email.toLowerCase()) {
+    
+    // Simplified mock login without external mock file
+    if (email.toLowerCase() === "buyer@example.com") {
       const buyerUser: AuthenticatedUser = {
-        id: mockCustomerChandana.id,
-        name: mockCustomerChandana.name,
-        email: mockCustomerChandana.email,
+        id: 'mock-buyer-id',
+        name: 'Mock Buyer',
+        email: email.toLowerCase(),
         role: 'buyer',
-        profileImageUrl: mockCustomerChandana.profileImageUrl,
-        followedArtisans: mockCustomerChandana.followedArtisans || [],
-        wishlist: mockCustomerChandana.wishlist || [], // Initialize wishlist
+        profileImageUrl: 'https://placehold.co/128x128.png',
+        followedArtisans: [],
+        wishlist: [],
       };
       updateAuthState(buyerUser);
       setIsLoading(false);
       return true;
-    } else if (email.toLowerCase() === (mockArtisanNimali.email || '').toLowerCase()) { 
+    } else if (email.toLowerCase() === "seller@example.com") { 
       const sellerUser: AuthenticatedUser = {
-        id: mockArtisanNimali.id,
-        name: mockArtisanNimali.name,
-        email: mockArtisanNimali.email || 'nimali.seller@example.com', 
+        id: 'mock-seller-id',
+        name: 'Mock Seller',
+        email: email.toLowerCase(),
         role: 'seller',
-        profileImageUrl: mockArtisanNimali.profileImageUrl,
-        wishlist: [], // Sellers might not have a buyer-wishlist in this model
-        followedArtisans: [], // Sellers might not follow other artisans
+        profileImageUrl: 'https://placehold.co/128x128.png',
+        wishlist: [], 
+        followedArtisans: [], 
       };
       updateAuthState(sellerUser);
       setIsLoading(false);
@@ -109,7 +111,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       role: 'buyer',
       profileImageUrl: 'https://placehold.co/128x128.png', 
       followedArtisans: [],
-      wishlist: [], // New buyers start with an empty wishlist
+      wishlist: [], 
     };
     updateAuthState(newBuyer);
     setIsLoading(false);
@@ -120,11 +122,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     const sellerUser: AuthenticatedUser = {
-        id: mockArtisanNimali.id, // This should ideally be a new ID
-        name: userData.name || mockArtisanNimali.name, 
+        id: `seller-${Date.now()}`, 
+        name: userData.name, 
         email: userData.email, 
         role: 'seller',
-        profileImageUrl: mockArtisanNimali.profileImageUrl,
+        profileImageUrl: 'https://placehold.co/128x128.png',
         wishlist: [],
         followedArtisans: [],
     };
@@ -189,3 +191,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

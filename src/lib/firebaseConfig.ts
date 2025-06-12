@@ -9,71 +9,92 @@
 
 import admin from 'firebase-admin';
 
-// --- OPTION 1: Using environment variables (Recommended for production) ---
-// Set these environment variables in your deployment environment (e.g., Vercel, Firebase Functions, Google Cloud Run)
-// or in a .env.local file for local development (ensure .env.local is in .gitignore).
-/*
+// Attempt to initialize Firebase Admin SDK
 if (!admin.apps.length) {
+  let serviceAccountUsedForAttempt; // To log what was actually used
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Handle escaped newlines
-      }),
-      // databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com` // If using Realtime Database
-    });
-    console.log("Firebase Admin SDK initialized via environment variables.");
-  } catch (error) {
-    console.error("Firebase Admin SDK initialization error (env vars):", error);
-  }
-}
-*/
+    // For server-side Admin SDK, use non-public environment variables
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKeyInput = process.env.FIREBASE_PRIVATE_KEY;
 
-// --- OPTION 2: Using a service account JSON file (Common for local development) ---
-// Make sure the path to your service account key JSON file is correct.
-// And ensure this file is NOT committed to your repository.
-const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || './path/to/your/serviceAccountKey.json'; // Replace with actual path or env var
+    let criticalEnvVarsMissing = false;
+    if (!projectId) {
+      console.warn("Firebase Admin SDK WARNING: Missing required environment variable FIREBASE_PROJECT_ID. Will use fallback placeholder.");
+      criticalEnvVarsMissing = true;
+    }
+    if (!clientEmail) {
+      console.warn("Firebase Admin SDK WARNING: Missing required environment variable FIREBASE_CLIENT_EMAIL. Will use fallback placeholder.");
+      criticalEnvVarsMissing = true;
+    }
+    if (!privateKeyInput) {
+      console.warn("Firebase Admin SDK WARNING: Missing required environment variable FIREBASE_PRIVATE_KEY. Will use fallback placeholder. This is critical for initialization and will likely fail.");
+      criticalEnvVarsMissing = true;
+    }
 
-if (!admin.apps.length) {
-  try {
-    // This is a placeholder. Replace with your actual service account key or use environment variables.
-    // For this prototype, we'll use a simplified initialization that expects environment variables to be set
-    // or it will likely fail if you haven't configured them.
-    // A real setup would securely load credentials.
-    const serviceAccount = {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id", // Fallback, replace
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "your-client-email@your-project-id.iam.gserviceaccount.com", // Fallback, replace
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || "your-private-key").replace(/\\n/g, '\n'), // Fallback, replace
+    // Format the private key correctly, replacing escaped newlines.
+    const privateKey = (privateKeyInput || "your-private-key-placeholder").replace(/\\n/g, '\n');
+
+    serviceAccountUsedForAttempt = {
+      projectId: projectId || "your-project-id-placeholder",
+      clientEmail: clientEmail || "your-client-email-placeholder@your-project-id.iam.gserviceaccount.com",
+      privateKey: privateKey, // This will be the processed key (or placeholder)
     };
 
-    if (serviceAccount.projectId === "your-project-id") {
-        console.warn(
-            "Firebase Admin SDK is using placeholder credentials. " +
-            "Functionality requiring Firebase will not work correctly. " +
-            "Please configure your service account key in environment variables or directly in firebaseConfig.ts (for local dev only, and ensure it's gitignored)."
+    if (criticalEnvVarsMissing || serviceAccountUsedForAttempt.projectId === "your-project-id-placeholder") {
+        console.error(
+            "Firebase Admin SDK CRITICAL WARNING: Attempting to initialize with placeholder or incomplete credentials because one or more environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) are missing or using defaults. " +
+            "Firebase functionality will FAIL. " +
+            "Please ensure these environment variables are correctly set with your actual Firebase service account details. " +
+            "The private key MUST be the full '-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----\\n' string. If stored in a single line env var, newlines MUST be escaped as '\\n'."
         );
     }
 
-
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      // databaseURL: `https://${serviceAccount.projectId}.firebaseio.com` // If using Realtime Database
+      credential: admin.credential.cert(serviceAccountUsedForAttempt),
+      // databaseURL: `https://\${serviceAccountUsedForAttempt.projectId}.firebaseio.com` // If using Realtime Database
     });
-    console.log("Firebase Admin SDK initialized (using potentially placeholder config).");
-  } catch (error) {
-    console.error(
-        "Firebase Admin SDK initialization error. " +
-        "Ensure your service account credentials are set up correctly, " +
-        "either via environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) " +
-        "or by providing a valid serviceAccountKey.json path if using GOOGLE_APPLICATION_CREDENTIALS.",
-        error
-    );
+    // Check if the app was actually initialized and get its project ID
+    if (admin.apps.length > 0 && admin.apps[0]) {
+        console.log("Firebase Admin SDK initialized successfully. Project ID:", admin.apps[0].options.projectId);
+    } else {
+        // This case should be rare if initializeApp doesn't throw but also doesn't populate admin.apps
+        console.error("Firebase Admin SDK: initializeApp was called but admin.apps is still empty. This is unexpected.");
+    }
+
+  } catch (error: any) {
+    console.error("Firebase Admin SDK Initialization Error: Exception during admin.initializeApp() or admin.credential.cert().", error.message);
+    console.error("This usually means the service account credentials provided are invalid, malformed, or incomplete.");
+    console.error("Service Account Object Used (Private Key REDACTED for safety in logs, check your env vars directly):", {
+        projectId: serviceAccountUsedForAttempt?.projectId,
+        clientEmail: serviceAccountUsedForAttempt?.clientEmail,
+        privateKeyProvided: serviceAccountUsedForAttempt?.privateKey && serviceAccountUsedForAttempt.privateKey !== "your-private-key-placeholder" ? "Yes (check format and validity)" : "No or Placeholder",
+    });
+    if (error.code === 'app/invalid-credential' || (error.message && (error.message.toLowerCase().includes("private key") || error.message.toLowerCase().includes("json")))) {
+        console.error("Error Details: The Firebase Admin SDK could not parse the credentials. Ensure FIREBASE_PRIVATE_KEY is the complete PEM key string (starts with '-----BEGIN PRIVATE KEY-----' and ends with '-----END PRIVATE KEY-----'). If newlines were escaped as '\\n' for a single-line environment variable, verify they are correctly formatted.");
+    } else {
+        console.error("Full error object:", error);
+    }
   }
 }
 
+// Final check if Firebase Admin App was successfully initialized
+if (!admin.apps.length || !admin.apps[0]) {
+  throw new Error(
+    "Firebase Admin SDK default app has not been initialized successfully. " +
+    "This is critical for backend functionality. " +
+    "Please check your server logs for previous Firebase Admin SDK initialization errors (especially messages above this one) and ensure your " +
+    "environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) " +
+    "are correctly set with valid service account credentials. " +
+    "The most common cause is missing or malformed credentials, particularly the private key format or content."
+  );
+}
+
+// If initialization was successful, export the services.
 const adminDb = admin.firestore();
 const adminAuth = admin.auth();
 const adminStorage = admin.storage();
 
 export { adminDb, adminAuth, adminStorage };
+
+    

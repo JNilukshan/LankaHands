@@ -2,32 +2,30 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/shared/ProductCard';
-import StarRating from '@/components/shared/StarRating';
-import type { Artisan, Product, Review } from '@/types';
+// StarRating import can be removed if averageRating is directly from artisan object
+import type { Artisan, Product } from '@/types';
 import Link from 'next/link';
 import { Award, MapPin, MessageCircle, Users, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; 
-import { getMockArtisanById, getMockProductsByArtisanId } from '@/lib/mock-data';
+import { getArtisanById } from '@/services/artisanService'; // Updated
+import { getProductsByArtisanId } from '@/services/productService'; // Updated, assumes this function exists
+import { notFound } from 'next/navigation';
 
 export default async function ArtisanProfilePage({ params }: { params: { id: string } }) {
-  const artisan = await getMockArtisanById(params.id);
+  const artisan = await getArtisanById(params.id);
 
   if (!artisan) {
-    return <div className="text-center py-10">Artisan not found.</div>;
+    notFound(); // Use Next.js notFound for 404
   }
 
-  // Products will be fetched or already part of the artisan object from mock-data
-  const artisanProducts = artisan.products || await getMockProductsByArtisanId(artisan.id);
+  // Fetch products by this artisan
+  const artisanProducts = await getProductsByArtisanId(artisan.id);
   
-  const averageRating = artisanProducts?.reduce((acc, product) => {
-      const productRating = product.reviews && product.reviews.length > 0
-        ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
-        : 0;
-      return acc + productRating;
-    }, 0) / (artisanProducts?.filter(p => p.reviews && p.reviews.length > 0).length || 1) || artisan.averageRating || 0;
+  // Use averageRating directly from artisan object if available, otherwise calculate or default
+  const averageRating = artisan.averageRating || 0;
 
 
   return (
@@ -36,7 +34,7 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
       <Card className="overflow-hidden shadow-xl">
         <div className="relative h-56 md:h-72 bg-gradient-to-r from-primary/20 to-accent/20">
           <Image 
-            src={"https://placehold.co/1200x400.png"} // Generic banner for artisan
+            src={artisan.bannerImageUrl || "https://placehold.co/1200x400.png"} // Use bannerImageUrl or placeholder
             alt={`${artisan.name} banner`} 
             fill
             style={{ objectFit: 'cover' }} 
@@ -124,5 +122,3 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
     </div>
   );
 }
-
-    

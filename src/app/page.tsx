@@ -1,20 +1,27 @@
 
-import ArtisanCard from '@/components/shared/ArtisanCard'; // Will be replaced for the featured section
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ProductCard from '@/components/shared/ProductCard';
 import { Button } from '@/components/ui/button';
 import type { Artisan, Product } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getMockAllArtisans, getMockAllProducts } from '@/lib/mock-data';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getAllArtisans } from '@/services/artisanService'; // Updated
+import { getAllProducts } from '@/services/productService'; // Updated
 
 
 export default async function HomePage() {
-  const allArtisans = await getMockAllArtisans();
+  // Fetch real data from services
+  const allArtisans: Artisan[] = await getAllArtisans();
+  const allProducts: Product[] = await getAllProducts();
+
+  // Sort artisans by followers (descending) and take top 3
   const sortedArtisans = [...allArtisans].sort((a, b) => (b.followers || 0) - (a.followers || 0));
-  const featuredArtisans = sortedArtisans.slice(0, 3); // Get top 3
-  const popularProducts = (await getMockAllProducts()).slice(0, 4);
+  const featuredArtisans = sortedArtisans.slice(0, 3);
+  
+  // For popular products, you might sort by reviews, sales, or just take the latest for now
+  // Here, we'll take the first 4 products as a simple example
+  const popularProducts = allProducts.slice(0, 4);
 
   return (
     <div className="space-y-16">
@@ -47,21 +54,25 @@ export default async function HomePage() {
         <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
           Meet Our Talented Artisans
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {featuredArtisans.map(artisan => (
-            <Card key={artisan.id} className="flex flex-col items-center text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <Avatar className="w-24 h-24 mb-4 border-2 border-primary">
-                <AvatarImage src={artisan.profileImageUrl as string} alt={artisan.name} data-ai-hint="artisan portrait" />
-                <AvatarFallback>{artisan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <h3 className="text-xl font-headline font-semibold text-primary mb-1">{artisan.name}</h3>
-              {artisan.speciality && <p className="text-sm text-accent mb-3">{artisan.speciality}</p>}
-              <Button variant="outline" className="mt-auto text-primary border-primary hover:bg-primary/10" asChild>
-                <Link href={`/artisans/${artisan.id}`}>View Profile</Link>
-              </Button>
-            </Card>
-          ))}
-        </div>
+        {featuredArtisans.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredArtisans.map(artisan => (
+              <Card key={artisan.id} className="flex flex-col items-center text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Avatar className="w-24 h-24 mb-4 border-2 border-primary">
+                  <AvatarImage src={artisan.profileImageUrl as string} alt={artisan.name} data-ai-hint="artisan portrait" />
+                  <AvatarFallback>{artisan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-headline font-semibold text-primary mb-1">{artisan.name}</h3>
+                {artisan.speciality && <p className="text-sm text-accent mb-3">{artisan.speciality}</p>}
+                <Button variant="outline" className="mt-auto text-primary border-primary hover:bg-primary/10" asChild>
+                  <Link href={`/artisans/${artisan.id}`}>View Profile</Link>
+                </Button>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground">No featured artisans available at the moment.</p>
+        )}
       </section>
 
       {/* Popular Products Section */}
@@ -69,11 +80,15 @@ export default async function HomePage() {
         <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
           Popular Handcrafted Treasures
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {popularProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {popularProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {popularProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground">No popular products to display right now.</p>
+        )}
         <div className="text-center mt-10">
           <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
             <Link href="/products">Explore All Products</Link>

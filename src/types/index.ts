@@ -20,17 +20,21 @@ export interface StorePolicies {
 
 export interface Artisan {
   id: string;
-  name:string;
+  userId?: string; // Link to users collection (Firebase Auth UID)
+  name:string; // This could be publicName or brandName
   email?: string;
   bio: string;
   profileImageUrl: string; // URL from Firebase Storage
-  // products?: Product[]; // Typically not stored directly on artisan, fetched separately
+  bannerImageUrl?: string; // URL from Firebase Storage for profile banner
   followers?: number;
   averageRating?: number;
   location?: string;
   speciality?: string;
   shippingSettings?: ShippingSettings;
   storePolicies?: StorePolicies;
+  isVerified?: boolean;
+  createdAt?: string; // ISO date string
+  // products?: Product[]; // Typically not stored directly on artisan, fetched separately
 }
 
 export interface Product {
@@ -43,12 +47,12 @@ export interface Product {
   images: string[]; // Array of image URLs from Firebase Storage
   artisanId: string;
   artisanName?: string; // Denormalized for easier display
-  // artisan?: Artisan; // Usually fetched separately or linked by artisanId
   reviews?: Review[];
   stock?: number;
   dimensions?: string;
   materials?: string[];
   isVisible?: boolean; // To control product visibility
+  tags?: string[];
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
 }
@@ -65,12 +69,16 @@ export interface Review {
   createdAt: string; // ISO date string
 }
 
-export interface User { // This might be more for a general user type, AuthenticatedUser is more specific
+export interface User { // More for your Firestore 'users' collection doc
   id: string; // Firebase Auth UID
   name: string;
   email: string;
+  role: 'buyer' | 'seller';
   profileImageUrl?: string; // URL from Firebase Storage
-  // isSeller: boolean; // Redundant if using 'role' in AuthenticatedUser
+  wishlist?: string[]; // Array of product IDs
+  followedArtisans?: string[]; // Array of artisan IDs
+  artisanProfileId?: string; // Link to their artisanProfiles document if role is 'seller'
+  createdAt?: string; // ISO date string
 }
 
 export interface Order {
@@ -84,7 +92,7 @@ export interface Order {
   grandTotal: number; // Total including shipping and tax
   orderDate: string; // ISO date string
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  shippingAddress?: { // Could be a more structured object
+  shippingAddress?: {
     street: string;
     city: string;
     postalCode: string;
@@ -92,11 +100,10 @@ export interface Order {
     recipientName?: string;
   };
   artisanId?: string; // If order is for a single artisan, or primary artisan
-  // If multiple artisans, items array would need artisanId per item, or orders split.
   paymentDetails?: {
     paymentId: string;
-    method: string; // e.g., 'Stripe', 'PayPal'
-    status: string; // e.g., 'succeeded'
+    method: string; 
+    status: string;
   };
   trackingNumber?: string;
   lastUpdatedAt?: string; // ISO date string
@@ -104,11 +111,11 @@ export interface Order {
 
 export interface OrderItem {
   productId: string;
-  productName: string; // Denormalized
-  productImage?: string; // Denormalized URL of primary image
+  productName: string; 
+  productImage?: string; 
   quantity: number;
-  priceAtPurchase: number; // Price of the item at the time of order
-  artisanId?: string; // If items can be from different artisans in one order
+  priceAtPurchase: number; 
+  artisanId?: string; 
 }
 
 export interface CartItem {
@@ -146,14 +153,15 @@ export interface SellerNotification {
   artisanId?: string;
 }
 
-// For AuthContext
+// For AuthContext - this represents the currently logged-in user's state in the app
 export interface AuthenticatedUser {
   id: string; // Firebase Auth UID
   name: string;
   email: string;
   role: 'buyer' | 'seller';
-  profileImageUrl?: string; // URL from Firebase Storage
-  followedArtisans?: string[]; // Array of artisan IDs
-  wishlist?: string[]; // Array of product IDs
-  artisanProfileId?: string; // If role is 'seller', links to their document in `artisanProfiles`
+  profileImageUrl?: string; 
+  followedArtisans?: string[]; 
+  wishlist?: string[]; 
+  // artisanProfileId might be fetched separately if needed in context, or derived
 }
+
