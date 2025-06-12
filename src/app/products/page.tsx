@@ -6,7 +6,7 @@ import ProductCard from '@/components/shared/ProductCard';
 import type { Product } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ListFilter, ChevronDown, Users } from 'lucide-react';
+import { Search, ListFilter, Users } from 'lucide-react'; // Keep Users import for now, in case it's used elsewhere or as placeholder. Will remove if truly unused.
 import {
   Select,
   SelectContent,
@@ -27,7 +27,7 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All'); // Default to "All"
+  const [selectedCategory, setSelectedCategory] = useState<string>('All'); 
   const { currentUser } = useAuth();
 
   useEffect(() => {
@@ -39,6 +39,7 @@ export default function ProductsPage() {
       const uniqueCategories = Array.from(new Set(productsData.map(p => p.category)));
       setCategories(uniqueCategories.sort());
       
+      // Initial sort by name (A-Z)
       setFilteredProducts(productsData.sort((a,b) => a.name.localeCompare(b.name))); 
       setIsLoading(false);
     };
@@ -55,7 +56,6 @@ export default function ProductsPage() {
           currentUser.followedArtisans!.includes(p.artisanId)
         );
       } else {
-        // No user logged in, or no followed artisans
         productsToDisplay = []; 
       }
     } else if (selectedCategory !== 'All') {
@@ -70,9 +70,11 @@ export default function ProductsPage() {
       );
     }
     
+    // Default sort: Name A-Z
     productsToDisplay.sort((a, b) => a.name.localeCompare(b.name));
 
 
+    // Simulate a brief loading delay for filter changes
     setTimeout(() => {
       setFilteredProducts(productsToDisplay);
       setIsLoading(false);
@@ -119,9 +121,9 @@ export default function ProductsPage() {
                     {category}
                   </SelectItem>
                 ))}
-                 {currentUser && ( // Only show if a user is logged in
+                 {currentUser && ( 
                     <SelectItem value={FOLLOWED_ARTISANS_FILTER_VALUE}>
-                        <span className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" /> Products from Followed Artisans</span>
+                        Products from Followed Artisans
                     </SelectItem>
                 )}
               </SelectContent>
@@ -171,4 +173,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
