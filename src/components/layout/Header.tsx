@@ -14,6 +14,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from "@/components/ui/badge";
 import { useState, type FC, useEffect } from 'react';
@@ -35,13 +46,63 @@ const Header: FC = () => {
 
   useEffect(() => {
     setCartItemCount(getCartItemCount());
-  }, [getCartItemCount, currentUser]); // Re-check cart count if user changes
+  }, [getCartItemCount, currentUser]);
 
 
   const handleLogout = () => {
     logout();
     router.push('/');
   };
+
+  const MobileNavLogoutButton = () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
+          <LogOutIcon className="mr-3 h-5 w-5" /> Logout
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to logout?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <SheetClose asChild>
+            <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Logout</AlertDialogAction>
+          </SheetClose>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+  
+  const DesktopDropdownLogoutItem = () => (
+     <AlertDialog>
+        <AlertDialogTrigger asChild>
+            <DropdownMenuItem
+            onSelect={(event) => event.preventDefault()} // Prevent menu close on trigger click
+            className="text-destructive cursor-pointer data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+            >
+            <LogOutIcon className="mr-2 h-4 w-4" /> Logout
+            </DropdownMenuItem>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+                Are you sure you want to logout?
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Logout</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+  );
+
 
   const MobileNav = () => (
     <Sheet>
@@ -74,9 +135,7 @@ const Header: FC = () => {
                     <User className="mr-3 h-5 w-5 text-primary" /> View Public Profile
                   </Link>
                 </SheetClose>
-                <Button variant="ghost" onClick={handleLogout} className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
-                  <LogOutIcon className="mr-3 h-5 w-5" /> Logout
-                </Button>
+                <MobileNavLogoutButton />
               </>
             ) : ( // Buyer
               <>
@@ -90,9 +149,7 @@ const Header: FC = () => {
                     <Briefcase className="mr-3 h-5 w-5 text-primary" /> Become a Seller
                   </Link>
                 </SheetClose>
-                 <Button variant="ghost" onClick={handleLogout} className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
-                  <LogOutIcon className="mr-3 h-5 w-5" /> Logout
-                </Button>
+                 <MobileNavLogoutButton />
               </>
             )
           ) : ( // Logged out
@@ -166,9 +223,7 @@ const Header: FC = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
-                    <LogOutIcon className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
+                  <DesktopDropdownLogoutItem />
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : ( // Buyer
@@ -195,9 +250,7 @@ const Header: FC = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                   <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
-                    <LogOutIcon className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
+                   <DesktopDropdownLogoutItem />
                 </DropdownMenuContent>
               </DropdownMenu>
             )
@@ -256,3 +309,4 @@ const Header: FC = () => {
 };
 
 export default Header;
+
