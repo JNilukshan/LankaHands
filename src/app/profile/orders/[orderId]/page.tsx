@@ -34,7 +34,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
   // For this prototype, we'll assume the logged-in user is 'chandana-c1'
   const customerId = 'chandana-c1'; 
   const resolvedParams = React.use(params);
-  const orderId = resolvedParams.orderId;
+  const orderId = resolvedParams.orderId; // Corrected from resolvedParams.id
   
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -290,5 +290,3 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     </div>
   );
 }
-
-    
