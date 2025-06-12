@@ -1,5 +1,5 @@
 
-import ArtisanCard from '@/components/shared/ArtisanCard';
+import ArtisanCard from '@/components/shared/ArtisanCard'; // Will be replaced for the featured section
 import ProductCard from '@/components/shared/ProductCard';
 import { Button } from '@/components/ui/button';
 import type { Artisan, Product } from '@/types';
@@ -7,12 +7,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getMockAllArtisans, getMockAllProducts } from '@/lib/mock-data';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 export default async function HomePage() {
-  // Fetch new mock data
-  const featuredArtisans = (await getMockAllArtisans()).slice(0, 2); // Take the first two for homepage
-  const popularProducts = (await getMockAllProducts()).slice(0, 4); // Take the first four
+  const allArtisans = await getMockAllArtisans();
+  const sortedArtisans = [...allArtisans].sort((a, b) => (b.followers || 0) - (a.followers || 0));
+  const featuredArtisans = sortedArtisans.slice(0, 3); // Get top 3
+  const popularProducts = (await getMockAllProducts()).slice(0, 4);
 
   return (
     <div className="space-y-16">
@@ -40,14 +42,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-       {/* Featured Artisans Section */}
+       {/* Featured Artisans Section - Redesigned */}
       <section>
         <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
           Meet Our Talented Artisans
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {featuredArtisans.map(artisan => (
-            <ArtisanCard key={artisan.id} artisan={artisan} />
+            <Card key={artisan.id} className="flex flex-col items-center text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <Avatar className="w-24 h-24 mb-4 border-2 border-primary">
+                <AvatarImage src={artisan.profileImageUrl as string} alt={artisan.name} data-ai-hint="artisan portrait" />
+                <AvatarFallback>{artisan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <h3 className="text-xl font-headline font-semibold text-primary mb-1">{artisan.name}</h3>
+              {artisan.speciality && <p className="text-sm text-accent mb-3">{artisan.speciality}</p>}
+              <Button variant="outline" className="mt-auto text-primary border-primary hover:bg-primary/10" asChild>
+                <Link href={`/artisans/${artisan.id}`}>View Profile</Link>
+              </Button>
+            </Card>
           ))}
         </div>
       </section>
@@ -132,4 +144,3 @@ export default async function HomePage() {
   );
 }
 
-    
