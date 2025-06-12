@@ -129,4 +129,6 @@ export interface AuthenticatedUser {
   email: string;
   role: 'buyer' | 'seller';
   profileImageUrl?: string | StaticImageData;
+  followedArtisans?: string[]; // Added for followed artisans feature
 }
+

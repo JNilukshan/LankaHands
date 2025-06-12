@@ -66,13 +66,14 @@ export const mockArtisanRavi: Artisan = {
 export const allMockArtisans: Artisan[] = [mockArtisanNimali, mockArtisanRavi];
 
 // --- CUSTOMER: Chandana Silva ---
-export const mockCustomerChandana: User & { role?: 'buyer' } = { // Added role for clarity, User type implies buyer if not seller
+export const mockCustomerChandana: User & { role?: 'buyer'; followedArtisans?: string[] } = {
   id: 'chandana-c1',
   name: 'Chandana Silva',
   email: 'chandana.silva@example.com',
   profileImageUrl: 'https://placehold.co/128x128.png', 
-  isSeller: false, // This matches User type
-  role: 'buyer', // More explicit for AuthContext
+  isSeller: false,
+  role: 'buyer',
+  followedArtisans: ['nimali-1'], // Chandana follows Nimali Perera
 };
 
 
@@ -301,3 +302,4 @@ export const getMockAllReviewsForNimali = async (): Promise<Review[]> => {
         return {...r, productName: product?.name || "Unknown Product", productImageUrl: product?.images[0] };
     });
 }
+

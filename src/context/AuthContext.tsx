@@ -56,15 +56,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: mockCustomerChandana.email,
         role: 'buyer',
         profileImageUrl: mockCustomerChandana.profileImageUrl,
+        followedArtisans: mockCustomerChandana.followedArtisans || [],
       };
       updateAuthState(buyerUser);
       setIsLoading(false);
       return true;
-    } else if (email.toLowerCase() === (mockArtisanNimali.email || '').toLowerCase()) { // Assuming Nimali has an email for login
+    } else if (email.toLowerCase() === (mockArtisanNimali.email || '').toLowerCase()) { 
       const sellerUser: AuthenticatedUser = {
         id: mockArtisanNimali.id,
         name: mockArtisanNimali.name,
-        email: mockArtisanNimali.email || 'nimali.seller@example.com', // Fallback email
+        email: mockArtisanNimali.email || 'nimali.seller@example.com', 
         role: 'seller',
         profileImageUrl: mockArtisanNimali.profileImageUrl,
       };
@@ -85,11 +86,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newBuyer: AuthenticatedUser = {
-      id: `buyer-${Date.now()}`, // Simple unique ID for prototype
+      id: `buyer-${Date.now()}`, 
       name: userData.name,
       email: userData.email,
       role: 'buyer',
-      profileImageUrl: 'https://placehold.co/128x128.png', // Default avatar
+      profileImageUrl: 'https://placehold.co/128x128.png', 
+      followedArtisans: [], // New buyers start with no followed artisans
     };
     updateAuthState(newBuyer);
     setIsLoading(false);
@@ -99,11 +101,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const registerAsSeller = useCallback(async (userData: Pick<AuthenticatedUser, 'name' | 'email'>): Promise<boolean> => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    // For prototype simplicity, registering as a seller logs them in as Nimali
     const sellerUser: AuthenticatedUser = {
         id: mockArtisanNimali.id,
-        name: userData.name || mockArtisanNimali.name, // Use form name if provided
-        email: userData.email, // Use form email
+        name: userData.name || mockArtisanNimali.name, 
+        email: userData.email, 
         role: 'seller',
         profileImageUrl: mockArtisanNimali.profileImageUrl,
     };
@@ -118,10 +119,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 500));
       const updatedUser: AuthenticatedUser = { ...currentUser, role: 'seller' };
-      // In a real app, you might assign a new seller ID or link to an existing artisan profile.
-      // For this prototype, we'll keep their ID but change role.
-      // Or, for simplicity, log them in as Nimali for "Become Seller" if they were Chandana
-      // Let's make it upgrade the current user's role:
       updateAuthState(updatedUser);
       setIsLoading(false);
       return true;
@@ -143,3 +140,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
