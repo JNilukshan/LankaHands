@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, DollarSign, TrendingUp, Users, ShoppingBag, Eye, Percent, Package, Brain } from 'lucide-react'; 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'; 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Legend, Tooltip } from 'recharts'; 
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'; 
 
 // Mock data for analytics
 const totalSales = 12560.75;
@@ -76,7 +76,7 @@ export default function SalesAnalyticsPage() {
         </CardHeader>
         <CardContent className="h-[400px] p-4">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={salesData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+            <LineChart data={salesData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `$${value / 1000}k`} />
@@ -86,8 +86,8 @@ export default function SalesAnalyticsPage() {
                 itemStyle={{ color: 'hsl(var(--primary))' }}
               />
               <Legend wrapperStyle={{fontSize: "12px"}}/>
-              <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
+              <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))" }} activeDot={{ r: 6 }} />
+            </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
