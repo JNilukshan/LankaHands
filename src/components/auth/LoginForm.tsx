@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,17 +12,22 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(1, { message: "Password is required." }), // Min 1 for mock
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -32,19 +38,42 @@ const LoginForm = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    console.log("Login data:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: "Login Successful",
-      description: "Welcome back!",
-    });
-    // In a real app, you'd redirect or update auth state here
-    // e.g., router.push('/profile');
-    setIsLoading(false);
-    form.reset();
+    setIsSubmitting(true);
+    const success = await login(data.email, data.password);
+    setIsSubmitting(false);
+
+    if (success) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      // Redirect after state update ensures currentUser is available
+      // We check currentUser in a useEffect or rely on router.refresh() if needed
+      // For now, let's check role after login for redirect
+      if (data.email.toLowerCase() === "nimali.perera@example.com") { // Mock seller email
+         router.push('/dashboard/seller');
+      } else {
+         router.push('/profile');
+      }
+
+    } else {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+       form.setError("email", { type: "manual", message: " " });
+       form.setError("password", { type: "manual", message: "Invalid credentials" });
+    }
   };
+  
+  // If user is already logged in, redirect them
+  if (!authLoading && currentUser) {
+    if (currentUser.role === 'seller') router.push('/dashboard/seller');
+    else router.push('/profile');
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Redirecting...</p></div>;
+  }
+
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl">
@@ -81,8 +110,8 @@ const LoginForm = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting || authLoading}>
+              {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
           </form>
@@ -95,9 +124,9 @@ const LoginForm = () => {
             <Link href="/register">Register here</Link>
           </Button>
         </p>
-        <Button variant="link" asChild className="text-primary p-0 h-auto mt-2">
+        {/* <Button variant="link" asChild className="text-primary p-0 h-auto mt-2">
             <Link href="/forgot-password">Forgot password?</Link>
-        </Button>
+        </Button> */}
       </CardContent>
     </Card>
   );

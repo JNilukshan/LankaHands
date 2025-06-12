@@ -20,6 +20,7 @@ export interface StorePolicies {
 export interface Artisan {
   id: string;
   name:string;
+  email?: string; // Added for seller login simulation
   bio: string;
   profileImageUrl: string | StaticImageData;
   products?: Product[];
@@ -40,9 +41,9 @@ export interface Product {
   category: string;
   images: (string | StaticImageData)[];
   artisanId: string;
-  artisan?: Artisan; // Optional: For direct access if product data includes full artisan details
+  artisan?: Artisan; 
   reviews?: Review[];
-  stock?: number; // Number of items in stock
+  stock?: number; 
   dimensions?: string; 
   materials?: string[];
 }
@@ -63,7 +64,7 @@ export interface User {
   name: string;
   email: string;
   profileImageUrl?: string | StaticImageData;
-  isSeller: boolean;
+  isSeller: boolean; // This can be derived from 'role' in AuthenticatedUser
 }
 
 export interface Order {
@@ -75,28 +76,26 @@ export interface Order {
   orderDate: string; 
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress?: string;
-  artisan?: Artisan; // Artisan fulfilling this order
+  artisan?: Artisan; 
 }
 
-// Represents an item *within an order* after it's placed
 export interface OrderItem {
   productId: string;
   productName: string;
   productImage?: string | StaticImageData;
   quantity: number;
-  price: number; // Price per unit at the time of order
+  price: number; 
 }
 
-// Represents an item *in the shopping cart* before an order is placed
 export interface CartItem {
-  id: string; // Product ID
+  id: string; 
   name: string;
-  price: number; // Current price per unit
-  image: string | StaticImageData; // Main product image
+  price: number; 
+  image: string | StaticImageData; 
   quantity: number;
   artisanId?: string;
   artisanName?: string;
-  stock?: number; // Available stock for the product
+  stock?: number; 
 }
 
 
@@ -109,7 +108,6 @@ export interface SellerStats {
   pendingOrders: number;
 }
 
-// This type is for the seller dashboard notifications
 export type NotificationType = 'new_order' | 'new_message' | 'new_review' | 'low_stock' | 'general';
 
 export interface SellerNotification {
@@ -117,9 +115,18 @@ export interface SellerNotification {
   type: NotificationType;
   title: string;
   description: string;
-  timestamp: string; // Stored as ISO string, converted to Date object in component
+  timestamp: string; 
   read: boolean;
   link?: string; 
   sender?: string; 
-  artisanId?: string; // To associate notification with a specific artisan (for multi-seller platforms)
+  artisanId?: string; 
+}
+
+// For AuthContext
+export interface AuthenticatedUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'buyer' | 'seller';
+  profileImageUrl?: string | StaticImageData;
 }

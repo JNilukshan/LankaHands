@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, UserCircle2, Store } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from "@/components/ui/badge";
 import { useState, type FC, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const mainNavLinks = [
   { href: '/', label: 'Home' },
@@ -24,30 +27,100 @@ const mainNavLinks = [
   { href: '/about', label: 'About Us' },
 ];
 
-const mobileNavLinks = [
-    { href: '/', label: 'Home', icon: Info },
-    { href: '/products', label: 'Products', icon: ShoppingCart },
-    { href: '/about', label: 'About Us', icon: Info },
-];
-
-const mobileAccountNavLinks = [
-    { href: '/login', label: 'Sign In', icon: LogIn },
-    { href: '/register', label: 'Register', icon: UserPlus },
-    { href: '/profile', label: 'Profile', icon: User },
-    { href: '/become-seller', label: 'Become a Seller', icon: Briefcase },
-    { href: '/dashboard/seller', label: 'Seller Dashboard', icon: Briefcase },
-];
-
-
 const Header: FC = () => {
-  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const { getCartItemCount } = useCart();
   const [cartItemCount, setCartItemCount] = useState(0);
+  const { currentUser, logout, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // Update cart count on client-side after hydration
     setCartItemCount(getCartItemCount());
-  }, [getCartItemCount]);
+  }, [getCartItemCount, currentUser]); // Re-check cart count if user changes
+
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
+  const MobileNav = () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Menu className="h-6 w-6 text-primary" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[300px] sm:w-[400px] flex flex-col">
+        <nav className="flex flex-col space-y-3 mt-8 flex-grow">
+          {mainNavLinks.map(link => (
+            <SheetClose asChild key={link.label}>
+              <Link href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                <Info className="mr-3 h-5 w-5 text-primary" /> {link.label}
+              </Link>
+            </SheetClose>
+          ))}
+          <hr className="my-3"/>
+          {currentUser ? (
+            currentUser.role === 'seller' ? (
+              <>
+                <SheetClose asChild>
+                  <Link href="/dashboard/seller" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                    <LayoutDashboard className="mr-3 h-5 w-5 text-primary" /> Seller Dashboard
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link href={`/artisans/${currentUser.id}`} className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                    <Store className="mr-3 h-5 w-5 text-primary" /> View Public Store
+                  </Link>
+                </SheetClose>
+                <Button variant="ghost" onClick={handleLogout} className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
+                  <LogOutIcon className="mr-3 h-5 w-5" /> Logout
+                </Button>
+              </>
+            ) : ( // Buyer
+              <>
+                <SheetClose asChild>
+                  <Link href="/profile" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                    <User className="mr-3 h-5 w-5 text-primary" /> Profile
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link href="/become-seller" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                    <Briefcase className="mr-3 h-5 w-5 text-primary" /> Become a Seller
+                  </Link>
+                </SheetClose>
+                 <Button variant="ghost" onClick={handleLogout} className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
+                  <LogOutIcon className="mr-3 h-5 w-5" /> Logout
+                </Button>
+              </>
+            )
+          ) : ( // Logged out
+            <>
+              <SheetClose asChild>
+                <Link href="/login" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                  <LogIn className="mr-3 h-5 w-5 text-primary" /> Sign In
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/register" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                  <UserPlus className="mr-3 h-5 w-5 text-primary" /> Register
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/become-seller" className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+                  <Briefcase className="mr-3 h-5 w-5 text-primary" /> Become a Seller
+                </Link>
+              </SheetClose>
+            </>
+          )}
+        </nav>
+        <div className="mt-auto p-2">
+          <LanguageSwitcher />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
 
 
   return (
@@ -57,64 +130,87 @@ const Header: FC = () => {
           LankaHands
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {mainNavLinks.map(link => (
             <Link key={link.label} href={link.href} className="text-foreground/80 hover:text-primary transition-colors">
               {link.label}
             </Link>
           ))}
+          {!isAuthLoading && !currentUser && (
+             <Link href="/become-seller" className="text-foreground/80 hover:text-primary transition-colors">Become a Seller</Link>
+          )}
+           {!isAuthLoading && currentUser && currentUser.role === 'buyer' && (
+             <Link href="/become-seller" className="text-foreground/80 hover:text-primary transition-colors">Become a Seller</Link>
+          )}
         </nav>
 
-        <div className="hidden md:flex items-center space-x-3">
-          <LanguageSwitcher />
-          <DropdownMenu open={isAccountDropdownOpen} onOpenChange={setIsAccountDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="text-sm"
-              >
-                Welcome
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-            >
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/login" className="flex items-center w-full">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
-                </Link>
-              </DropdownMenuItem>
-               <DropdownMenuItem asChild>
-                <Link href="/register" className="flex items-center w-full">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Register
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/become-seller" className="flex items-center w-full">
-                  <Briefcase className="mr-2 h-4 w-4" />
-                  Become a Seller
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/seller" className="flex items-center w-full">
-                  <Briefcase className="mr-2 h-4 w-4" />
-                  Seller Dashboard
-                </Link>
-              </DropdownMenuItem>
-               <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center w-full">
-                        <User className="mr-2 h-4 w-4" />
-                        Profile
+        <div className="flex items-center space-x-2">
+          <div className="hidden md:block"> <LanguageSwitcher /> </div>
+          
+          {!isAuthLoading && currentUser ? (
+            currentUser.role === 'seller' ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={currentUser.profileImageUrl as string | undefined} alt={currentUser.name} data-ai-hint="seller avatar"/>
+                      <AvatarFallback><LayoutDashboard className="h-5 w-5 text-primary"/></AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/seller" className="flex items-center w-full">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Seller Dashboard
                     </Link>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                     <Link href={`/artisans/${currentUser.id}`} className="flex items-center w-full">
+                        <Store className="mr-2 h-4 w-4" /> View Public Store
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
+                    <LogOutIcon className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : ( // Buyer
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" size="icon" className="rounded-full">
+                     <Avatar className="h-8 w-8">
+                       <AvatarImage src={currentUser.profileImageUrl as string | undefined} alt={currentUser.name} data-ai-hint="buyer avatar"/>
+                       <AvatarFallback><User className="h-5 w-5 text-primary"/></AvatarFallback>
+                     </Avatar>
+                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center w-full">
+                      <User className="mr-2 h-4 w-4" /> Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
+                    <LogOutIcon className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
+          ) : !isAuthLoading ? ( // Logged out
+            <div className="hidden md:flex items-center space-x-2">
+              <Button variant="ghost" asChild><Link href="/login">Sign In</Link></Button>
+              <Button asChild><Link href="/register">Register</Link></Button>
+            </div>
+          ) : (
+            <div className="h-8 w-20 bg-muted rounded-md animate-pulse hidden md:block"></div> // Skeleton for auth loading
+          )}
+
           <Button variant="ghost" size="icon" asChild className="relative">
             <Link href="/cart">
               <ShoppingCart className="h-5 w-5 text-primary" />
@@ -126,46 +222,9 @@ const Header: FC = () => {
               <span className="sr-only">Shopping Cart</span>
             </Link>
           </Button>
-        </div>
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden flex items-center">
-          <LanguageSwitcher />
-          <Button variant="ghost" size="icon" asChild className="relative">
-            <Link href="/cart">
-              <ShoppingCart className="h-5 w-5 text-primary" />
-              {cartItemCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center rounded-full bg-accent text-accent-foreground text-[0.6rem]">
-                  {cartItemCount}
-                </Badge>
-              )}
-              <span className="sr-only">Shopping Cart</span>
-            </Link>
-          </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6 text-primary" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col space-y-4 mt-8">
-                {mobileNavLinks.map(link => (
-                  <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
-                     <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
-                  </Link>
-                ))}
-                <hr/>
-                {mobileAccountNavLinks.map(link => (
-                   <Link key={link.label} href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center">
-                     <link.icon className="mr-2 h-5 w-5 text-primary" /> {link.label}
-                   </Link>
-                ))}
-                {/* Cart link removed from here as it's an icon button now */}
-              </nav>
-            </SheetContent>
-          </Sheet>
+          <div className="md:hidden">
+            <MobileNav />
+          </div>
         </div>
       </div>
     </header>

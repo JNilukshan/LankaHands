@@ -1,5 +1,5 @@
 
-import type { Artisan, Product, User, Review, Order, OrderItem, ShippingSettings, StorePolicies } from '@/types';
+import type { Artisan, Product, User, Review, Order, OrderItem, ShippingSettings, StorePolicies, AuthenticatedUser } from '@/types';
 
 // --- ARTISAN: Nimali Perera (Batik Artist) ---
 const nimaliShippingSettings: ShippingSettings = {
@@ -21,15 +21,16 @@ const nimaliStorePolicies: StorePolicies = {
 export const mockArtisanNimali: Artisan = {
   id: 'nimali-1',
   name: 'Nimali Perera',
+  email: 'nimali.perera@example.com', // Added for login
   bio: "Nimali Perera is a celebrated Batik artist from the historic city of Kandy. With over 20 years of experience, Nimali draws inspiration from Sri Lanka's lush landscapes and rich cultural tapestry. Her work is characterized by intricate details, vibrant color palettes, and a fusion of traditional motifs with contemporary aesthetics. Each piece is a labor of love, meticulously handcrafted to bring a touch of Sri Lankan heritage into modern life. Nimali is passionate about sustainable practices, using eco-friendly dyes and materials in her creations. She also mentors young aspiring artists, helping to preserve and evolve the ancient art of Batik.",
-  profileImageUrl: 'https://placehold.co/400x400.png', // Placeholder image
+  profileImageUrl: 'https://placehold.co/400x400.png', 
   speciality: 'Master Batik Artist',
   location: 'Kandy, Sri Lanka',
   followers: 1357,
   averageRating: 4.9,
   shippingSettings: nimaliShippingSettings,
   storePolicies: nimaliStorePolicies,
-  products: [], // Will be populated later
+  products: [], 
 };
 
 // --- ARTISAN: Ravi Fernando (Wood Carver) ---
@@ -50,27 +51,30 @@ const raviStorePolicies: StorePolicies = {
 export const mockArtisanRavi: Artisan = {
   id: 'ravi-2',
   name: 'Ravi Fernando',
+  email: 'ravi.fernando@example.com', // Added for login (if needed)
   bio: "Ravi Fernando is a master wood carver hailing from the coastal city of Galle. With generations of woodcraft in his family, Ravi's work is renowned for its intricate detailing and the lifelike quality he imparts to his sculptures. He primarily uses sustainably sourced local timbers like mahogany, teak, and ebony, transforming them into exquisite pieces that reflect Sri Lanka's rich biodiversity and cultural narratives. Ravi is dedicated to traditional carving techniques while also exploring contemporary forms.",
-  profileImageUrl: 'https://placehold.co/400x400.png', // Placeholder image
+  profileImageUrl: 'https://placehold.co/400x400.png', 
   speciality: 'Wood Sculptor & Carver',
   location: 'Galle, Sri Lanka',
   followers: 975,
   averageRating: 4.7,
   shippingSettings: raviShippingSettings,
   storePolicies: raviStorePolicies,
-  products: [], // Will be populated later
+  products: [], 
 };
 
 export const allMockArtisans: Artisan[] = [mockArtisanNimali, mockArtisanRavi];
 
 // --- CUSTOMER: Chandana Silva ---
-export const mockCustomerChandana: User = {
+export const mockCustomerChandana: User & { role?: 'buyer' } = { // Added role for clarity, User type implies buyer if not seller
   id: 'chandana-c1',
   name: 'Chandana Silva',
   email: 'chandana.silva@example.com',
-  profileImageUrl: 'https://placehold.co/128x128.png', // Placeholder image
-  isSeller: false,
+  profileImageUrl: 'https://placehold.co/128x128.png', 
+  isSeller: false, // This matches User type
+  role: 'buyer', // More explicit for AuthContext
 };
+
 
 // --- REVIEWS (by Chandana Silva) ---
 export const mockReviewsByChandana: Review[] = [
@@ -140,18 +144,16 @@ export const mockProductWoodenMask: Product = {
   images: ['https://placehold.co/500x700.png', 'https://placehold.co/400x600.png'],
   artisanId: 'ravi-2',
   reviews: mockReviewsByChandana.filter(r => r.productId === 'prod-wood-mask-cobra'),
-  stock: 0, // Intentionally out of stock
+  stock: 0, 
   dimensions: "Approx. 10 inches height", materials: ["Kaduru Wood", "Acrylic Paints"],
   artisan: mockArtisanRavi,
 };
 
 export const allMockProducts: Product[] = [mockProductBatikSaree, mockProductBatikWallHanging, mockProductWoodenElephant, mockProductWoodenMask];
 
-// Populate artisan products arrays
 mockArtisanNimali.products = allMockProducts.filter(p => p.artisanId === 'nimali-1');
 mockArtisanRavi.products = allMockProducts.filter(p => p.artisanId === 'ravi-2');
 
-// --- ORDERS (for Chandana Silva) ---
 export const mockOrdersForChandana: Order[] = [
   {
     id: 'order-c1-1', userId: 'chandana-c1', customerName: 'Chandana Silva',
@@ -162,8 +164,7 @@ export const mockOrdersForChandana: Order[] = [
     totalAmount: mockProductBatikSaree.price + mockProductWoodenMask.price,
     orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'Delivered', shippingAddress: '123, Flower Road, Colombo 07, Sri Lanka',
-    // For simplicity, assume order is fulfilled by the first item's artisan, or handle multi-artisan orders differently
-    artisan: mockArtisanNimali,
+    artisan: mockArtisanNimali, 
   },
   {
     id: 'order-c1-2', userId: 'chandana-c1', customerName: 'Chandana Silva',
@@ -177,24 +178,20 @@ export const mockOrdersForChandana: Order[] = [
   },
 ];
 
-// --- WISHLIST (for Chandana Silva) ---
 export const mockWishlistForChandana: Product[] = [mockProductBatikWallHanging, mockProductWoodenMask];
 
-// --- HELPER FUNCTIONS ---
 export const getMockArtisanById = async (id: string): Promise<Artisan | null> => {
-  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
+  await new Promise(resolve => setTimeout(resolve, 50)); 
   return allMockArtisans.find(a => a.id === id) || null;
 };
 
 export const getMockProductById = async (id: string): Promise<Product | null> => {
-  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
+  await new Promise(resolve => setTimeout(resolve, 50)); 
   const product = allMockProducts.find(p => p.id === id);
   if (product) {
-    // Ensure artisan details are attached if not already
     if (!product.artisan) {
       product.artisan = allMockArtisans.find(a => a.id === product.artisanId);
     }
-    // Ensure reviews are attached if not already
     if(!product.reviews || product.reviews.length === 0) {
         product.reviews = mockReviewsByChandana.filter(r => r.productId === product.id);
     }
@@ -205,7 +202,6 @@ export const getMockProductById = async (id: string): Promise<Product | null> =>
 export const getMockProductsByArtisanId = async (artisanId: string): Promise<Product[]> => {
   await new Promise(resolve => setTimeout(resolve, 50));
   return allMockProducts.filter(p => p.artisanId === artisanId).map(p => {
-    // Ensure artisan details are attached
     if (!p.artisan) {
       p.artisan = allMockArtisans.find(a => a.id === p.artisanId);
     }
@@ -252,7 +248,6 @@ export const getMockAllArtisans = async (): Promise<Artisan[]> => {
     return allMockArtisans;
 };
 
-// For Seller Dashboard - assuming it's for Nimali Perera
 export const getMockSellerStatsForNimali = async (): Promise<any> => {
     await new Promise(resolve => setTimeout(resolve, 50));
     const nimaliProducts = allMockProducts.filter(p => p.artisanId === mockArtisanNimali.id);
@@ -287,7 +282,7 @@ export const getMockRecentOrdersForNimali = async (): Promise<Order[]> => {
     return mockOrdersForChandana
         .filter(order => order.items.some(item => nimaliProducts.find(p => p.id === item.productId)))
         .sort((a,b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-        .slice(0,3); // Return top 3 recent
+        .slice(0,3); 
 }
 
 export const getMockAllOrdersForNimali = async (): Promise<Order[]> => {
@@ -306,6 +301,3 @@ export const getMockAllReviewsForNimali = async (): Promise<Review[]> => {
         return {...r, productName: product?.name || "Unknown Product", productImageUrl: product?.images[0] };
     });
 }
-
-
-    

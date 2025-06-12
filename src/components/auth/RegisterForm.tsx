@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +12,8 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -19,14 +22,16 @@ const registerSchema = z.object({
   confirmPassword: z.string()
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"], // path of error
+  path: ["confirmPassword"],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const RegisterForm = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { registerAsBuyer, currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -39,19 +44,29 @@ const RegisterForm = () => {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
-    setIsLoading(true);
-    console.log("Registration data:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: "Registration Successful",
-      description: "Welcome to LankaHands! Please check your email to verify your account.",
-    });
-    // In a real app, you'd handle the registration logic
-    // e.g., router.push('/login');
-    setIsLoading(false);
-    form.reset();
+    setIsSubmitting(true);
+    const success = await registerAsBuyer({ name: data.fullName, email: data.email });
+    setIsSubmitting(false);
+
+    if (success) {
+      toast({
+        title: "Registration Successful",
+        description: "Welcome to LankaHands! You are now logged in.",
+      });
+      router.push('/profile');
+    } else {
+      toast({
+        title: "Registration Failed",
+        description: "Could not create your account. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (!authLoading && currentUser) {
+    router.push('/profile'); // Or dashboard if seller, but register form is for buyers
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Redirecting...</p></div>;
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl">
@@ -114,8 +129,8 @@ const RegisterForm = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting || authLoading}>
+              {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>
           </form>
