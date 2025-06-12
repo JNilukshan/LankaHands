@@ -44,11 +44,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     } catch (error) {
       console.error("Failed to save cart to localStorage", error);
-      toast({
-        title: "Storage Error",
-        description: "Could not save your cart. Please try again.",
-        variant: "destructive",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Storage Error",
+          description: "Could not save your cart. Please try again.",
+          variant: "destructive",
+        });
+      }, 0);
     }
   }, [toast]);
 
@@ -60,11 +62,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const newQuantity = existingItem.quantity + quantity;
         // Check against stock if available
         if (product.stock !== undefined && newQuantity > product.stock) {
-          toast({
-            title: "Stock Limit Reached",
-            description: `Cannot add more than ${product.stock} units of ${product.name}.`,
-            variant: "destructive",
-          });
+          setTimeout(() => {
+            toast({
+              title: "Stock Limit Reached",
+              description: `Cannot add more than ${product.stock} units of ${product.name}.`,
+              variant: "destructive",
+            });
+          }, 0);
           return prevItems; // Return previous items without change
         }
         newItems = prevItems.map(item =>
@@ -73,11 +77,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         // Check stock for new item
         if (product.stock !== undefined && quantity > product.stock) {
-           toast({
-            title: "Not Enough Stock",
-            description: `Only ${product.stock} units of ${product.name} available.`,
-            variant: "destructive",
-          });
+           setTimeout(() => {
+            toast({
+              title: "Not Enough Stock",
+              description: `Only ${product.stock} units of ${product.name} available.`,
+              variant: "destructive",
+            });
+          }, 0);
           return prevItems; // Return previous items without change
         }
         newItems = [
@@ -95,10 +101,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ];
       }
       saveCartToLocalStorage(newItems);
-      toast({
-        title: "Item Added to Cart",
-        description: `${product.name} (x${quantity}) has been added to your cart.`,
-      });
+      setTimeout(() => {
+        toast({
+          title: "Item Added to Cart",
+          description: `${product.name} (x${quantity}) has been added to your cart.`,
+        });
+      }, 0);
       return newItems;
     });
   }, [saveCartToLocalStorage, toast]);
@@ -109,10 +117,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const newItems = prevItems.filter(item => item.id !== productId);
       saveCartToLocalStorage(newItems);
       if (itemToRemove) {
-        toast({
-          title: "Item Removed",
-          description: `${itemToRemove.name} has been removed from your cart.`,
-        });
+        setTimeout(() => {
+          toast({
+            title: "Item Removed",
+            description: `${itemToRemove.name} has been removed from your cart.`,
+          });
+        }, 0);
       }
       return newItems;
     });
@@ -125,10 +135,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const newItems = prevItems.filter(item => item.id !== productId);
         saveCartToLocalStorage(newItems);
          if (itemToRemove) {
-           toast({
-             title: "Item Removed",
-             description: `${itemToRemove.name} has been removed as quantity is zero.`,
-           });
+           setTimeout(() => {
+            toast({
+              title: "Item Removed",
+              description: `${itemToRemove.name} has been removed as quantity is zero.`,
+            });
+          }, 0);
          }
         return newItems;
       }
@@ -136,11 +148,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (item.id === productId) {
           // Check against stock if available
           if (item.stock !== undefined && quantity > item.stock) {
-            toast({
-              title: "Stock Limit Reached",
-              description: `Cannot set quantity for ${item.name} beyond ${item.stock} units.`,
-              variant: "destructive",
-            });
+            setTimeout(() => {
+              toast({
+                title: "Stock Limit Reached",
+                description: `Cannot set quantity for ${item.name} beyond ${item.stock} units.`,
+                variant: "destructive",
+              });
+            }, 0);
             return { ...item, quantity: item.stock }; // Set to max stock
           }
           return { ...item, quantity };
@@ -155,10 +169,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearCart = useCallback(() => {
     setCartItems([]);
     saveCartToLocalStorage([]);
-    toast({
-      title: "Cart Cleared",
-      description: "All items have been removed from your cart.",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Cart Cleared",
+        description: "All items have been removed from your cart.",
+      });
+    }, 0);
   }, [saveCartToLocalStorage, toast]);
 
   const getCartTotal = useCallback(() => {
