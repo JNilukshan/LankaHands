@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, Store } from 'lucide-react'; // Removed UserCircle2
+import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, Store } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -71,7 +71,7 @@ const Header: FC = () => {
                 </SheetClose>
                 <SheetClose asChild>
                   <Link href={`/artisans/${currentUser.id}`} className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
-                    <Store className="mr-3 h-5 w-5 text-primary" /> View Public Store
+                    <User className="mr-3 h-5 w-5 text-primary" /> View Public Profile
                   </Link>
                 </SheetClose>
                 <Button variant="ghost" onClick={handleLogout} className="text-lg text-destructive hover:text-destructive justify-start p-2 rounded-md hover:bg-destructive/10 flex items-center w-full">
@@ -136,7 +136,6 @@ const Header: FC = () => {
               {link.label}
             </Link>
           ))}
-          {/* "Become a Seller" link logic is handled within the user dropdowns below for desktop now */}
         </nav>
 
         <div className="flex items-center space-x-2">
@@ -163,7 +162,7 @@ const Header: FC = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                      <Link href={`/artisans/${currentUser.id}`} className="flex items-center w-full">
-                        <Store className="mr-2 h-4 w-4" /> View Public Store
+                        <User className="mr-2 h-4 w-4" /> View Public Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -206,7 +205,7 @@ const Header: FC = () => {
             <div className="hidden md:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" size="default" className="px-3"> {/* Changed from icon to text "Welcome" */}
+                   <Button variant="ghost" size="default" className="px-3">
                      Welcome
                    </Button>
                 </DropdownMenuTrigger>
@@ -257,5 +256,3 @@ const Header: FC = () => {
 };
 
 export default Header;
-
-    
