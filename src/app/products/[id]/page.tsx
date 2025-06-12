@@ -15,6 +15,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from "@/hooks/use-toast";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { getMockProductById } from '@/lib/mock-data'; 
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const { addToCart } = useCart();
   const { currentUser, addToWishlist, removeFromWishlist, isProductInWishlist } = useAuth();
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
   const [mainImage, setMainImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,6 +71,21 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     }
     setIsLoadingWishlist(false);
   };
+  
+  const handleWriteReviewClick = () => {
+    if (!product) return;
+    if (currentUser) {
+      router.push(`/products/${product.id}/review`);
+    } else {
+      toast({
+        title: "Login Required",
+        description: "Please log in to write a review.",
+        variant: "default",
+      });
+      router.push('/login');
+    }
+  };
+
 
   if (isLoading) {
     return <div className="text-center py-10">Loading product details...</div>;
@@ -209,10 +226,12 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       <section>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-headline font-semibold text-primary">Community Reviews</h2>
-          <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
-            <Link href={`/products/${product.id}/review`}>
-              <PlusCircle size={18} className="mr-2"/> Write a Review
-            </Link>
+          <Button 
+            variant="default" 
+            className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            onClick={handleWriteReviewClick}
+          >
+            <PlusCircle size={18} className="mr-2"/> Write a Review
           </Button>
         </div>
         {product.reviews && product.reviews.length > 0 ? (
@@ -247,3 +266,4 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
+
