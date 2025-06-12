@@ -129,6 +129,7 @@ export interface AuthenticatedUser {
   email: string;
   role: 'buyer' | 'seller';
   profileImageUrl?: string | StaticImageData;
-  followedArtisans?: string[]; // Added for followed artisans feature
+  followedArtisans?: string[];
+  wishlist?: string[]; // Array of product IDs
 }
 

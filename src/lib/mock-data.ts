@@ -66,7 +66,7 @@ export const mockArtisanRavi: Artisan = {
 export const allMockArtisans: Artisan[] = [mockArtisanNimali, mockArtisanRavi];
 
 // --- CUSTOMER: Chandana Silva ---
-export const mockCustomerChandana: User & { role?: 'buyer'; followedArtisans?: string[] } = {
+export const mockCustomerChandana: User & { role?: 'buyer'; followedArtisans?: string[]; wishlist?: string[] } = {
   id: 'chandana-c1',
   name: 'Chandana Silva',
   email: 'chandana.silva@example.com',
@@ -74,6 +74,7 @@ export const mockCustomerChandana: User & { role?: 'buyer'; followedArtisans?: s
   isSeller: false,
   role: 'buyer',
   followedArtisans: ['nimali-1'], // Chandana follows Nimali Perera
+  wishlist: ['prod-batik-wall-lotus', 'prod-wood-mask-cobra'], // Chandana's wishlist product IDs
 };
 
 
@@ -155,6 +156,10 @@ export const allMockProducts: Product[] = [mockProductBatikSaree, mockProductBat
 mockArtisanNimali.products = allMockProducts.filter(p => p.artisanId === 'nimali-1');
 mockArtisanRavi.products = allMockProducts.filter(p => p.artisanId === 'ravi-2');
 
+// This constant represents the full product objects for Chandana's initial wishlist.
+export const mockWishlistForChandanaObjects: Product[] = [mockProductBatikWallHanging, mockProductWoodenMask];
+
+
 export const mockOrdersForChandana: Order[] = [
   {
     id: 'order-c1-1', userId: 'chandana-c1', customerName: 'Chandana Silva',
@@ -179,7 +184,21 @@ export const mockOrdersForChandana: Order[] = [
   },
 ];
 
-export const mockWishlistForChandana: Product[] = [mockProductBatikWallHanging, mockProductWoodenMask];
+// This function is less used now that profile page fetches products by ID from AuthContext
+// Kept for potential direct use or reference
+export const getMockWishlistByCustomerId = async (customerId: string): Promise<Product[]> => {
+  await new Promise(resolve => setTimeout(resolve, 50));
+   if (customerId === mockCustomerChandana.id) {
+    // Return full product objects for the initial wishlist
+    return mockWishlistForChandanaObjects.map(p => {
+      if(!p.artisan) {
+        p.artisan = allMockArtisans.find(a => a.id === p.artisanId);
+      }
+      return p;
+    });
+  }
+  return [];
+};
 
 export const getMockArtisanById = async (id: string): Promise<Artisan | null> => {
   await new Promise(resolve => setTimeout(resolve, 50)); 
@@ -218,18 +237,6 @@ export const getMockOrdersByCustomerId = async (customerId: string): Promise<Ord
   return [];
 };
 
-export const getMockWishlistByCustomerId = async (customerId: string): Promise<Product[]> => {
-  await new Promise(resolve => setTimeout(resolve, 50));
-   if (customerId === mockCustomerChandana.id) {
-    return mockWishlistForChandana.map(p => {
-      if(!p.artisan) {
-        p.artisan = allMockArtisans.find(a => a.id === p.artisanId);
-      }
-      return p;
-    });
-  }
-  return [];
-};
 
 export const getMockAllProducts = async (): Promise<Product[]> => {
     await new Promise(resolve => setTimeout(resolve, 50));

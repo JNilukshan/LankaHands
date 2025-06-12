@@ -7,58 +7,67 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { User, Order, Product, OrderItem } from '@/types';
-import { Edit3, History, Heart, UserCircle2, ShoppingBag } from 'lucide-react';
+import { Edit3, History, Heart, UserCircle2, ShoppingBag, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/shared/ProductCard';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { mockCustomerChandana, getMockOrdersByCustomerId, getMockWishlistByCustomerId } from '@/lib/mock-data';
-// AlertDialog imports are no longer needed if the button is removed.
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-//   AlertDialogTrigger,
-// } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/context/AuthContext';
+import { getMockOrdersByCustomerId, getMockProductById } from '@/lib/mock-data';
 
 export default function ProfilePage() {
-  const user = mockCustomerChandana; 
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
-  // const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false); // No longer needed
   const [orders, setOrders] = useState<Order[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
+  const [isLoadingPageData, setIsLoadingPageData] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      const userOrders = await getMockOrdersByCustomerId(user.id);
-      setOrders(userOrders);
-      const userWishlist = await getMockWishlistByCustomerId(user.id);
-      setWishlist(userWishlist);
-      setIsLoading(false);
-    };
-    fetchData();
-  }, [user.id]);
+    if (!currentUser || isAuthLoading) return;
 
-  // const handleLogout = () => { // No longer needed
-  //   setIsLogoutDialogOpen(false);
-  //   toast({
-  //     title: "Logged Out",
-  //     description: "You have been successfully logged out.",
-  //   });
-  //   // router.push('/login');
-  // };
-  
-  if (isLoading) {
-    return <div className="text-center py-10">Loading profile data...</div>;
+    const fetchData = async () => {
+      setIsLoadingPageData(true);
+      try {
+        const userOrders = await getMockOrdersByCustomerId(currentUser.id);
+        setOrders(userOrders);
+
+        if (currentUser.wishlist && currentUser.wishlist.length > 0) {
+          const fetchedWishlistProducts = await Promise.all(
+            currentUser.wishlist.map(productId => getMockProductById(productId))
+          );
+          setWishlistProducts(fetchedWishlistProducts.filter(p => p !== null) as Product[]);
+        } else {
+          setWishlistProducts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        toast({ title: "Error", description: "Could not load profile data.", variant: "destructive" });
+      }
+      setIsLoadingPageData(false);
+    };
+
+    fetchData();
+  }, [currentUser, isAuthLoading, toast]);
+
+  if (isAuthLoading || !currentUser) {
+    return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
+            <p className="text-lg text-muted-foreground">Loading profile...</p>
+        </div>
+    );
   }
+  
+  if (isLoadingPageData) {
+     return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
+            <p className="text-lg text-muted-foreground">Loading your information...</p>
+        </div>
+    );
+  }
+
 
   return (
     <div className="space-y-10">
@@ -66,14 +75,14 @@ export default function ProfilePage() {
         <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-              <AvatarImage src={typeof user.profileImageUrl === 'string' ? user.profileImageUrl : undefined} alt={user.name} data-ai-hint="person avatar"/>
+              <AvatarImage src={typeof currentUser.profileImageUrl === 'string' ? currentUser.profileImageUrl : undefined} alt={currentUser.name} data-ai-hint="person avatar"/>
               <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
-                {user.name ? user.name.substring(0,2).toUpperCase() : <UserCircle2 />}
+                {currentUser.name ? currentUser.name.substring(0,2).toUpperCase() : <UserCircle2 />}
               </AvatarFallback>
             </Avatar>
             <div className="text-center md:text-left">
-              <CardTitle className="text-3xl md:text-4xl font-headline text-primary">{user.name}</CardTitle>
-              <CardDescription className="text-md text-muted-foreground">{user.email}</CardDescription>
+              <CardTitle className="text-3xl md:text-4xl font-headline text-primary">{currentUser.name}</CardTitle>
+              <CardDescription className="text-md text-muted-foreground">{currentUser.email}</CardDescription>
             </div>
             <div className="md:ml-auto flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
                 <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
@@ -81,7 +90,6 @@ export default function ProfilePage() {
                         <Edit3 size={16} className="mr-2"/> Edit Profile
                     </Link>
                 </Button>
-                {/* Logout Button and AlertDialog Removed */}
             </div>
           </div>
         </CardHeader>
@@ -151,9 +159,9 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-headline font-semibold mb-6 text-primary flex items-center">
           <Heart size={28} className="mr-3 text-accent" /> Saved Items (Wishlist)
         </h2>
-        {wishlist.length > 0 ? (
+        {wishlistProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {wishlist.map(product => (
+            {wishlistProducts.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

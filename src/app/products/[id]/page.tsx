@@ -12,6 +12,8 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from "@/hooks/use-toast";
 import React, { useState, useEffect } from 'react';
 import { getMockProductById } from '@/lib/mock-data'; 
 import { cn } from '@/lib/utils';
@@ -22,7 +24,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const productId = resolvedParams.id;
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingWishlist, setIsLoadingWishlist] = useState(false);
   const { addToCart } = useCart();
+  const { currentUser, addToWishlist, removeFromWishlist, isProductInWishlist } = useAuth();
+  const { toast } = useToast();
   const [mainImage, setMainImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,6 +44,32 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     fetchProduct();
   }, [productId]);
 
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product, 1); 
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!currentUser) {
+      toast({ title: "Please Login", description: "You need to be logged in to manage your wishlist.", variant: "destructive" });
+      return;
+    }
+    if (!product) return;
+
+    setIsLoadingWishlist(true);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+
+    if (isProductInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+      toast({ title: "Removed from Wishlist", description: `${product.name} has been removed from your wishlist.` });
+    } else {
+      addToWishlist(product.id);
+      toast({ title: "Added to Wishlist", description: `${product.name} has been added to your wishlist.` });
+    }
+    setIsLoadingWishlist(false);
+  };
+
   if (isLoading) {
     return <div className="text-center py-10">Loading product details...</div>;
   }
@@ -51,11 +82,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
     : 0;
 
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product, 1); 
-    }
-  };
+  const productIsInWishlist = isProductInWishlist(product.id);
 
   return (
     <div className="space-y-12">
@@ -136,8 +163,18 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             >
               <ShoppingCart size={20} className="mr-2"/> Add to Cart
             </Button>
-            <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 flex-grow">
-              <Heart size={20} className="mr-2"/> Add to Wishlist
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className={cn(
+                "border-primary flex-grow",
+                productIsInWishlist ? "text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive" : "text-primary hover:bg-primary/10"
+              )}
+              onClick={handleWishlistToggle}
+              disabled={isLoadingWishlist}
+            >
+              <Heart size={20} className="mr-2" fill={productIsInWishlist ? "currentColor" : "none"} /> 
+              {isLoadingWishlist ? "Updating..." : (productIsInWishlist ? "Remove from Wishlist" : "Add to Wishlist")}
             </Button>
           </div>
         </div>
@@ -210,4 +247,3 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
-
