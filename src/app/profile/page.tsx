@@ -7,29 +7,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { User, Order, Product, OrderItem } from '@/types';
-import { Edit3, History, Heart, LogOut, UserCircle2, ShoppingBag } from 'lucide-react';
+import { Edit3, History, Heart, UserCircle2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/shared/ProductCard';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { mockCustomerChandana, getMockOrdersByCustomerId, getMockWishlistByCustomerId } from '@/lib/mock-data';
+// AlertDialog imports are no longer needed if the button is removed.
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+//   AlertDialogTrigger,
+// } from "@/components/ui/alert-dialog";
 
 export default function ProfilePage() {
   const user = mockCustomerChandana; 
   const { toast } = useToast();
-  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  // const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false); // No longer needed
   const [orders, setOrders] = useState<Order[]>([]);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,14 +47,14 @@ export default function ProfilePage() {
     fetchData();
   }, [user.id]);
 
-  const handleLogout = () => {
-    setIsLogoutDialogOpen(false);
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    // router.push('/login');
-  };
+  // const handleLogout = () => { // No longer needed
+  //   setIsLogoutDialogOpen(false);
+  //   toast({
+  //     title: "Logged Out",
+  //     description: "You have been successfully logged out.",
+  //   });
+  //   // router.push('/login');
+  // };
   
   if (isLoading) {
     return <div className="text-center py-10">Loading profile data...</div>;
@@ -80,25 +81,7 @@ export default function ProfilePage() {
                         <Edit3 size={16} className="mr-2"/> Edit Profile
                     </Link>
                 </Button>
-                <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="bg-destructive/90 hover:bg-destructive">
-                        <LogOut size={16} className="mr-2"/> Logout
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        You will be returned to the login page.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                {/* Logout Button and AlertDialog Removed */}
             </div>
           </div>
         </CardHeader>
@@ -189,5 +172,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
