@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { AuthenticatedUser } from '@/types';
-import { mockCustomerChandana, mockArtisanNimali } from '@/lib/mock-data';
+import { mockCustomerChandana, mockArtisanNimali } from '@/lib/mock-data.ts';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
