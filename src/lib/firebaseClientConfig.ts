@@ -16,24 +16,39 @@ const firebaseConfig = {
   // measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
-// Check if essential config values are present
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+// --- CRITICAL CHECK ---
+// Log these values to the BROWSER console to help debug.
+console.log("Firebase Client Config Values (Check BROWSER CONSOLE):");
+console.log("NEXT_PUBLIC_FIREBASE_API_KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "SET" : "MISSING or undefined");
+console.log("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "SET" : "MISSING or undefined");
+console.log("NEXT_PUBLIC_FIREBASE_PROJECT_ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "SET" : "MISSING or undefined");
+// Add more logs for other variables if needed for debugging
+
+let app: FirebaseApp;
+
+if (
+  !firebaseConfig.apiKey ||
+  !firebaseConfig.authDomain ||
+  !firebaseConfig.projectId ||
+  !firebaseConfig.appId
+) {
   console.error(
-    "Firebase Client Config Error: Missing NEXT_PUBLIC_FIREBASE_API_KEY or NEXT_PUBLIC_FIREBASE_PROJECT_ID. " +
-    "Please ensure these environment variables are set correctly in your .env.local file (or your deployment environment) " +
-    "and that the Next.js development server has been restarted. Without these, Firebase client SDK cannot initialize correctly, " +
-    "leading to errors like 'auth/configuration-not-found'."
+    "Firebase Client Config CRITICAL Error: One or more essential Firebase configuration values are missing or undefined. " +
+    "This will cause 'auth/configuration-not-found' or similar errors. " +
+    "Please ensure all NEXT_PUBLIC_FIREBASE_... environment variables are correctly set in your .env.local file (or deployment environment) " +
+    "and that the Next.js development server has been RESTARTED after changes. " +
+    "Values received:", firebaseConfig
   );
-  // You could throw an error here to halt further execution if these are absolutely critical for app startup
-  // throw new Error("Firebase client configuration is missing essential values. App cannot start.");
+  // To prevent the app from crashing entirely here, we might initialize with placeholder if absolutely necessary,
+  // but it's better to highlight the error. For now, we'll let it proceed and Firebase will throw the error.
+  // Or, throw an error here to stop further execution:
+  // throw new Error("Firebase client configuration is critically missing values. App cannot initialize Firebase correctly.");
 } else {
-  // This log is mostly for debugging; you might remove it in production.
-  console.log("Firebase Client Config: NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID appear to be present. Attempting Firebase initialization.");
+  console.log("Firebase Client Config: All essential NEXT_PUBLIC_FIREBASE_... variables seem to be present. Attempting Firebase initialization.");
 }
 
 
 // Initialize Firebase
-let app: FirebaseApp;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
 } else {
