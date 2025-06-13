@@ -30,9 +30,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// No longer using AUTH_STORAGE_KEY directly for currentUser, as onAuthStateChanged is the source of truth
-// However, it might be useful for persisting non-sensitive UI preferences if needed later.
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +45,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       let userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists() && additionalData) {
-        // New user registration, create Firestore document
         const newUserDocData: FirestoreUserDocument = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || additionalData.email || '',
@@ -57,29 +53,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           profileImageUrl: additionalData.profileImageUrl || firebaseUser.photoURL || 'https://placehold.co/128x128.png',
           wishlist: additionalData.wishlist || [],
           followedArtisans: additionalData.followedArtisans || [],
-          createdAt: Timestamp.now().toDate().toISOString(), // Firestore serverTimestamp might be better if called from backend
-          // artisanProfileId: additionalData.role === 'seller' ? (additionalData.artisanProfileId || firebaseUser.uid) : undefined,
+          createdAt: Timestamp.now().toDate().toISOString(),
         };
         if (additionalData.role === 'seller') {
-          // For sellers, artisanProfileId could be their UID or a new unique ID
-          // For simplicity now, if they register as seller, we can use their UID.
            newUserDocData.artisanProfileId = additionalData.artisanProfileId || firebaseUser.uid;
         }
-
-
         await setDoc(userDocRef, newUserDocData);
-        userDocSnap = await getDoc(userDocRef); // Re-fetch to get the created doc
+        userDocSnap = await getDoc(userDocRef);
       } else if (userDocSnap.exists() && additionalData && Object.keys(additionalData).length > 0) {
-        // Existing user, but additional data needs to be merged (e.g. display name update after social sign in)
-        // This case might be rare with email/password but good for social auth later
         await updateDoc(userDocRef, additionalData);
-        userDocSnap = await getDoc(userDocRef); // Re-fetch
+        userDocSnap = await getDoc(userDocRef);
       }
 
       if (userDocSnap.exists()) {
         const firestoreData = userDocSnap.data() as FirestoreUserDocument;
         const authenticatedUser: AuthenticatedUser = {
-          id: firebaseUser.uid, // Use Firebase UID as the primary ID
+          id: firebaseUser.uid,
           email: firebaseUser.email || firestoreData.email,
           name: firestoreData.name || firebaseUser.displayName || 'User',
           role: firestoreData.role || 'buyer',
@@ -91,9 +80,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCurrentUser(authenticatedUser);
         return authenticatedUser;
       } else {
-        // This case should be rare if registration creates the doc. Could be an error or social sign-in without profile yet.
         console.warn(`Firestore document not found for user ${firebaseUser.uid} after attempt to ensure it exists.`);
-        setCurrentUser(null); // Or a minimal user object from FirebaseUser if preferred
+        setCurrentUser(null);
         return null;
       }
     } else {
@@ -109,15 +97,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await updateAuthStateAndFirestore(firebaseUser);
       setIsLoading(false);
     });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [updateAuthStateAndFirestore]);
 
 
   const login = useCallback(async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log('AuthContext - login - Checking auth.app.options. Current state:', auth?.app?.options);
+      if (!auth?.app?.options?.apiKey) {
+        console.error("AuthContext - login - Firebase auth configuration is missing or invalid before signInWithEmailAndPassword.");
+        toast({ title: "Login Failed", description: "Client configuration error.", variant: "destructive" });
+        setIsLoading(false);
+        return false;
+      }
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle setting currentUser and fetching Firestore data
       setIsLoading(false);
       return true;
     } catch (error: any) {
@@ -132,7 +126,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       await firebaseSignOut(auth);
-      // onAuthStateChanged will set currentUser to null
       router.push('/');
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -145,8 +138,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const registerAsBuyer = useCallback(async (userData: Pick<AuthenticatedUser, 'name' | 'email'>, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log('AuthContext - registerAsBuyer - Checking auth.app.options. Current state:', auth?.app?.options);
+      if (!auth?.app?.options?.apiKey || !auth?.app?.options?.projectId) { // Added projectId check as it's also crucial
+        console.error("AuthContext - registerAsBuyer - Critical Firebase auth configuration (apiKey or projectId) is missing or invalid before createUserWithEmailAndPassword. Options:", auth?.app?.options);
+        toast({ title: "Registration Failed", description: "Client configuration error. Please check console.", variant: "destructive" });
+        setIsLoading(false);
+        return false;
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, pass);
-      // Pass additionalData to create Firestore profile through onAuthStateChanged logic
       await updateAuthStateAndFirestore(userCredential.user, {
         name: userData.name,
         email: userData.email,
@@ -165,13 +164,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const registerAsSeller = useCallback(async (userData: Pick<AuthenticatedUser, 'name' | 'email'>, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log('AuthContext - registerAsSeller - Checking auth.app.options. Current state:', auth?.app?.options);
+      if (!auth?.app?.options?.apiKey || !auth?.app?.options?.projectId) {
+        console.error("AuthContext - registerAsSeller - Critical Firebase auth configuration (apiKey or projectId) is missing or invalid before createUserWithEmailAndPassword. Options:", auth?.app?.options);
+        toast({ title: "Seller Registration Failed", description: "Client configuration error. Please check console.", variant: "destructive" });
+        setIsLoading(false);
+        return false;
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, pass);
-      // Pass additionalData to create Firestore profile
       await updateAuthStateAndFirestore(userCredential.user, {
         name: userData.name,
         email: userData.email,
         role: 'seller',
-        artisanProfileId: userCredential.user.uid, // Simple: use UID as artisan ID initially
+        artisanProfileId: userCredential.user.uid,
       });
       setIsLoading(false);
       return true;
@@ -188,15 +193,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       try {
         const userDocRef = doc(db, 'users', currentUser.id);
-        // For simplicity, directly assign UID as artisanProfileId upon upgrade if not already seller.
-        // A more robust flow might involve creating a separate artisanProfiles entry and linking it.
         const artisanProfileId = currentUser.id;
         await updateDoc(userDocRef, { role: 'seller', artisanProfileId: artisanProfileId });
-
-        // Optimistically update or re-fetch
         const updatedUser = { ...currentUser, role: 'seller' as 'seller', artisanProfileId: artisanProfileId };
-        setCurrentUser(updatedUser); // Optimistic update
-
+        setCurrentUser(updatedUser);
         toast({ title: "Account Upgraded", description: "You are now registered as a seller!" });
         setIsLoading(false);
         return true;
