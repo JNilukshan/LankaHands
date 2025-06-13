@@ -16,6 +16,22 @@ const firebaseConfig = {
   // measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
+// Check if essential config values are present
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error(
+    "Firebase Client Config Error: Missing NEXT_PUBLIC_FIREBASE_API_KEY or NEXT_PUBLIC_FIREBASE_PROJECT_ID. " +
+    "Please ensure these environment variables are set correctly in your .env.local file (or your deployment environment) " +
+    "and that the Next.js development server has been restarted. Without these, Firebase client SDK cannot initialize correctly, " +
+    "leading to errors like 'auth/configuration-not-found'."
+  );
+  // You could throw an error here to halt further execution if these are absolutely critical for app startup
+  // throw new Error("Firebase client configuration is missing essential values. App cannot start.");
+} else {
+  // This log is mostly for debugging; you might remove it in production.
+  console.log("Firebase Client Config: NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID appear to be present. Attempting Firebase initialization.");
+}
+
+
 // Initialize Firebase
 let app: FirebaseApp;
 if (!getApps().length) {
