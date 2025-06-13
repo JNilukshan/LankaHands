@@ -19,7 +19,7 @@ if (!admin.apps.length) {
   console.log("INFO: This application requires the following Firebase service account environment variables to be set:");
   console.log("  - FIREBASE_PROJECT_ID: Your Firebase Project ID.");
   console.log("  - FIREBASE_CLIENT_EMAIL: The client_email from your Firebase service account JSON.");
-  console.log("  - FIREBASE_PRIVATE_KEY: The private_key from your Firebase service account JSON. Ensure newlines are escaped as '\\\\n' if stored as a single line.");
+  console.log("  - FIREBASE_PRIVATE_KEY: The private_key from your Firebase service account JSON. Ensure newlines are escaped as '\\\\n' if stored as a single line, including the final newline of the key.");
   console.log("----------------------------------------------------------------------------------");
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -69,6 +69,18 @@ if (!admin.apps.length) {
   console.log(`Firebase Admin SDK: Using Client Email: ${clientEmail}`);
   console.log(`Firebase Admin SDK: Private Key Provided: Yes (format check will follow)`);
   
+  if (privateKeyInput && privateKeyInput !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
+      if (privateKeyInput.includes('\\r\\n')) {
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\r\\\\n' (escaped carriage return + newline).");
+      } else if (privateKeyInput.includes('\\n') && !privateKeyInput.includes('\n')) { // Check for escaped \n but not actual \n
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\n' (escaped newlines). This is expected for single-line env vars.");
+      } else if (privateKeyInput.includes('\n')) {
+        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS actual newlines ('\\n'). This might be okay if your env system supports multi-line vars directly, BUT ensure it's not a mix-up with escaped newlines if it should be single-line.");
+      } else {
+        console.warn("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input does NOT appear to contain common newline representations. If it's a multi-line key, this could be an issue or indicate the key is not fully set.");
+      }
+  }
+
   const serviceAccountUsedForAttempt = {
     projectId: projectId,
     clientEmail: clientEmail,
@@ -82,12 +94,12 @@ if (!admin.apps.length) {
     console.log(`Firebase Admin SDK: Attempting to use Processed Private Key (Snippet for format check): Starts with [${keySnippetStart}...] and ends with [...${keySnippetEnd}]`);
     
     const expectedHeader = "-----BEGIN PRIVATE KEY-----";
-    const expectedFooterEndsWith = "-----END PRIVATE KEY-----\n"; // PEM keys usually end with a newline
+    const expectedFooterEndsWith = "-----END PRIVATE KEY-----\n"; 
     const expectedFooterWithoutNewline = "-----END PRIVATE KEY-----";
 
 
     if (!serviceAccountUsedForAttempt.privateKey.startsWith(expectedHeader) || 
-        !(serviceAccountUsedForAttempt.privateKey.includes(expectedFooterWithoutNewline)) ) { // Check if it at least contains the footer
+        !(serviceAccountUsedForAttempt.privateKey.includes(expectedFooterWithoutNewline)) ) { 
         console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         console.error("Firebase Admin SDK CRITICAL PEM FORMAT WARNING (Headers/Footers):");
         console.error(`The PROCESSED private key does NOT start with '${expectedHeader}' OR does not contain '${expectedFooterWithoutNewline}'.`);
@@ -97,25 +109,12 @@ if (!admin.apps.length) {
         console.error("Ensure no extra characters (quotes, spaces) are at the beginning or end of the environment variable value.");
         console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     } else if (!serviceAccountUsedForAttempt.privateKey.endsWith(expectedFooterEndsWith)) {
-         console.warn("Firebase Admin SDK PEM FORMAT WARNING (Footer Newline): The processed private key includes the correct header and footer tags, but does not strictly end with '-----END PRIVATE KEY-----\\n' (i.e., missing the final newline after the footer). This might cause issues with some parsers, though Firebase SDK might be tolerant.");
+         console.warn("Firebase Admin SDK PEM FORMAT WARNING (Footer Newline): The processed private key includes the correct header and footer tags, but does not strictly end with '-----END PRIVATE KEY-----\\n' (i.e., missing the final newline after the footer). This might cause issues with some parsers, though Firebase SDK might be tolerant. Ensure your original key from JSON ends with a newline, and if escaping, that newline is also escaped (e.g., final `\\n`).");
     } else {
         console.log("Firebase Admin SDK: Processed private key appears to have correct PEM headers and ends with the expected newline, based on preliminary checks.");
     }
     
-    // Log raw private key characteristics (helpful for \\n vs \n issues)
-    if (privateKeyInput && privateKeyInput !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") {
-        if (privateKeyInput.includes('\\r\\n')) {
-        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\r\\\\n' (escaped carriage return + newline).");
-        } else if (privateKeyInput.includes('\\n')) {
-        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS '\\\\n' (escaped newlines). This is expected for single-line env vars.");
-        } else if (privateKeyInput.includes('\n')) {
-        console.log("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input CONTAINS actual newlines ('\\n'). This might be okay if your env system supports multi-line vars directly.");
-        } else {
-        console.warn("Firebase Admin SDK: Raw FIREBASE_PRIVATE_KEY input does NOT appear to contain common newline representations. If it's a multi-line key, this could be an issue or indicate the key is not fully set.");
-        }
-    }
-
-
+    console.info("Firebase Admin SDK: About to call admin.initializeApp(). Ensure the private key format logged above is correct, especially headers and newline handling.");
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountUsedForAttempt),
     });
@@ -133,21 +132,23 @@ if (!admin.apps.length) {
     console.error("Error Message:", error.message);
     console.error("Error Code:", error.code);
 
-    console.error("Service Account Object Used for attempt:", {
+    console.error("Service Account Object Used for attempt (Private key content not logged for security):", {
         projectId: serviceAccountUsedForAttempt?.projectId,
         clientEmail: serviceAccountUsedForAttempt?.clientEmail,
         privateKeyProcessedAndAttempted: (serviceAccountUsedForAttempt?.privateKey && serviceAccountUsedForAttempt.privateKey !== "YOUR_PRIVATE_KEY_PLACEHOLDER_INVALID") ? "Yes (see format check snippets and warnings above)" : "No or Placeholder",
     });
-
+    
     if (error.message && (error.message.toLowerCase().includes("failed to parse private key") || error.message.toLowerCase().includes("invalid pem formatted message"))) {
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        console.error("Firebase Admin SDK PEM Key Format Hint: The private key could not be parsed by Firebase.");
-        console.error("This means the string provided in the FIREBASE_PRIVATE_KEY environment variable, even after processing, is not a valid PEM-formatted private key.");
-        console.error("1. Ensure it starts with '-----BEGIN PRIVATE KEY-----' and ends with '-----END PRIVATE KEY-----\\n' (including the final newline).");
-        console.error("2. Ensure all original newline characters from the JSON key file are correctly represented (e.g., as '\\\\n' in a single-line env var).");
-        console.error("3. Ensure no extra characters (like quotes or spaces) are surrounding the key in the env variable.");
-        console.error("Review the 'Processed Private Key (Snippet for format check)' and 'Raw FIREBASE_PRIVATE_KEY input' logs above for clues.");
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.error("*********************************************************************************************************");
+        console.error("SPECIFIC ERROR: 'Invalid PEM formatted message'. This means the FIREBASE_PRIVATE_KEY is malformed.");
+        console.error("ACTION: Please meticulously check the value of your FIREBASE_PRIVATE_KEY environment variable.");
+        console.error("   - Ensure it's the COMPLETE key from your Firebase service account JSON.");
+        console.error("   - It MUST start with '-----BEGIN PRIVATE KEY-----'.");
+        console.error("   - It MUST end with '-----END PRIVATE KEY-----\\n' (including the final newline).");
+        console.error("   - If stored as a single line, all internal newlines MUST be escaped as '\\\\n'.");
+        console.error("   - No extra characters (spaces, quotes) should surround the key in the env variable.");
+        console.error("   - REFER TO THE 'Processed Private Key (Snippet for format check)' and 'Raw FIREBASE_PRIVATE_KEY input' LOGS ABOVE to see what the code is attempting to use.");
+        console.error("*********************************************************************************************************");
     } else if (error.code === 'app/invalid-credential') {
         console.error("Firebase Admin SDK Credential Hint: The Firebase Admin SDK reported an 'invalid-credential' error. This could be due to an incorrect project ID, client email, or an issue with the private key (format, content, or if it's for the wrong project). Double-check all three environment variables: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.");
     }
@@ -156,8 +157,6 @@ if (!admin.apps.length) {
 }
 
 if (!admin.apps.length || !admin.apps[0]) {
-  // This error should ideally not be reached if the pre-flight checks or the try-catch block above throws correctly.
-  // It's a fallback for unexpected scenarios.
   throw new Error(
     "Firebase Admin SDK default app has not been initialized successfully. " +
     "This is critical for backend functionality. " +
