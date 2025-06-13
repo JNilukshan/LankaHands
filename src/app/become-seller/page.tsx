@@ -16,7 +16,7 @@ import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
-const sellerApplicationSchema = z.object({
+const sellerApplicationSchemaBase = z.object({
   fullName: z.string().min(2, { message: "Full name is required." }),
   email: z.string().email({ message: "Valid email is required." }),
   phoneNumber: z.string().min(10, { message: "Valid phone number is required." }),
@@ -25,6 +25,37 @@ const sellerApplicationSchema = z.object({
   portfolioLink: z.string().url({ message: "Please enter a valid URL (e.g., Instagram, website)." }).optional().or(z.literal('')),
   motivation: z.string().min(50, { message: "Please tell us more about your craft and why you want to join (min 50 characters)." }),
 });
+
+// Conditional schema for password when user is not logged in
+const sellerApplicationSchema = sellerApplicationSchemaBase.extend({
+  password: z.string().optional(), // Optional for now, will be made required based on currentUser
+  confirmPassword: z.string().optional(),
+}).superRefine((data, ctx) => {
+    // Logic to make password required if user is not logged in
+    // This check needs to happen within the component based on currentUser state,
+    // or by having two separate schemas. For simplicity, we'll handle this in component logic for now
+    // or assume if it's a new seller, password fields will be shown and validated.
+    // A better approach is to have separate flows or dynamic schema validation based on auth state.
+    // For this iteration, if password field is present (i.e. user is new), it should be validated.
+    if (data.password && data.password.length < 6) {
+         ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 6,
+            type: "string",
+            inclusive: true,
+            message: "Password must be at least 6 characters.",
+            path: ["password"],
+        });
+    }
+    if (data.password && data.password !== data.confirmPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Passwords don't match",
+            path: ["confirmPassword"],
+        });
+    }
+});
+
 
 type SellerApplicationValues = z.infer<typeof sellerApplicationSchema>;
 
@@ -45,19 +76,17 @@ export default function BecomeSellerPage() {
       craftCategory: "",
       portfolioLink: "",
       motivation: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
   useEffect(() => {
     if (currentUser) {
       form.reset({
+        ...form.getValues(), // Keep other form values
         fullName: currentUser.name,
         email: currentUser.email,
-        phoneNumber: "",
-        brandName: "",
-        craftCategory: "",
-        portfolioLink: "",
-        motivation: "",
       });
     }
   }, [currentUser, form]);
@@ -67,10 +96,31 @@ export default function BecomeSellerPage() {
     let success = false;
 
     if (currentUser && currentUser.role === 'buyer') {
+      // Logic for upgrading an existing buyer
       success = await upgradeToSeller();
+      if (success) {
+        // Optionally, here you could save the other form data (brandName, motivation etc.)
+        // to the newly upgraded seller's Firestore profile.
+        // For now, AuthContext's upgradeToSeller only changes the role.
+        console.log("Buyer upgraded. Additional seller info:", data);
+      }
     } else if (!currentUser) {
-      // If user is logged out, register them as a new seller
-      success = await registerAsSeller({ name: data.fullName, email: data.email });
+      // Logic for registering a new user as a seller
+      if (!data.password) {
+        toast({ title: "Password Required", description: "Please enter a password to create your seller account.", variant: "destructive" });
+        form.setError("password", { type: "manual", message: "Password is required." });
+        setIsSubmitting(false);
+        return;
+      }
+      success = await registerAsSeller({ name: data.fullName, email: data.email }, data.password);
+      if (success) {
+        // After Firebase user is created by registerAsSeller,
+        // you would typically save the additional seller application details (brandName, motivation etc.)
+        // to their Firestore user document or a separate 'artisanProfiles' document.
+        // AuthContext's registerAsSeller now handles basic Firestore profile creation.
+        // Further updates might be needed here.
+         console.log("New seller registered. Additional seller info:", data);
+      }
     } else if (currentUser && currentUser.role === 'seller') {
         toast({ title: "Already a Seller", description: "Your account is already registered as a seller.", variant: "default"});
         setIsSubmitting(false);
@@ -86,13 +136,8 @@ export default function BecomeSellerPage() {
         description: "Welcome, seller! You're now set up to sell on LankaHands.",
       });
       setIsApplicationSuccessful(true);
-      // Form reset is handled by the success view
     } else {
-      toast({
-        title: "Application Failed",
-        description: "There was an issue processing your application. Please try again.",
-        variant: "destructive",
-      });
+      // Error toast is handled within auth functions (registerAsSeller, upgradeToSeller)
     }
   };
 
@@ -110,8 +155,8 @@ export default function BecomeSellerPage() {
       </div>
     );
   }
-  
-   if (authLoading && !currentUser) { // Show loader if auth state is loading and no user yet
+
+   if (authLoading && !currentUser) {
     return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading...</p></div>;
   }
 
@@ -149,8 +194,8 @@ export default function BecomeSellerPage() {
         <CardHeader>
           <CardTitle className="font-headline text-2xl text-primary">Seller Application</CardTitle>
           <CardDescription>
-            {currentUser && currentUser.role === 'buyer' 
-              ? "Upgrade your buyer account to become a seller." 
+            {currentUser && currentUser.role === 'buyer'
+              ? "Upgrade your buyer account to become a seller."
               : "Tell us about yourself and your craft. We're excited to learn more!"}
           </CardDescription>
         </CardHeader>
@@ -165,7 +210,7 @@ export default function BecomeSellerPage() {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your Full Name" {...field} disabled={!!currentUser} />
+                        <Input placeholder="Your Full Name" {...field} disabled={!!currentUser && currentUser.role === 'buyer'} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -178,13 +223,45 @@ export default function BecomeSellerPage() {
                     <FormItem>
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="your.email@example.com" {...field} disabled={!!currentUser}/>
+                        <Input type="email" placeholder="your.email@example.com" {...field} disabled={!!currentUser && currentUser.role === 'buyer'}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              {!currentUser && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Create a password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Confirm your password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
               <div className="grid sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}

@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -43,9 +43,15 @@ const RegisterForm = () => {
     },
   });
 
+   useEffect(() => {
+    if (!authLoading && currentUser) {
+      router.push('/profile'); // Redirect if already logged in
+    }
+  }, [currentUser, authLoading, router]);
+
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
-    const success = await registerAsBuyer({ name: data.fullName, email: data.email });
+    const success = await registerAsBuyer({ name: data.fullName, email: data.email }, data.password);
     setIsSubmitting(false);
 
     if (success) {
@@ -53,19 +59,14 @@ const RegisterForm = () => {
         title: "Registration Successful",
         description: "Welcome to LankaHands! You are now logged in.",
       });
-      router.push('/profile');
+      // router.push('/profile'); // onAuthStateChanged in AuthContext will handle redirect implicitly
     } else {
-      toast({
-        title: "Registration Failed",
-        description: "Could not create your account. Please try again.",
-        variant: "destructive",
-      });
+      // Error toast is handled within registerAsBuyer
     }
   };
 
-  if (!authLoading && currentUser) {
-    router.push('/profile'); // Or dashboard if seller, but register form is for buyers
-    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Redirecting...</p></div>;
+  if (authLoading || (!authLoading && currentUser)) {
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading...</p></div>;
   }
 
   return (

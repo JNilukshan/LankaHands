@@ -1,4 +1,6 @@
 
+import type { Timestamp } from 'firebase/firestore';
+
 // Note: StaticImageData is primarily for images imported directly in Next.js.
 // For database URLs, 'string' is more appropriate.
 
@@ -19,13 +21,13 @@ export interface StorePolicies {
 }
 
 export interface Artisan {
-  id: string;
-  userId?: string; // Link to users collection (Firebase Auth UID)
-  name:string; // This could be publicName or brandName
+  id: string; // Corresponds to Firebase Auth UID if the artisan is also a user
+  userId?: string; // Link to users collection (Firebase Auth UID) - can be same as id
+  name:string;
   email?: string;
   bio: string;
-  profileImageUrl: string; // URL from Firebase Storage
-  bannerImageUrl?: string; // URL from Firebase Storage for profile banner
+  profileImageUrl: string;
+  bannerImageUrl?: string;
   followers?: number;
   averageRating?: number;
   location?: string;
@@ -34,7 +36,6 @@ export interface Artisan {
   storePolicies?: StorePolicies;
   isVerified?: boolean;
   createdAt?: string; // ISO date string
-  // products?: Product[]; // Typically not stored directly on artisan, fetched separately
 }
 
 export interface Product {
@@ -44,14 +45,14 @@ export interface Product {
   longDescription?: string;
   price: number;
   category: string;
-  images: string[]; // Array of image URLs from Firebase Storage
+  images: string[];
   artisanId: string;
-  artisanName?: string; // Denormalized for easier display
+  artisanName?: string;
   reviews?: Review[];
   stock?: number;
   dimensions?: string;
   materials?: string[];
-  isVisible?: boolean; // To control product visibility
+  isVisible?: boolean;
   tags?: string[];
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
@@ -61,7 +62,7 @@ export interface Review {
   id: string;
   userId: string;
   userName: string;
-  userAvatar?: string; // URL from Firebase Storage
+  userAvatar?: string;
   productId: string;
   rating: number;
   comment: string;
@@ -69,27 +70,30 @@ export interface Review {
   createdAt: string; // ISO date string
 }
 
-export interface User { // More for your Firestore 'users' collection doc
-  id: string; // Firebase Auth UID
+// This represents the structure of documents in the 'users' Firestore collection
+export interface User {
+  uid: string; // Firebase Auth UID - This IS the document ID
   name: string;
   email: string;
   role: 'buyer' | 'seller';
-  profileImageUrl?: string; // URL from Firebase Storage
+  profileImageUrl?: string;
   wishlist?: string[]; // Array of product IDs
   followedArtisans?: string[]; // Array of artisan IDs
-  artisanProfileId?: string; // Link to their artisanProfiles document if role is 'seller'
-  createdAt?: string; // ISO date string
+  artisanProfileId?: string; // If role is 'seller', this links to their document in 'artisanProfiles' (could be same as UID)
+  createdAt: string; // ISO date string
+  // shippingAddresses, paymentMethods etc. could be subcollections or arrays here
 }
+
 
 export interface Order {
   id: string;
   userId: string; // Firebase Auth UID of the buyer
-  customerName?: string; // Denormalized
+  customerName?: string;
   items: OrderItem[];
-  totalAmount: number; // Subtotal of items
+  totalAmount: number;
   shippingCost?: number;
   taxAmount?: number;
-  grandTotal: number; // Total including shipping and tax
+  grandTotal: number;
   orderDate: string; // ISO date string
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress?: {
@@ -99,10 +103,10 @@ export interface Order {
     country: string;
     recipientName?: string;
   };
-  artisanId?: string; // If order is for a single artisan, or primary artisan
+  artisanId?: string;
   paymentDetails?: {
     paymentId: string;
-    method: string; 
+    method: string;
     status: string;
   };
   trackingNumber?: string;
@@ -111,18 +115,18 @@ export interface Order {
 
 export interface OrderItem {
   productId: string;
-  productName: string; 
-  productImage?: string; 
+  productName: string;
+  productImage?: string;
   quantity: number;
-  priceAtPurchase: number; 
-  artisanId?: string; 
+  priceAtPurchase: number;
+  artisanId?: string;
 }
 
 export interface CartItem {
   id: string; // Product ID
   name: string;
   price: number;
-  image: string; // Product image URL
+  image: string;
   quantity: number;
   artisanId?: string;
   artisanName?: string;
@@ -153,15 +157,15 @@ export interface SellerNotification {
   artisanId?: string;
 }
 
-// For AuthContext - this represents the currently logged-in user's state in the app
+// For AuthContext - this represents the currently logged-in user's state in the app.
+// It should largely mirror the Firestore 'User' document structure.
 export interface AuthenticatedUser {
-  id: string; // Firebase Auth UID
+  id: string; // Firebase Auth UID (maps to User.uid)
   name: string;
   email: string;
   role: 'buyer' | 'seller';
-  profileImageUrl?: string; 
-  followedArtisans?: string[]; 
-  wishlist?: string[]; 
-  // artisanProfileId might be fetched separately if needed in context, or derived
+  profileImageUrl?: string;
+  followedArtisans?: string[];
+  wishlist?: string[];
+  artisanProfileId?: string; // Present if role is 'seller'
 }
-
