@@ -68,7 +68,7 @@ export async function getArtisanById(id: string): Promise<Artisan | null> {
 }
 
 /**
- * Updates an artisan's profile in Firestore.
+ * Updates an artisan's profile in Firestore using a robust set-merge operation.
  * @param artisanId The ID of the artisan to update.
  * @param dataToUpdate The data to update.
  * @returns True if successful, false otherwise.
@@ -80,11 +80,14 @@ export async function updateArtisanProfile(artisanId: string, dataToUpdate: Part
   }
   try {
     const artisanRef = adminDb.collection('artisanProfiles').doc(artisanId);
-    await artisanRef.update({
+    // Use set with merge:true for a more robust update. This will create the document if it doesn't exist
+    // and update fields without overwriting the entire document.
+    await artisanRef.set({
         ...dataToUpdate,
         updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
+    // Revalidate paths to ensure data is fresh across the app
     revalidatePath(`/artisans/${artisanId}`);
     revalidatePath(`/dashboard/seller/settings`);
     
