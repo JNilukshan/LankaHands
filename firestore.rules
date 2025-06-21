@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Products can be read by anyone, but only created, updated, or
+    // deleted by the artisan who owns them.
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.artisanId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.artisanId;
+
+      // Reviews can be read by anyone.
+      // They can only be created by an authenticated user, and the review's
+      // userId must match the person creating it.
+      // Users can only update or delete their own reviews.
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // User profiles can only be read or modified by the user themselves.
+    // This allows users to manage their own wishlists, followed artisans, etc.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      // New users create their own document upon registration.
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Artisan profiles are public to read.
+    // Only the artisan can update their own profile.
+    match /artisanProfiles/{artisanId} {
+        allow read: if true;
+        allow create, update: if request.auth != null && request.auth.uid == artisanId;
+    }
+
+    // Orders can only be created by the buyer.
+    // They can only be read by the buyer or the artisan fulfilling the order.
+    // They can only be updated (e.g., status change) by the artisan.
+    match /orders/{orderId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.artisanId);
+      allow update: if request.auth != null && request.auth.uid == resource.data.artisanId;
+    }
+  }
+}
