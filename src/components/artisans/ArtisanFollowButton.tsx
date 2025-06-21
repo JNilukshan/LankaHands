@@ -1,41 +1,69 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { followArtisan, unfollowArtisan } from '@/services/followService';
 
 interface ArtisanFollowButtonProps {
   artisanId: string;
-  initialIsFollowing?: boolean;
   artisanName: string;
 }
 
-export default function ArtisanFollowButton({ artisanId, initialIsFollowing = false, artisanName }: ArtisanFollowButtonProps) {
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
-  const [isLoading, setIsLoading] = useState(false);
+export default function ArtisanFollowButton({ artisanId, artisanName }: ArtisanFollowButtonProps) {
+  const { currentUser } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
+  
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setIsFollowing(initialIsFollowing);
-  }, [initialIsFollowing]);
+    if (currentUser && currentUser.followedArtisans) {
+      setIsFollowing(currentUser.followedArtisans.includes(artisanId));
+    } else {
+      setIsFollowing(false);
+    }
+  }, [currentUser, artisanId]);
 
   const handleFollowToggle = async () => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "You need to be logged in to follow an artisan.",
+        variant: "destructive",
+      });
+      router.push('/login');
+      return;
+    }
 
-    const newFollowState = !isFollowing;
-    setIsFollowing(newFollowState);
-    setIsLoading(false);
+    startTransition(async () => {
+      const currentFollowState = isFollowing;
+      const action = currentFollowState ? unfollowArtisan : followArtisan;
+      const result = await action(currentUser.id, artisanId);
 
-    toast({
-      title: newFollowState ? "Followed!" : "Unfollowed",
-      description: newFollowState ? `You are now following ${artisanName}.` : `You have unfollowed ${artisanName}.`,
+      if (result.success) {
+        setIsFollowing(!currentFollowState);
+        toast({
+          title: !currentFollowState ? "Followed!" : "Unfollowed",
+          description: result.message,
+        });
+        // Note: We don't manually update AuthContext state here.
+        // For a full implementation, you'd want to refresh the currentUser state
+        // or have the server action return the updated user object.
+        // For now, the visual state toggles immediately.
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
     });
-    // In a real app, you would call your backend API here
-    // console.log(`User ${newFollowState ? 'followed' : 'unfollowed'} artisan ${artisanId}`);
   };
 
   return (
@@ -43,16 +71,16 @@ export default function ArtisanFollowButton({ artisanId, initialIsFollowing = fa
       variant={isFollowing ? "outline" : "default"} 
       className={isFollowing ? "text-primary border-primary hover:bg-primary/10" : "bg-primary hover:bg-primary/90"}
       onClick={handleFollowToggle}
-      disabled={isLoading}
+      disabled={isPending || !currentUser}
     >
-      {isLoading ? (
+      {isPending ? (
         <Loader2 size={18} className="mr-2 animate-spin" />
       ) : isFollowing ? (
         <UserCheck size={18} className="mr-2" />
       ) : (
         <UserPlus size={18} className="mr-2" />
       )}
-      {isLoading ? "Processing..." : isFollowing ? "Following" : "Follow Artisan"}
+      {isPending ? "Processing..." : isFollowing ? "Following" : "Follow Artisan"}
     </Button>
   );
 }
