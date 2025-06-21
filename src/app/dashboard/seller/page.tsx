@@ -200,6 +200,7 @@ export default function SellerDashboardPage() {
                 <QuickLinkItem href="/dashboard/seller/products" icon={ListOrdered} label="Manage Products" />
                 <QuickLinkItem href="/dashboard/seller/reviews" icon={MessageSquare} label="View Reviews" />
                 <QuickLinkItem href="/dashboard/seller/analytics" icon={BarChart3} label="Sales Analytics" />
+                <QuickLinkItem href="/dashboard/seller/followers" icon={Users} label="View Followers" />
                 <QuickLinkItem href="/dashboard/seller/settings" icon={Settings} label="Store Settings" />
             </CardContent>
         </Card>
