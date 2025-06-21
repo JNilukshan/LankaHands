@@ -22,11 +22,6 @@ export default function ArtisanFollowButton({ artisanId, artisanName }: ArtisanF
   const [isFollowing, setIsFollowing] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Hide the button if the current user is the artisan being viewed.
-  if (currentUser && currentUser.id === artisanId) {
-    return null;
-  }
-
   useEffect(() => {
     if (currentUser && currentUser.followedArtisans) {
       setIsFollowing(currentUser.followedArtisans.includes(artisanId));
@@ -34,6 +29,11 @@ export default function ArtisanFollowButton({ artisanId, artisanName }: ArtisanF
       setIsFollowing(false);
     }
   }, [currentUser, artisanId]);
+
+  // This check MUST come after all hooks are called.
+  if (currentUser && currentUser.id === artisanId) {
+    return null;
+  }
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
