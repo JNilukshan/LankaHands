@@ -18,7 +18,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getArtisanById } from '@/services/artisanService';
-import { createNotification } from '@/services/notificationService';
+import { sendMessage } from '@/services/notificationService';
 import { useParams } from "next/navigation";
 
 const contactArtisanSchema = z.object({
@@ -27,28 +27,6 @@ const contactArtisanSchema = z.object({
   imageFile: z.any().optional(), 
 });
 type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
-
-// Server Action to create the notification in Firestore
-async function sendMessage(artisanId: string, artisanName: string, formData: ContactArtisanFormValues) {
-    'use server';
-
-    try {
-        const notificationPayload = {
-            type: 'new_message' as const,
-            title: `New Message from ${formData.customerName || 'Customer'}`,
-            description: formData.messageText,
-            artisanId: artisanId,
-            sender: formData.customerName || 'Customer',
-            // Note: link would ideally be to a real message thread page
-            link: `/dashboard/seller/messages/thread/${artisanId}/${Date.now()}` 
-        };
-        await createNotification(notificationPayload);
-        return { success: true, message: `Your message has been sent to ${artisanName}.` };
-    } catch (error) {
-        console.error("Failed to send message and create notification", error);
-        return { success: false, message: "Could not send your message. Please try again later." };
-    }
-}
 
 
 export default function ContactArtisanPage() {
@@ -121,7 +99,6 @@ export default function ContactArtisanPage() {
         return;
     }
     
-    // Call the server action instead of using localStorage
     const result = await sendMessage(artisan.id, artisan.name, data);
     
     if (result.success) {
