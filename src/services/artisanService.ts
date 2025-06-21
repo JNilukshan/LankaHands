@@ -3,6 +3,7 @@
 
 import type { Artisan } from '@/types';
 import { adminDb } from '@/lib/firebaseConfig';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Fetches all artisans from Firestore.
@@ -10,8 +11,6 @@ import { adminDb } from '@/lib/firebaseConfig';
  */
 export async function getAllArtisans(): Promise<Artisan[]> {
   try {
-    // Assuming your artisans are stored in a collection named 'artisanProfiles'
-    // or 'artisans'. Adjust collection name if different.
     const artisansSnapshot = await adminDb.collection('artisanProfiles').get();
     if (artisansSnapshot.empty) {
       console.log('No artisans found in Firestore.');
@@ -21,14 +20,13 @@ export async function getAllArtisans(): Promise<Artisan[]> {
       const data = doc.data();
       return {
         id: doc.id,
-        name: data.name || data.publicName || 'Unnamed Artisan',
+        name: data.name || 'Unnamed Artisan',
         bio: data.bio || '',
         profileImageUrl: data.profileImageUrl || 'https://placehold.co/300x300.png',
-        followers: data.followersCount || 0,
+        followers: data.followers || 0,
         averageRating: data.averageRating || 0,
         location: data.location || 'Unknown Location',
         speciality: data.speciality || 'General Artisan',
-        // Ensure all fields match the Artisan type, add defaults if necessary
       } as Artisan;
     });
     return artisans;
@@ -57,24 +55,42 @@ export async function getArtisanById(id: string): Promise<Artisan | null> {
     const data = artisanDoc.data();
     if (!data) return null;
 
-    // Here you might also want to fetch products by this artisan if needed directly
-    // or let the artisan page handle that separately.
-
     return {
       id: artisanDoc.id,
-      name: data.name || data.publicName || 'Unnamed Artisan',
-      email: data.email,
-      bio: data.bio || '',
-      profileImageUrl: data.profileImageUrl || 'https://placehold.co/300x300.png',
-      followers: data.followersCount || 0,
-      averageRating: data.averageRating || 0,
-      location: data.location || 'Unknown Location',
-      speciality: data.speciality || 'General Artisan',
-      shippingSettings: data.shippingSettings,
-      storePolicies: data.storePolicies,
+      ...data,
+      // Ensure date fields are converted if they exist
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
     } as Artisan;
   } catch (error) {
     console.error(`Error fetching artisan with ID ${id}:`, error);
     return null;
+  }
+}
+
+/**
+ * Updates an artisan's profile in Firestore.
+ * @param artisanId The ID of the artisan to update.
+ * @param dataToUpdate The data to update.
+ * @returns True if successful, false otherwise.
+ */
+export async function updateArtisanProfile(artisanId: string, dataToUpdate: Partial<Artisan>): Promise<boolean> {
+  if (!artisanId) {
+    console.error("updateArtisanProfile called with no artisanId");
+    return false;
+  }
+  try {
+    const artisanRef = adminDb.collection('artisanProfiles').doc(artisanId);
+    await artisanRef.update({
+        ...dataToUpdate,
+        updatedAt: new Date().toISOString(),
+    });
+
+    revalidatePath(`/artisans/${artisanId}`);
+    revalidatePath(`/dashboard/seller/settings`);
+    
+    return true;
+  } catch (error) {
+    console.error(`Error updating artisan profile for ${artisanId}:`, error);
+    return false;
   }
 }

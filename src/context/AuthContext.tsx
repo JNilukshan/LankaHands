@@ -12,7 +12,7 @@ import {
   signOut as firebaseSignOut, // Renamed to avoid conflict
   type User as FirebaseUser, // Firebase Auth User type
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -44,32 +44,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const userDocRef = doc(db, 'users', firebaseUser.uid);
       let userDocSnap = await getDoc(userDocRef);
 
-      // Scenario 1: User document DOES NOT exist. Create it.
-      // This covers both new registrations (where additionalData is provided)
-      // and first-time logins for users who exist in Auth but not Firestore.
       if (!userDocSnap.exists()) {
         const newUserDocData: FirestoreUserDocument = {
           uid: firebaseUser.uid,
           email: additionalData?.email || firebaseUser.email || '',
           name: additionalData?.name || firebaseUser.displayName || 'New User',
-          role: additionalData?.role || 'buyer', // Default to buyer
+          role: additionalData?.role || 'buyer',
           profileImageUrl: additionalData?.profileImageUrl || 'https://placehold.co/128x128.png',
           wishlist: additionalData?.wishlist || [],
           followedArtisans: additionalData?.followedArtisans || [],
           createdAt: Timestamp.now().toDate().toISOString(),
         };
-        // If they are registering as a seller, ensure artisanProfileId is set.
         if (newUserDocData.role === 'seller') {
            newUserDocData.artisanProfileId = additionalData?.artisanProfileId || firebaseUser.uid;
         }
         await setDoc(userDocRef, newUserDocData);
-        userDocSnap = await getDoc(userDocRef); // Re-fetch the newly created doc
+        userDocSnap = await getDoc(userDocRef);
         console.log(`AuthContext: Created new Firestore user document for ${firebaseUser.uid}`);
       } 
-      // Scenario 2: User document EXISTS and we have additional data to update (e.g. from registration flow)
       else if (additionalData && Object.keys(additionalData).length > 0) {
         await updateDoc(userDocRef, additionalData);
-        userDocSnap = await getDoc(userDocRef); // Re-fetch the updated doc
+        userDocSnap = await getDoc(userDocRef);
         console.log(`AuthContext: Updated Firestore user document for ${firebaseUser.uid}`);
       }
 
@@ -112,13 +107,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback(async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      console.log('AuthContext - login - Checking auth.app.options. Current state:', auth?.app?.options);
-      if (!auth?.app?.options?.apiKey) {
-        console.error("AuthContext - login - Firebase auth configuration is missing or invalid before signInWithEmailAndPassword.");
-        toast({ title: "Login Failed", description: "Client configuration error.", variant: "destructive" });
-        setIsLoading(false);
-        return false;
-      }
       await signInWithEmailAndPassword(auth, email, pass);
       // onAuthStateChanged will handle the rest
       setIsLoading(false);
@@ -147,13 +135,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const registerAsBuyer = useCallback(async (userData: Pick<AuthenticatedUser, 'name' | 'email'>, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      console.log('AuthContext - registerAsBuyer - Checking auth.app.options. Current state:', auth?.app?.options);
-      if (!auth?.app?.options?.apiKey || !auth?.app?.options?.projectId) { 
-        console.error("AuthContext - registerAsBuyer - Critical Firebase auth configuration (apiKey or projectId) is missing or invalid before createUserWithEmailAndPassword. Options:", auth?.app?.options);
-        toast({ title: "Registration Failed", description: "Client configuration error. Please check console.", variant: "destructive" });
-        setIsLoading(false);
-        return false;
-      }
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, pass);
       await updateAuthStateAndFirestore(userCredential.user, {
         name: userData.name,
@@ -173,13 +154,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const registerAsSeller = useCallback(async (userData: Pick<AuthenticatedUser, 'name' | 'email'>, pass: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      console.log('AuthContext - registerAsSeller - Checking auth.app.options. Current state:', auth?.app?.options);
-      if (!auth?.app?.options?.apiKey || !auth?.app?.options?.projectId) {
-        console.error("AuthContext - registerAsSeller - Critical Firebase auth configuration (apiKey or projectId) is missing or invalid before createUserWithEmailAndPassword. Options:", auth?.app?.options);
-        toast({ title: "Seller Registration Failed", description: "Client configuration error. Please check console.", variant: "destructive" });
-        setIsLoading(false);
-        return false;
-      }
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, pass);
       await updateAuthStateAndFirestore(userCredential.user, {
         name: userData.name,
@@ -188,7 +162,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         artisanProfileId: userCredential.user.uid,
       });
 
-      // Create the corresponding document in 'artisanProfiles' collection
       const artisanProfileRef = doc(db, 'artisanProfiles', userCredential.user.uid);
       await setDoc(artisanProfileRef, {
         name: userData.name,
@@ -223,7 +196,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const artisanProfileId = currentUser.id;
         await updateDoc(userDocRef, { role: 'seller', artisanProfileId: artisanProfileId });
         
-        // Also create/check for document in 'artisanProfiles' collection
         const artisanProfileRef = doc(db, 'artisanProfiles', currentUser.id);
         const artisanDocSnap = await getDoc(artisanProfileRef);
         if (!artisanDocSnap.exists()) {

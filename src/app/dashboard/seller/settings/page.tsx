@@ -14,7 +14,7 @@ import type { Artisan } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { getArtisanById } from '@/services/artisanService';
+import { getArtisanById, updateArtisanProfile } from '@/services/artisanService';
 
 const craftCategories = [
   "Batik Artist", "Master Batik Artist",
@@ -36,7 +36,7 @@ export default function StoreSettingsPage() {
   const { toast } = useToast();
   
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [sellerData, setSellerData] = useState<Artisan | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form states
   const [artisanName, setArtisanName] = useState("");
@@ -67,13 +67,11 @@ export default function StoreSettingsPage() {
     const fetchArtisanData = async () => {
       setIsDataLoading(true);
       const data = await getArtisanById(currentUser.id);
-      setSellerData(data);
       if (data) {
         setArtisanName(data.name);
         setLocation(data.location || "");
         setBio(data.bio || "");
 
-        // Handle speciality dropdown logic
         const currentSpeciality = data.speciality || "";
         if (craftCategories.includes(currentSpeciality)) {
           setSpeciality(currentSpeciality);
@@ -86,7 +84,6 @@ export default function StoreSettingsPage() {
           setOtherSpecialityText("");
         }
 
-        // Set shipping and policy states
         setLocalRate(data.shippingSettings?.localRate?.toString() || "5.00");
         setLocalDeliveryTime(data.shippingSettings?.localDeliveryTime || "3-5 business days");
         setInternationalRate(data.shippingSettings?.internationalRate?.toString() || "25.00");
@@ -105,17 +102,58 @@ export default function StoreSettingsPage() {
     fetchArtisanData();
   }, [currentUser, isAuthLoading, router]);
 
-  const handleSave = (section: string) => {
-    toast({
-        title: `${section} Settings Saved!`,
-        description: `Your ${section.toLowerCase()} information has been updated (simulated).`
-    });
-    // In a real app, you'd send this data to your backend.
-    console.log(`Saving ${section}:`, {
-        ...(section === "Profile" && {artisanName, speciality: speciality === "Other" ? otherSpecialityText : speciality, location, bio}),
-        ...(section === "Shipping" && {localRate, localDeliveryTime, internationalRate, internationalDeliveryTime, freeLocalShippingThreshold, freeInternationalShippingThreshold, processingTime}),
-        ...(section === "Policies" && {returnPolicy, exchangePolicy, cancellationPolicy})
-    });
+  const handleSave = async (section: "Profile" | "Shipping" | "Policies" | "Payments") => {
+    if (!currentUser) return;
+    setIsSaving(true);
+    
+    let dataToUpdate: Partial<Artisan> = {};
+    
+    if (section === "Profile") {
+        dataToUpdate = {
+            name: artisanName,
+            speciality: speciality === "Other" ? otherSpecialityText : speciality,
+            location,
+            bio
+        };
+    } else if (section === "Shipping") {
+        dataToUpdate = {
+            shippingSettings: {
+                localRate: parseFloat(localRate) || 0,
+                localDeliveryTime,
+                internationalRate: parseFloat(internationalRate) || 0,
+                internationalDeliveryTime,
+                freeShippingLocalThreshold: parseFloat(freeLocalShippingThreshold) || 0,
+                freeShippingInternationalThreshold: parseFloat(freeInternationalShippingThreshold) || 0,
+                processingTime,
+            }
+        };
+    } else if (section === "Policies") {
+        dataToUpdate = {
+            storePolicies: { returnPolicy, exchangePolicy, cancellationPolicy }
+        };
+    } else if (section === "Payments") {
+        // Mock save for payments as we don't store this sensitive data
+        toast({ title: "Payments Settings Saved (Simulated)", description: "Your payment details have been updated." });
+        setIsSaving(false);
+        return;
+    }
+
+    const success = await updateArtisanProfile(currentUser.id, dataToUpdate);
+    
+    if(success) {
+        toast({
+            title: `${section} Settings Saved!`,
+            description: `Your ${section.toLowerCase()} information has been updated.`
+        });
+    } else {
+        toast({
+            title: `Error Saving ${section} Settings`,
+            description: "There was a problem saving your information. Please try again.",
+            variant: "destructive"
+        });
+    }
+
+    setIsSaving(false);
   };
 
   if (isAuthLoading || isDataLoading) {
@@ -150,7 +188,7 @@ export default function StoreSettingsPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                   <Label htmlFor="artisanName">Artisan/Brand Name (Public)</Label>
-                  <Input id="artisanName" value={artisanName} onChange={(e) => setArtisanName(e.target.value)} />
+                  <Input id="artisanName" value={artisanName} onChange={(e) => setArtisanName(e.target.value)} disabled={isSaving}/>
               </div>
               
               <div className="space-y-2">
@@ -159,56 +197,49 @@ export default function StoreSettingsPage() {
                   value={speciality}
                   onValueChange={(value) => {
                     setSpeciality(value);
-                    if (value !== "Other") {
-                      setOtherSpecialityText(""); 
-                    }
+                    if (value !== "Other") setOtherSpecialityText(""); 
                   }}
+                  disabled={isSaving}
                 >
                   <SelectTrigger id="artisanSpecialitySelect">
                     <SelectValue placeholder="Select your craft type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {craftCategories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
+                    {craftCategories.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {speciality === "Other" && (
                   <div className="space-y-2 pt-2">
                     <Label htmlFor="otherSpecialityInput">Please specify your speciality:</Label>
-                    <Input
-                      id="otherSpecialityInput"
-                      placeholder="e.g., Glass Blower, Upcycled Art Creator"
-                      value={otherSpecialityText}
-                      onChange={(e) => setOtherSpecialityText(e.target.value)}
-                    />
+                    <Input id="otherSpecialityInput" placeholder="e.g., Glass Blower" value={otherSpecialityText} onChange={(e) => setOtherSpecialityText(e.target.value)} disabled={isSaving}/>
                   </div>
                 )}
               </div>
 
               <div className="space-y-2">
                   <Label htmlFor="artisanLocation">Location</Label>
-                  <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" value={location} onChange={(e) => setLocation(e.target.value)} />
+                  <Input id="artisanLocation" placeholder="e.g., Kandy, Sri Lanka" value={location} onChange={(e) => setLocation(e.target.value)} disabled={isSaving}/>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanBio">Full Artisan Bio (Public)</Label>
-                  <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." value={bio} onChange={(e) => setBio(e.target.value)} />
+                  <Textarea id="artisanBio" rows={6} placeholder="Share your story, inspiration, and techniques with customers." value={bio} onChange={(e) => setBio(e.target.value)} disabled={isSaving}/>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanBannerImage" className="flex items-center"><ImageIcon size={16} className="mr-2"/>Profile Banner Image</Label>
-                  <Input id="artisanBannerImage" type="file" accept="image/*" />
-                  <p className="text-xs text-muted-foreground">Recommended size: 1200x400px. Max 2MB.</p>
+                  <Input id="artisanBannerImage" type="file" accept="image/*" disabled/>
+                   <p className="text-xs text-muted-foreground">Image uploads coming soon. Recommended: 1200x400px.</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="artisanProfilePic" className="flex items-center"><ImagePlus size={16} className="mr-2"/>Profile Picture</Label>
-                  <Input id="artisanProfilePic" type="file" accept="image/*" />
-                  <p className="text-xs text-muted-foreground">Recommended size: 400x400px. Max 1MB.</p>
+                  <Input id="artisanProfilePic" type="file" accept="image/*" disabled/>
+                  <p className="text-xs text-muted-foreground">Image uploads coming soon. Recommended: 400x400px.</p>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Profile")}><Save size={16} className="mr-2"/> Save Profile Information</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Profile")} disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
+                Save Profile Information
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -239,7 +270,10 @@ export default function StoreSettingsPage() {
               <p className="text-sm text-muted-foreground">Ensure all details are accurate to avoid payment delays. Payments are processed monthly.</p>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Payment")}><Save size={16} className="mr-2"/> Save Payment Details</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Payments")} disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
+                Save Payment Details
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -257,11 +291,11 @@ export default function StoreSettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="localShippingRate">Local Shipping Rate (USD)</Label>
-                    <Input id="localShippingRate" type="number" placeholder="e.g., 5.00" value={localRate} onChange={(e) => setLocalRate(e.target.value)} />
+                    <Input id="localShippingRate" type="number" placeholder="e.g., 5.00" value={localRate} onChange={(e) => setLocalRate(e.target.value)} disabled={isSaving}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="localDeliveryTime">Local Estimated Delivery Time</Label>
-                    <Input id="localDeliveryTime" placeholder="e.g., 3-5 business days" value={localDeliveryTime} onChange={(e) => setLocalDeliveryTime(e.target.value)} />
+                    <Input id="localDeliveryTime" placeholder="e.g., 3-5 business days" value={localDeliveryTime} onChange={(e) => setLocalDeliveryTime(e.target.value)} disabled={isSaving}/>
                   </div>
                 </div>
               </div>
@@ -271,11 +305,11 @@ export default function StoreSettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="internationalShippingRate">International Shipping Rate (USD)</Label>
-                    <Input id="internationalShippingRate" type="number" placeholder="e.g., 25.00" value={internationalRate} onChange={(e) => setInternationalRate(e.target.value)} />
+                    <Input id="internationalShippingRate" type="number" placeholder="e.g., 25.00" value={internationalRate} onChange={(e) => setInternationalRate(e.target.value)} disabled={isSaving}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="internationalDeliveryTime">International Estimated Delivery Time</Label>
-                    <Input id="internationalDeliveryTime" placeholder="e.g., 7-21 business days" value={internationalDeliveryTime} onChange={(e) => setInternationalDeliveryTime(e.target.value)} />
+                    <Input id="internationalDeliveryTime" placeholder="e.g., 7-21 business days" value={internationalDeliveryTime} onChange={(e) => setInternationalDeliveryTime(e.target.value)} disabled={isSaving}/>
                   </div>
                 </div>
               </div>
@@ -285,23 +319,26 @@ export default function StoreSettingsPage() {
                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="freeLocalShippingThreshold">Free Local Shipping on Orders Over (USD)</Label>
-                        <Input id="freeLocalShippingThreshold" type="number" placeholder="e.g., 100" value={freeLocalShippingThreshold} onChange={(e) => setFreeLocalShippingThreshold(e.target.value)} />
+                        <Input id="freeLocalShippingThreshold" type="number" placeholder="e.g., 100" value={freeLocalShippingThreshold} onChange={(e) => setFreeLocalShippingThreshold(e.target.value)} disabled={isSaving}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="freeInternationalShippingThreshold">Free International Shipping on Orders Over (USD)</Label>
-                        <Input id="freeInternationalShippingThreshold" type="number" placeholder="e.g., 200" value={freeInternationalShippingThreshold} onChange={(e) => setFreeInternationalShippingThreshold(e.target.value)} />
+                        <Input id="freeInternationalShippingThreshold" type="number" placeholder="e.g., 200" value={freeInternationalShippingThreshold} onChange={(e) => setFreeInternationalShippingThreshold(e.target.value)} disabled={isSaving}/>
                     </div>
                  </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="processingTime">Typical Order Processing Time</Label>
-                <Input id="processingTime" placeholder="e.g., 1-3 business days" value={processingTime} onChange={(e) => setProcessingTime(e.target.value)}/>
+                <Input id="processingTime" placeholder="e.g., 1-3 business days" value={processingTime} onChange={(e) => setProcessingTime(e.target.value)} disabled={isSaving}/>
                  <p className="text-xs text-muted-foreground">This is the time it takes you to prepare an order before shipping. It helps set customer expectations.</p>
               </div>
             </CardContent>
              <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Shipping")}><Save size={16} className="mr-2"/> Save Shipping Settings</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Shipping")} disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
+                Save Shipping Settings
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -315,19 +352,22 @@ export default function StoreSettingsPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="returnPolicy">Return & Refund Policy</Label>
-                <Textarea id="returnPolicy" rows={5} placeholder="Detail your return and refund process, conditions, and timeframe." value={returnPolicy} onChange={(e) => setReturnPolicy(e.target.value)} />
+                <Textarea id="returnPolicy" rows={5} placeholder="Detail your return and refund process, conditions, and timeframe." value={returnPolicy} onChange={(e) => setReturnPolicy(e.target.value)} disabled={isSaving}/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="exchangePolicy">Exchange Policy</Label>
-                <Textarea id="exchangePolicy" rows={3} placeholder="Specify if you offer exchanges and under what conditions." value={exchangePolicy} onChange={(e) => setExchangePolicy(e.target.value)}/>
+                <Textarea id="exchangePolicy" rows={3} placeholder="Specify if you offer exchanges and under what conditions." value={exchangePolicy} onChange={(e) => setExchangePolicy(e.target.value)} disabled={isSaving}/>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="cancellationPolicy">Order Cancellation Policy</Label>
-                <Textarea id="cancellationPolicy" rows={2} placeholder="When can customers cancel an order?" value={cancellationPolicy} onChange={(e) => setCancellationPolicy(e.target.value)}/>
+                <Textarea id="cancellationPolicy" rows={2} placeholder="When can customers cancel an order?" value={cancellationPolicy} onChange={(e) => setCancellationPolicy(e.target.value)} disabled={isSaving}/>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Policies")}><Save size={16} className="mr-2"/> Save Policies</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleSave("Policies")} disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
+                Save Policies
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
