@@ -4,19 +4,12 @@ import Link from 'next/link';
 import type { Product } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// StarRating import is no longer needed if we remove it completely
-// import StarRating from './StarRating';
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  // averageRating calculation is no longer needed if not displayed
-  // const averageRating = product.reviews && product.reviews.length > 0
-  //   ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
-  //   : 0;
-
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
       <CardHeader className="p-0">
@@ -34,9 +27,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <CardTitle className="text-lg font-headline mb-1 hover:text-primary transition-colors">
           <Link href={`/products/${product.id}`}>{product.name}</Link>
         </CardTitle>
-        {product.artisan && (
+        {product.artisanName && (
           <CardDescription className="text-xs text-muted-foreground mb-1">
-            By <Link href={`/artisans/${product.artisan.id}`} className="hover:underline text-accent">{product.artisan.name}</Link>
+            By <Link href={`/artisans/${product.artisanId}`} className="hover:underline text-accent">{product.artisanName}</Link>
           </CardDescription>
         )}
         <p className="text-sm text-foreground/80 line-clamp-2 mb-2">
@@ -51,7 +44,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <p className="text-lg font-semibold text-primary">
             ${product.price.toFixed(2)}
           </p>
-          {/* Star rating and review count removed from here */}
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">

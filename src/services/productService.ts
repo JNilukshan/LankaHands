@@ -1,8 +1,97 @@
 
-'use server'; // Indicates this module can contain server-side logic, callable from Server Actions or Server Components
+'use server';
 
 import type { Product, Review } from '@/types';
-import { adminDb } from '@/lib/firebaseConfig'; // Using Firebase Admin SDK
+import { adminDb } from '@/lib/firebaseConfig';
+import { FieldValue }from 'firebase-admin/firestore';
+import { revalidatePath } from 'next/cache';
+
+/**
+ * Creates a new product document in Firestore.
+ * @param productData The data for the new product.
+ * @returns The newly created Product object or null on error.
+ */
+export async function createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'reviews'>): Promise<Product | null> {
+    try {
+        const newProductRef = adminDb.collection('products').doc();
+        const now = FieldValue.serverTimestamp();
+
+        const finalProductData = {
+            ...productData,
+            images: productData.images?.length ? productData.images : ['https://placehold.co/600x400.png'],
+            isVisible: true,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        await newProductRef.set(finalProductData);
+        
+        revalidatePath('/products');
+        revalidatePath('/dashboard/seller/products');
+
+        const newProductDoc = await newProductRef.get();
+        const data = newProductDoc.data();
+
+        if (!data) return null;
+        
+        return {
+            id: newProductDoc.id,
+            ...data,
+            // Convert Firestore Timestamps to ISO strings for client compatibility
+            createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+            reviews: [],
+        } as Product;
+
+    } catch (error) {
+        console.error("Error creating product:", error);
+        return null;
+    }
+}
+
+/**
+ * Updates an existing product document in Firestore.
+ * @param productId The ID of the product to update.
+ * @param productData The data to update.
+ * @returns True if successful, false otherwise.
+ */
+export async function updateProduct(productId: string, productData: Partial<Omit<Product, 'id' | 'reviews'>>): Promise<boolean> {
+    try {
+        const productRef = adminDb.collection('products').doc(productId);
+        await productRef.update({
+            ...productData,
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+        
+        revalidatePath(`/products/${productId}`);
+        revalidatePath(`/dashboard/seller/products`);
+        revalidatePath(`/dashboard/seller/products/${productId}/edit`);
+
+        return true;
+    } catch (error) {
+        console.error(`Error updating product ${productId}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Deletes a product from Firestore.
+ * @param productId The ID of the product to delete.
+ * @returns True if successful, false otherwise.
+ */
+export async function deleteProduct(productId: string): Promise<boolean> {
+    try {
+        await adminDb.collection('products').doc(productId).delete();
+
+        revalidatePath('/products');
+        revalidatePath('/dashboard/seller/products');
+        return true;
+    } catch (error) {
+        console.error(`Error deleting product ${productId}:`, error);
+        return false;
+    }
+}
+
 
 /**
  * Fetches all products from Firestore.
@@ -30,7 +119,7 @@ export async function getAllProducts(): Promise<Product[]> {
         longDescription: data.longDescription || data.description || '',
         materials: data.materials || [],
         dimensions: data.dimensions || '',
-        reviews: [], // Reviews are typically fetched separately or on product detail page
+        reviews: [], // Reviews are fetched separately
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
         updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
       } as Product;
@@ -113,11 +202,10 @@ export async function getProductsByArtisanId(artisanId: string): Promise<Product
   try {
     const productsSnapshot = await adminDb.collection('products')
       .where('artisanId', '==', artisanId)
-      .where('isVisible', '==', true)
+      // .where('isVisible', '==', true) // Seller should see all their products, even hidden ones
       .get();
       
     if (productsSnapshot.empty) {
-      console.log(`No products found for artisan ID ${artisanId}.`);
       return [];
     }
     const products: Product[] = productsSnapshot.docs.map(doc => {
@@ -129,15 +217,9 @@ export async function getProductsByArtisanId(artisanId: string): Promise<Product
         price: data.price || 0,
         category: data.category || 'Uncategorized',
         images: Array.isArray(data.images) && data.images.length > 0 ? data.images : ['https://placehold.co/600x400.png'],
-        artisanId: data.artisanId, // Should match the queried artisanId
+        artisanId: data.artisanId,
         artisanName: data.artisanName || 'Unknown Artisan',
         stock: data.stock !== undefined ? data.stock : 0,
-        longDescription: data.longDescription || data.description || '',
-        materials: data.materials || [],
-        dimensions: data.dimensions || '',
-        reviews: [], // Full reviews typically fetched on product detail page
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
       } as Product;
     });
     return products;

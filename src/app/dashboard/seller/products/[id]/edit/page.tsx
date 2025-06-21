@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Edit3, ImagePlus, Tag, DollarSign, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Product } from "@/types"; 
-import { getProductById } from '@/services/productService';
+import { getProductById, updateProduct } from '@/services/productService';
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -40,9 +40,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const productId = params.id; 
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [productData, setProductData] = useState<Product | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -74,7 +73,6 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       const fetchedProduct = await getProductById(productId);
       
       if (fetchedProduct && fetchedProduct.artisanId === currentUser.id) { 
-          setProductData(fetchedProduct);
           form.reset({
               productName: fetchedProduct.name,
               description: fetchedProduct.description,
@@ -96,16 +94,36 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
 
   const onSubmit = async (data: ProductFormValues) => {
-    setIsLoading(true);
-    console.log("Updated product data for ID:", productId, data);
-    // Simulate API call for product update
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast({
-      title: "Product Updated!",
-      description: `${data.productName} has been successfully updated.`,
-    });
-    setIsLoading(false);
-    router.push('/dashboard/seller/products'); 
+    setIsSubmitting(true);
+    
+    const productUpdateData: Partial<Product> = {
+        name: data.productName,
+        description: data.description,
+        longDescription: data.longDescription,
+        price: data.price,
+        category: data.category,
+        stock: data.stock,
+        materials: data.materials ? data.materials.split(',').map(m => m.trim()) : [],
+        dimensions: data.dimensions,
+    };
+    
+    const success = await updateProduct(productId, productUpdateData);
+    
+    setIsSubmitting(false);
+
+    if (success) {
+        toast({
+            title: "Product Updated!",
+            description: `${data.productName} has been successfully updated.`,
+        });
+        router.push('/dashboard/seller/products');
+    } else {
+        toast({
+            title: "Error",
+            description: "Failed to update product. Please try again.",
+            variant: "destructive"
+        });
+    }
   };
 
   if (isDataLoading || isAuthLoading) {
@@ -116,11 +134,6 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         </div>
     );
   }
-  
-  if (!productData) {
-     return <div className="text-center py-10">Product not found or you do not have permission to edit it.</div>;
-  }
-
 
   return (
     <div className="py-8">
@@ -263,8 +276,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               </FormItem>
 
 
-              <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Save size={16} className="mr-2" /> Save Changes
               </Button>
             </form>

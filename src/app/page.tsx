@@ -5,23 +5,24 @@ import { Button } from '@/components/ui/button';
 import type { Artisan, Product } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAllArtisans } from '@/services/artisanService'; // Updated
-import { getAllProducts } from '@/services/productService'; // Updated
+import { getAllArtisans } from '@/services/artisanService';
+import { getAllProducts } from '@/services/productService';
 
 
 export default async function HomePage() {
-  // Fetch real data from services
   const allArtisans: Artisan[] = await getAllArtisans();
   const allProducts: Product[] = await getAllProducts();
 
-  // Sort artisans by followers (descending) and take top 3
   const sortedArtisans = [...allArtisans].sort((a, b) => (b.followers || 0) - (a.followers || 0));
   const featuredArtisans = sortedArtisans.slice(0, 3);
   
-  // For popular products, you might sort by reviews, sales, or just take the latest for now
-  // Here, we'll take the first 4 products as a simple example
-  const popularProducts = allProducts.slice(0, 4);
+  // Sort products by creation date (newest first) for "Popular" section as a proxy
+  const sortedProducts = [...allProducts].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+  });
+  const popularProducts = sortedProducts.slice(0, 4);
 
   return (
     <div className="space-y-16">
@@ -49,7 +50,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-       {/* Featured Artisans Section - Redesigned */}
+       {/* Featured Artisans Section */}
       <section>
         <h2 className="text-3xl font-headline font-semibold text-center mb-8 text-primary">
           Meet Our Talented Artisans
@@ -57,7 +58,7 @@ export default async function HomePage() {
         {featuredArtisans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {featuredArtisans.map(artisan => (
-              <Card key={artisan.id} className="flex flex-col items-center text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div key={artisan.id} className="flex flex-col items-center text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg bg-card">
                 <Avatar className="w-24 h-24 mb-4 border-2 border-primary">
                   <AvatarImage src={artisan.profileImageUrl as string} alt={artisan.name} data-ai-hint="artisan portrait" />
                   <AvatarFallback>{artisan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -67,7 +68,7 @@ export default async function HomePage() {
                 <Button variant="outline" className="mt-auto text-primary border-primary hover:bg-primary/10" asChild>
                   <Link href={`/artisans/${artisan.id}`}>View Profile</Link>
                 </Button>
-              </Card>
+              </div>
             ))}
           </div>
         ) : (

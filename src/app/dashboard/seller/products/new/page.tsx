@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2, PackagePlus, ImagePlus, Tag, DollarSign } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { createProduct } from "@/services/productService";
+import type { Product } from "@/types";
 
 const productSchema = z.object({
   productName: z.string().min(3, { message: "Product name must be at least 3 characters." }),
@@ -22,7 +27,6 @@ const productSchema = z.object({
   stock: z.coerce.number().int().min(0, { message: "Stock quantity must be a non-negative integer." }),
   materials: z.string().optional(), // comma-separated
   dimensions: z.string().optional(),
-  // imageUpload: typeof window === 'undefined' ? z.any() : z.instanceof(FileList).refine(files => files?.length >= 1, 'At least one image is required.'), // TODO: Handle file uploads properly
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -30,9 +34,10 @@ type ProductFormValues = z.infer<typeof productSchema>;
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
 
 export default function AddNewProductPage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  // const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -48,29 +53,55 @@ export default function AddNewProductPage() {
     },
   });
 
-  // const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (event.target.files) {
-  //     const filesArray = Array.from(event.target.files);
-  //     const previews = filesArray.map(file => URL.createObjectURL(file));
-  //     setImagePreviews(previews);
-  //     // form.setValue("imageUpload", event.target.files); // This needs to be handled carefully with react-hook-form
-  //   }
-  // };
-
   const onSubmit = async (data: ProductFormValues) => {
+    if (!currentUser || currentUser.role !== 'seller') {
+        toast({ title: "Unauthorized", description: "You must be a seller to add products.", variant: "destructive" });
+        return;
+    }
     setIsLoading(true);
-    console.log("New product data:", data);
-    // Simulate API call for product creation, including image uploads
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast({
-      title: "Product Added!",
-      description: `${data.productName} has been successfully listed.`,
-    });
+    
+    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'reviews'> = {
+        name: data.productName,
+        description: data.description,
+        longDescription: data.longDescription,
+        price: data.price,
+        category: data.category,
+        stock: data.stock,
+        materials: data.materials ? data.materials.split(',').map(m => m.trim()) : [],
+        dimensions: data.dimensions,
+        artisanId: currentUser.id,
+        artisanName: currentUser.name,
+        images: ['https://placehold.co/600x400.png'], // Placeholder image for now
+        isVisible: true,
+    };
+
+    const newProduct = await createProduct(productData);
+    
     setIsLoading(false);
-    form.reset();
-    // setImagePreviews([]);
-    // router.push('/dashboard/seller/products'); // redirect to product list
+
+    if (newProduct) {
+        toast({
+            title: "Product Added!",
+            description: `${newProduct.name} has been successfully listed.`,
+        });
+        router.push('/dashboard/seller/products');
+    } else {
+        toast({
+            title: "Error",
+            description: "Failed to add the product. Please try again.",
+            variant: "destructive",
+        });
+    }
   };
+  
+  if (isAuthLoading) {
+     return <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading...</p></div>;
+  }
+  
+  if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return <div className="text-center py-10">Redirecting to login...</div>;
+  }
 
   return (
     <div className="py-8">
@@ -206,33 +237,10 @@ export default function AddNewProductPage() {
                 )}
               />
 
-              {/* <FormField
-                control={form.control}
-                name="imageUpload"
-                render={({ field }) => ( // fieldState can be used for errors
-                  <FormItem>
-                    <FormLabel className="flex items-center"><ImagePlus size={16} className="mr-1 text-muted-foreground"/>Product Images (up to 5)</FormLabel>
-                    <FormControl>
-                       <Input type="file" accept="image/*" multiple onChange={handleImageChange} />
-                    </FormControl>
-                    <FormDescription>First image will be the main display image.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
-                  {imagePreviews.map((src, index) => (
-                    <div key={index} className="relative aspect-square border rounded-md overflow-hidden">
-                       <img src={src} alt={`Preview ${index + 1}`} className="object-cover w-full h-full" />
-                    </div>
-                  ))}
-                </div>
-              )} */}
                <FormItem>
                 <FormLabel className="flex items-center"><ImagePlus size={16} className="mr-1 text-muted-foreground"/>Product Images (up to 5)</FormLabel>
                 <Input type="file" accept="image/*" multiple disabled /> 
-                <FormDescription>Image upload functionality will be implemented soon. For now, placeholder images will be used.</FormDescription>
+                <FormDescription>Image upload functionality will be implemented soon. For now, a placeholder image will be used.</FormDescription>
               </FormItem>
 
 

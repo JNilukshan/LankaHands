@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/shared/ProductCard';
-// StarRating import can be removed if averageRating is directly from artisan object
 import type { Artisan, Product } from '@/types';
 import Link from 'next/link';
 import { Award, MapPin, MessageCircle, Users, Star } from 'lucide-react';
@@ -10,31 +9,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton'; 
-import { getArtisanById } from '@/services/artisanService'; // Updated
-import { getProductsByArtisanId } from '@/services/productService'; // Updated, assumes this function exists
+import { getArtisanById } from '@/services/artisanService';
+import { getProductsByArtisanId } from '@/services/productService';
 import { notFound } from 'next/navigation';
 
 export default async function ArtisanProfilePage({ params }: { params: { id: string } }) {
   const artisan = await getArtisanById(params.id);
 
   if (!artisan) {
-    notFound(); // Use Next.js notFound for 404
+    notFound();
   }
 
-  // Fetch products by this artisan
   const artisanProducts = await getProductsByArtisanId(artisan.id);
   
-  // Use averageRating directly from artisan object if available, otherwise calculate or default
   const averageRating = artisan.averageRating || 0;
 
 
   return (
     <div className="space-y-12">
-      {/* Artisan Header Section */}
       <Card className="overflow-hidden shadow-xl">
         <div className="relative h-56 md:h-72 bg-gradient-to-r from-primary/20 to-accent/20">
           <Image 
-            src={artisan.bannerImageUrl || "https://placehold.co/1200x400.png"} // Use bannerImageUrl or placeholder
+            src={artisan.bannerImageUrl || "https://placehold.co/1200x400.png"}
             alt={`${artisan.name} banner`} 
             fill
             style={{ objectFit: 'cover' }} 
@@ -72,7 +68,6 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
       </Card>
       
       <div className="grid md:grid-cols-3 gap-6 items-start">
-        {/* About Artisan Section */}
         <Card className="md:col-span-2 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-headline text-primary">About {artisan.name}</CardTitle>
@@ -82,7 +77,6 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
           </CardContent>
         </Card>
 
-        {/* Artisan Stats Section */}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl font-headline text-primary">Artisan Stats</CardTitle>
@@ -106,7 +100,6 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
 
       <Separator />
 
-      {/* Products by Artisan Section */}
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-6 text-primary">Creations by {artisan.name}</h2>
         {artisanProducts && artisanProducts.length > 0 ? (

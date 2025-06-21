@@ -3,91 +3,91 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if a user is the owner of a document.
+  
+    // Helper functions
+    function isUserAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isUserRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
-    // By default, deny all reads and writes.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Publicly readable collections
-    match /products/{productId} {
-      allow read;
-      // Only authenticated artisans can write to the products collection.
-      // We check if the artisanId on the product document matches the user's UID.
-      allow create: if request.auth != null && request.resource.data.artisanId == request.auth.uid;
-      allow update: if request.auth != null && request.resource.data.artisanId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.artisanId == request.auth.uid;
-    }
-    
-    // Reviews are a subcollection of products.
-    match /products/{productId}/reviews/{reviewId} {
-        // Anyone can read reviews.
-        allow read;
-        // Only authenticated users can create a review.
-        // The user ID on the review must match the logged-in user.
-        allow create: if isOwner(request.resource.data.userId);
-        // Users can only update or delete their OWN reviews.
-        allow update, delete: if isOwner(resource.data.userId);
-    }
-    
-    // Artisan profiles are public, but only the artisan can create/update their own.
-    match /artisanProfiles/{artisanId} {
-      allow read;
-      allow create: if request.auth != null && request.auth.uid == artisanId;
-      allow update: if request.auth != null && request.auth.uid == artisanId;
-      // No one can delete an artisan profile through the client for safety.
-      allow delete: if false;
-    }
-
-    // User profiles can only be read and modified by the owner.
+    // Users Collection
+    // Users can read their own profile, and update their own profile data.
+    // Creation is handled by Firebase Auth functions, not directly by clients.
     match /users/{userId} {
-      allow read, update, create: if isOwner(userId);
-      // Disallow deletion of user profiles from the client.
-      allow delete: if false;
+      allow read: if isUserAuthenticated() && isOwner(userId);
+      allow update: if isUserAuthenticated() && isOwner(userId);
+      // Deny create/delete to prevent users from creating accounts outside of auth flow
+      // or deleting their user record.
+      allow create, delete: if false;
     }
-    
-    // Orders collection
-    match /orders/{orderId} {
-        // Users can create their own orders.
-        allow create: if isOwner(request.resource.data.userId);
-        
-        // The buyer who owns the order can read it.
-        // The artisan associated with the order can also read it.
-        allow read: if isOwner(resource.data.userId) || isOwner(resource.data.artisanId);
-        
-        // Only the artisan associated with the order can update its status.
-        // We restrict updates to specific fields like 'status' and 'trackingNumber' for safety.
-        allow update: if isOwner(resource.data.artisanId) && request.resource.data.keys().hasOnly(['status', 'trackingNumber', 'lastUpdatedAt']);
-        
-        // Only the buyer can "cancel" an order, which should be an update to the status field.
-        // The rule above handles status changes. Client-side logic should enforce who can change to what status.
-        // Disallow direct deletion of orders from the client for record-keeping.
-        allow delete: if false;
 
-        // Rules for the 'items' subcollection within an order.
-        match /items/{itemId} {
-            // These should be created with the order in a batch/transaction.
-            // Reading them is governed by the parent order's read rule.
-            allow read: if isOwner(get(/databases/$(database)/documents/orders/$(orderId)).data.userId) || isOwner(get(/databases/$(database)/documents/orders/$(orderId)).data.artisanId);
-            allow write: if false; // Disallow direct modification of order items after creation.
-        }
+    // Artisan Profiles Collection
+    // Anyone can read public artisan profiles.
+    // Only the artisan themselves (who must be a seller) can create or update their profile.
+    match /artisanProfiles/{artisanId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isUserRole('seller') && isOwner(artisanId);
+      allow update: if isUserAuthenticated() && isOwner(artisanId);
+      allow delete: if false; // Disallow deleting profiles for now
+    }
+
+    // Products Collection
+    // Anyone can read products.
+    // Only authenticated sellers can create products, and they must own them.
+    // Only the artisan who owns the product can update or delete it.
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isUserRole('seller') && request.resource.data.artisanId == request.auth.uid;
+      allow update: if isUserAuthenticated() && resource.data.artisanId == request.auth.uid;
+      allow delete: if isUserAuthenticated() && resource.data.artisanId == request.auth.uid;
+
+      // Reviews Subcollection
+      // Anyone can read reviews.
+      // Any authenticated user can create a review.
+      // Only the user who wrote the review can update or delete it.
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isUserAuthenticated();
+        allow update, delete: if isUserAuthenticated() && resource.data.userId == request.auth.uid;
+      }
     }
     
-    // Notifications for sellers
+    // Orders Collection
+    // Users can only read their own orders. Artisans can read orders for their products.
+    // Only authenticated users can create orders.
+    // Updating status should be restricted, perhaps to an admin or the artisan.
+    match /orders/{orderId} {
+      allow read: if isUserAuthenticated() && 
+                      (resource.data.userId == request.auth.uid || resource.data.artisanId == request.auth.uid);
+      allow create: if isUserAuthenticated();
+      // Allow artisans to update order status, but not other fields.
+      allow update: if isUserAuthenticated() && 
+                       isUserRole('seller') && 
+                       resource.data.artisanId == request.auth.uid &&
+                       request.resource.data.keys().hasOnly(['status', 'lastUpdatedAt', 'trackingNumber']);
+      allow delete: if false; // Do not allow orders to be deleted.
+      
+      // Items Subcollection should inherit read permissions from parent order.
+      match /items/{itemId} {
+         allow read: if get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid ||
+                      get(/databases/$(database)/documents/orders/$(orderId)).data.artisanId == request.auth.uid;
+         allow create, update, delete: if false; // These are part of the order, not standalone.
+      }
+    }
+    
+    // Notifications Collection
+    // Only the target artisan can read or update (e.g., mark as read) their notifications.
     match /notifications/{notificationId} {
-        // Only the target artisan can read their notifications.
-        allow read: if isOwner(resource.data.artisanId);
-        // Notifications are created by server-side logic (e.g., Cloud Functions) or via specific Server Actions.
-        // To allow creation from the client (e.g., "Contact Artisan" form), we must secure it.
-        // Let's allow any authenticated user to create a notification, as long as they provide the artisanId.
-        // The server-side logic is responsible for not creating spam.
-        allow create: if request.auth != null && request.resource.data.artisanId != null;
-        // The artisan can update the 'read' status or delete their own notification.
-        allow update, delete: if isOwner(resource.data.artisanId);
+      allow read, update, delete: if isUserAuthenticated() && resource.data.artisanId == request.auth.uid;
+      // Creation is handled by server-side logic (e.g., Cloud Functions or Server Actions)
+      allow create: if isUserAuthenticated(); // Allow authenticated users to send messages, which creates a notification
     }
   }
 }

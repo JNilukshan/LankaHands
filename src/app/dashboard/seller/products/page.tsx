@@ -11,7 +11,7 @@ import type { Product } from '@/types';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getProductsByArtisanId } from '@/services/productService';
+import { getProductsByArtisanId, deleteProduct } from '@/services/productService';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -33,6 +33,7 @@ export default function ManageProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -59,22 +60,31 @@ export default function ManageProductsPage() {
   };
 
   const confirmDeleteProduct = () => {
-    if (productToDeleteId) {
-      const deletedProduct = products.find(p => p.id === productToDeleteId);
-      setProducts(currentProducts => currentProducts.filter(product => product.id !== productToDeleteId));
-      toast({
-        title: "Product Deleted",
-        description: `${deletedProduct?.name || 'The product'} has been successfully deleted.`,
-      });
-      // In a real app, also call backend to delete
-    }
-    setIsDeleteDialogOpen(false);
-    setProductToDeleteId(null);
+    if (!productToDeleteId) return;
+
+    startDeleteTransition(async () => {
+        const deletedProduct = products.find(p => p.id === productToDeleteId);
+        const success = await deleteProduct(productToDeleteId);
+        if (success) {
+            setProducts(currentProducts => currentProducts.filter(product => product.id !== productToDeleteId));
+            toast({
+                title: "Product Deleted",
+                description: `${deletedProduct?.name || 'The product'} has been successfully deleted.`,
+            });
+        } else {
+            toast({
+                title: "Error",
+                description: "Failed to delete the product. Please try again.",
+                variant: "destructive"
+            });
+        }
+        setIsDeleteDialogOpen(false);
+        setProductToDeleteId(null);
+    });
   };
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.id.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isAuthLoading || isLoading) {
@@ -107,7 +117,7 @@ export default function ManageProductsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
               type="search" 
-              placeholder="Search products by name or ID..." 
+              placeholder="Search products by name..." 
               className="pl-10 w-full sm:w-1/2 lg:w-1/3"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -165,6 +175,7 @@ export default function ManageProductsPage() {
                         <DropdownMenuItem 
                           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                           onClick={() => handleDeleteClick(product.id)}
+                          disabled={isDeleting}
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete Product
                         </DropdownMenuItem>
@@ -199,7 +210,8 @@ export default function ManageProductsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setProductToDeleteId(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteProduct} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+            <AlertDialogAction onClick={confirmDeleteProduct} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
