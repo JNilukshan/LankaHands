@@ -14,8 +14,10 @@ import { useState, useEffect } from "react";
 import { Loader2, Edit3, ImagePlus, Tag, DollarSign, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Product } from "@/types"; 
-import { getMockProductById, mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller
+import { getProductById } from '@/services/productService';
 import React from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 
 const productSchema = z.object({
@@ -32,12 +34,11 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
-const SELLER_ARTISAN_ID = mockArtisanNimali.id;
-
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
-  const resolvedParams = React.use(params);
-  const productId = resolvedParams.id; 
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+  const productId = params.id; 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -58,15 +59,21 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   });
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return;
+    }
+
     const fetchProductData = async () => {
       if (!productId) {
           setIsDataLoading(false);
           return;
       };
       setIsDataLoading(true);
-      const fetchedProduct = await getMockProductById(productId);
+      const fetchedProduct = await getProductById(productId);
       
-      if (fetchedProduct && fetchedProduct.artisanId === SELLER_ARTISAN_ID) { 
+      if (fetchedProduct && fetchedProduct.artisanId === currentUser.id) { 
           setProductData(fetchedProduct);
           form.reset({
               productName: fetchedProduct.name,
@@ -80,12 +87,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           });
       } else {
           toast({ title: "Product not found or not yours", description: "Could not load product data for editing.", variant: "destructive"});
-          // Consider redirecting or showing an error message
+          router.push('/dashboard/seller/products');
       }
       setIsDataLoading(false);
     };
     fetchProductData();
-  }, [productId, form, toast]); 
+  }, [productId, form, toast, currentUser, isAuthLoading, router]); 
 
 
   const onSubmit = async (data: ProductFormValues) => {
@@ -98,10 +105,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       description: `${data.productName} has been successfully updated.`,
     });
     setIsLoading(false);
-    // router.push('/dashboard/seller/products'); 
+    router.push('/dashboard/seller/products'); 
   };
 
-  if (isDataLoading) {
+  if (isDataLoading || isAuthLoading) {
     return (
         <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -267,5 +274,3 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-    

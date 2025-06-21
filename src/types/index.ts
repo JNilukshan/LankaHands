@@ -104,6 +104,7 @@ export interface Order {
     recipientName?: string;
   };
   artisanId?: string;
+  artisan?: Artisan;
   paymentDetails?: {
     paymentId: string;
     method: string;

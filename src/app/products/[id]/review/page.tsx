@@ -1,9 +1,9 @@
 
 import ReviewWizardClient from '@/components/products/ReviewWizardClient';
-import { getMockProductById } from '@/lib/mock-data'; // Import from new mock data source
+import { getProductById } from '@/services/productService';
 
 async function getProductNameForReview(productId: string): Promise<string> {
-  const product = await getMockProductById(productId); // Use new mock data function
+  const product = await getProductById(productId);
   return product?.name || "the Product";
 }
 
@@ -16,5 +16,3 @@ export default async function ReviewPage({ params }: { params: { id: string } })
     </div>
   );
 }
-
-    

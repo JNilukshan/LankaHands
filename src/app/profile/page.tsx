@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/AuthContext';
-import { getMockOrdersByCustomerId, getMockProductById } from '@/lib/mock-data';
+import { getOrdersByCustomerId } from '@/services/orderService';
+import { getProductById } from '@/services/productService';
 
 export default function ProfilePage() {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
@@ -29,12 +30,12 @@ export default function ProfilePage() {
     const fetchData = async () => {
       setIsLoadingPageData(true);
       try {
-        const userOrders = await getMockOrdersByCustomerId(currentUser.id);
+        const userOrders = await getOrdersByCustomerId(currentUser.id);
         setOrders(userOrders);
 
         if (currentUser.wishlist && currentUser.wishlist.length > 0) {
           const fetchedWishlistProducts = await Promise.all(
-            currentUser.wishlist.map(productId => getMockProductById(productId))
+            currentUser.wishlist.map(productId => getProductById(productId))
           );
           setWishlistProducts(fetchedWishlistProducts.filter(p => p !== null) as Product[]);
         } else {
@@ -127,7 +128,7 @@ export default function ProfilePage() {
                           />
                           <div>
                             <p className="font-medium text-foreground">{item.productName}</p>
-                            <p className="text-sm text-muted-foreground">Qty: {item.quantity} · Price: ${item.price.toFixed(2)}</p>
+                            <p className="text-sm text-muted-foreground">Qty: {item.quantity} · Price: ${item.priceAtPurchase.toFixed(2)}</p>
                           </div>
                         </div>
                         <Button variant="link" size="sm" className="text-primary p-0 h-auto" asChild>
@@ -136,9 +137,6 @@ export default function ProfilePage() {
                       </li>
                     ))}
                   </ul>
-                   <div className="mt-3 pt-3 border-t">
-                        <p className="text-sm text-muted-foreground"><strong>Shipping Address:</strong> {order.shippingAddress}</p>
-                    </div>
                 </CardContent>
                 <CardFooter className="border-t pt-4 flex justify-end">
                     <Button variant="outline" className="text-primary border-primary hover:bg-primary/10" asChild>
@@ -149,7 +147,7 @@ export default function ProfilePage() {
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
+          <p className="text-muted-foreground">You haven't placed any orders yet.</p>
         )}
       </section>
 

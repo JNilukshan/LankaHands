@@ -11,13 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import type { Order } from '@/types';
-import { ListOrdered, Search, Eye, ChevronDown } from 'lucide-react';
+import { ListOrdered, Search, Eye, ChevronDown, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { getMockAllOrdersForNimali } from '@/lib/mock-data'; // Import from new mock data source
+import { getOrdersByArtisanId } from '@/services/orderService';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const orderStatuses: Order['status'][] = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function AllOrdersPage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+  
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -29,14 +34,20 @@ export default function AllOrdersPage() {
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+        router.push('/login');
+        return;
+    }
+
     const fetchOrders = async () => {
         setIsLoading(true);
-        const ordersData = await getMockAllOrdersForNimali(); // Fetch orders for Nimali
+        const ordersData = await getOrdersByArtisanId(currentUser.id);
         setAllOrders(ordersData);
         setIsLoading(false);
     };
     fetchOrders();
-  }, []);
+  }, [currentUser, isAuthLoading, router]);
 
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
     setAllOrders(prevOrders =>
@@ -81,8 +92,13 @@ export default function AllOrdersPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-10">Loading orders...</div>;
+  if (isLoading || isAuthLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading orders...</p>
+        </div>
+    );
   }
 
   return (
@@ -229,10 +245,10 @@ export default function AllOrdersPage() {
                         />
                         <div>
                           <p className="font-medium text-sm text-foreground">{item.productName}</p>
-                          <p className="text-xs text-muted-foreground">Qty: {item.quantity} · Price: ${item.price.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">Qty: {item.quantity} · Price: ${item.priceAtPurchase.toFixed(2)}</p>
                         </div>
                       </div>
-                      <p className="text-sm font-semibold text-primary">${(item.quantity * item.price).toFixed(2)}</p>
+                      <p className="text-sm font-semibold text-primary">${(item.quantity * item.priceAtPurchase).toFixed(2)}</p>
                     </li>
                   ))}
                 </ul>
@@ -246,7 +262,7 @@ export default function AllOrdersPage() {
               {selectedOrder.shippingAddress && (
                 <div className="border-t pt-3">
                   <h4 className="font-semibold text-sm text-foreground mb-1">Shipping Address:</h4>
-                  <p className="text-sm text-muted-foreground">{selectedOrder.shippingAddress}</p>
+                  <p className="text-sm text-muted-foreground">{typeof selectedOrder.shippingAddress === 'string' ? selectedOrder.shippingAddress : 'Address details missing'}</p>
                 </div>
               )}
               <div className="border-t pt-3">
@@ -279,5 +295,3 @@ export default function AllOrdersPage() {
     </div>
   );
 }
-
-    

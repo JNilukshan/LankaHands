@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Package, Search, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Package, Search, MoreHorizontal, Edit, Trash2, Loader2 } from 'lucide-react';
 import type { Product } from '@/types';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -23,11 +23,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getMockProductsByArtisanId, mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller
-
-const SELLER_ARTISAN_ID = mockArtisanNimali.id;
+import { getProductsByArtisanId } from '@/services/productService';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function ManageProductsPage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,14 +38,20 @@ export default function ManageProductsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return;
+    }
+
     const fetchProducts = async () => {
       setIsLoading(true);
-      const sellerProducts = await getMockProductsByArtisanId(SELLER_ARTISAN_ID);
+      const sellerProducts = await getProductsByArtisanId(currentUser.id);
       setProducts(sellerProducts);
       setIsLoading(false);
     };
     fetchProducts();
-  }, []);
+  }, [currentUser, isAuthLoading, router]);
 
   const handleDeleteClick = (productId: string) => {
     setProductToDeleteId(productId);
@@ -69,8 +77,13 @@ export default function ManageProductsPage() {
     product.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) {
-    return <div className="text-center py-10">Loading products...</div>;
+  if (isLoading || isAuthLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading products...</p>
+        </div>
+    );
   }
 
   return (
@@ -195,5 +208,3 @@ export default function ManageProductsPage() {
     </div>
   );
 }
-
-    

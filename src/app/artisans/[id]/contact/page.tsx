@@ -17,7 +17,7 @@ import type { Artisan, SellerNotification } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getMockArtisanById } from "@/lib/mock-data"; // Import from new mock data source
+import { getArtisanById } from '@/services/artisanService';
 
 const contactArtisanSchema = z.object({
   customerName: z.string().min(2, { message: "Your name must be at least 2 characters."}),
@@ -29,8 +29,7 @@ type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
 const LOCAL_STORAGE_NOTIFICATIONS_KEY = 'lankaHandsSellerNotifications';
 
 export default function ContactArtisanPage({ params }: { params: { id: string } }) {
-  const resolvedParams = React.use(params); 
-  const artisanId = resolvedParams.id;
+  const artisanId = params.id;
 
   const { toast } = useToast();
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -55,7 +54,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
         return;
       }
       setIsPageLoading(true);
-      const artisanData = await getMockArtisanById(artisanId); // Use new mock data function
+      const artisanData = await getArtisanById(artisanId);
       if (artisanData) {
         setArtisan(artisanData);
       } else {
@@ -147,7 +146,7 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
         <div className="flex flex-col items-center justify-center py-12 text-center">
             <UserCircle2 className="w-24 h-24 text-destructive mb-6" />
             <h1 className="text-2xl font-semibold text-destructive mb-4">Artisan Not Found</h1>
-            <p className="text-muted-foreground mb-6">Sorry, we couldn&apos;t find the artisan you&apos;re trying to contact.</p>
+            <p className="text-muted-foreground mb-6">Sorry, we couldn't find the artisan you're trying to contact.</p>
             <Button asChild variant="outline">
                 <Link href="/products">Back to Products</Link>
             </Button>
@@ -258,5 +257,3 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
     </div>
   );
 }
-
-    

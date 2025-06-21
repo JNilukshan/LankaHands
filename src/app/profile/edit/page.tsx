@@ -11,10 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Loader2, Save, UserCircle, ImagePlus } from "lucide-react";
-import type { User } from "@/types";
+import type { AuthenticatedUser } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { mockCustomerChandana } from '@/lib/mock-data'; // Import from new mock data source
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from "next/navigation";
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -25,9 +26,10 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function EditProfilePage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
@@ -39,16 +41,20 @@ export default function EditProfilePage() {
   });
 
   useEffect(() => {
-    const userToEdit = mockCustomerChandana; // Use new mock customer
-    setCurrentUser(userToEdit);
-    form.reset({
-      name: userToEdit.name,
-      email: userToEdit.email,
-    });
-    if (typeof userToEdit.profileImageUrl === 'string') {
-      setImagePreview(userToEdit.profileImageUrl);
+    if (isAuthLoading) return;
+    if (!currentUser) {
+        router.push('/login');
+        return;
     }
-  }, [form]);
+    
+    form.reset({
+      name: currentUser.name,
+      email: currentUser.email,
+    });
+    if (typeof currentUser.profileImageUrl === 'string') {
+      setImagePreview(currentUser.profileImageUrl);
+    }
+  }, [form, currentUser, isAuthLoading, router]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -59,18 +65,19 @@ export default function EditProfilePage() {
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log("Updated profile data:", data);
-    // Simulate API call
+    // Simulate API call to update user document in Firestore
     await new Promise(resolve => setTimeout(resolve, 2000));
     toast({
       title: "Profile Updated!",
       description: "Your profile information has been successfully updated.",
     });
-    setIsLoading(false);
+    setIsSubmitting(false);
+    // You could also call a function from AuthContext to refresh currentUser state if needed
   };
 
-  if (!currentUser) {
+  if (isAuthLoading || !currentUser) {
     return (
         <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -93,7 +100,7 @@ export default function EditProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="profileImage" // This field is not directly in schema for data, but for UI interaction
+                name="profileImage" // This field is not in schema for data, but for UI interaction
                 render={({ field }) => (
                   <FormItem className="flex flex-col items-center">
                     <FormLabel htmlFor="profile-image-upload">
@@ -111,9 +118,10 @@ export default function EditProfilePage() {
                         accept="image/*" 
                         className="hidden"
                         onChange={handleImageChange}
+                        disabled // Disabled until backend logic is implemented
                       />
                     </FormControl>
-                    <FormDescription className="mt-2">Click image to change. Max 1MB.</FormDescription>
+                    <FormDescription className="mt-2">Click image to change (Upload disabled). Max 1MB.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -140,17 +148,17 @@ export default function EditProfilePage() {
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                      <Input type="email" placeholder="your.email@example.com" {...field} disabled />
                     </FormControl>
-                    <FormDescription>This email is used for login and notifications.</FormDescription>
+                    <FormDescription>Email cannot be changed after registration.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button type="submit" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
+                <Button type="submit" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2"/>}
                   Save Changes
                 </Button>
                  <Button variant="outline" className="w-full sm:w-auto" asChild>
@@ -164,5 +172,3 @@ export default function EditProfilePage() {
     </div>
   );
 }
-
-    

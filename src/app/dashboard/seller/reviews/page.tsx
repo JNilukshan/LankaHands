@@ -5,15 +5,20 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import StarRating from '@/components/shared/StarRating';
-import { MessageSquare, UserCircle2 } from 'lucide-react';
-import type { Review } from '@/types';
+import { MessageSquare, UserCircle2, Loader2 } from 'lucide-react';
+import type { Review, Product } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getMockAllReviewsForNimali, getMockProductsByArtisanId, mockArtisanNimali } from '@/lib/mock-data';
+import { getReviewsByArtisanId } from '@/services/reviewService';
+import { getProductsByArtisanId } from '@/services/productService';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 type ReviewWithProductInfo = Review & { productName: string, productImageUrl?: string };
-const SELLER_ARTISAN_ID = mockArtisanNimali.id;
 
 export default function ViewReviewsPage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+
   const [allReviews, setAllReviews] = useState<ReviewWithProductInfo[]>([]);
   const [displayedReviews, setDisplayedReviews] = useState<ReviewWithProductInfo[]>([]);
   const [productFilterOptions, setProductFilterOptions] = useState<{value: string, label: string}[]>([]);
@@ -31,12 +36,18 @@ export default function ViewReviewsPage() {
   ];
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return;
+    }
+
     const fetchReviewsAndProducts = async () => {
       setIsLoading(true);
-      const reviews = await getMockAllReviewsForNimali();
+      const reviews = await getReviewsByArtisanId(currentUser.id); 
       setAllReviews(reviews);
 
-      const sellerProducts = await getMockProductsByArtisanId(SELLER_ARTISAN_ID);
+      const sellerProducts: Product[] = await getProductsByArtisanId(currentUser.id);
       const pOptions = [
         { value: 'all-products', label: 'All Products' },
         ...sellerProducts.map(product => ({
@@ -48,7 +59,7 @@ export default function ViewReviewsPage() {
       setIsLoading(false);
     };
     fetchReviewsAndProducts();
-  }, []);
+  }, [currentUser, isAuthLoading, router]);
 
   useEffect(() => {
     let newFilteredReviews = [...allReviews];
@@ -62,11 +73,16 @@ export default function ViewReviewsPage() {
       newFilteredReviews = newFilteredReviews.filter(review => review.rating === numericRating);
     }
 
-    setDisplayedReviews(newFilteredReviews);
+    setDisplayedReviews(newFilteredReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, [productFilter, ratingFilter, allReviews]);
   
-  if (isLoading) {
-    return <div className="text-center py-10">Loading reviews...</div>;
+  if (isAuthLoading || isLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading reviews...</p>
+        </div>
+    );
   }
 
   return (
@@ -142,5 +158,3 @@ export default function ViewReviewsPage() {
     </div>
   );
 }
-
-    
