@@ -12,6 +12,7 @@ import ArtisanFollowButton from '@/components/artisans/ArtisanFollowButton';
 import { getArtisanById } from '@/services/artisanService';
 import { getProductsByArtisanId } from '@/services/productService';
 import { notFound } from 'next/navigation';
+import ArtisanContactButton from '@/components/artisans/ArtisanContactButton';
 
 export default async function ArtisanProfilePage({ params }: { params: { id: string } }) {
   const artisan = await getArtisanById(params.id);
@@ -55,12 +56,7 @@ export default async function ArtisanProfilePage({ params }: { params: { id: str
               </div>
             </div>
             <div className="flex flex-col gap-3 items-stretch mt-4 md:mt-0 w-full sm:w-auto">
-                <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                  <Link href={`/artisans/${artisan.id}/contact`}>
-                    <MessageCircle size={18} className="mr-2" />
-                    Contact Artisan
-                  </Link>
-                </Button>
+                <ArtisanContactButton artisanId={artisan.id} />
                 <ArtisanFollowButton artisanId={artisan.id} artisanName={artisan.name} />
             </div>
           </div>
