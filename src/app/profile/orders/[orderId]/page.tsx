@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { Order } from '@/types';
-import { CalendarDays, MapPin, ShoppingBag, Package, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck, Ban } from 'lucide-react';
+import { CalendarDays, MapPin, ShoppingBag, Package, DollarSign, ListOrdered, UserCircle2, ShieldCheck, Truck, Ban, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,7 +22,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getMockOrdersByCustomerId } from '@/lib/mock-data'; // Import from new mock data source
+import { getMockOrdersByCustomerId } from '@/lib/mock-data';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const getOrderDetails = async (orderId: string, customerId: string): Promise<Order | null> => {
   const orders = await getMockOrdersByCustomerId(customerId);
@@ -31,10 +33,9 @@ const getOrderDetails = async (orderId: string, customerId: string): Promise<Ord
 };
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  // For this prototype, we'll assume the logged-in user is 'chandana-c1'
-  const customerId = 'chandana-c1'; 
-  const resolvedParams = React.use(params);
-  const orderId = resolvedParams.orderId; // Corrected from resolvedParams.id
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+  const orderId = params.orderId;
   
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -42,15 +43,25 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
   const { toast } = useToast();
 
   React.useEffect(() => {
+    if (isAuthLoading) {
+        return; // Wait until authentication state is resolved
+    }
+    if (!currentUser) {
+        toast({ title: "Unauthorized", description: "Please log in to view your orders.", variant: "destructive" });
+        router.push('/login');
+        return;
+    }
+
     const fetchOrder = async () => {
       if (!orderId) return;
       setLoading(true);
-      const orderDetails = await getOrderDetails(orderId, customerId);
+      const orderDetails = await getOrderDetails(orderId, currentUser.id);
       setOrder(orderDetails);
       setLoading(false);
     };
+
     fetchOrder();
-  }, [orderId, customerId]);
+  }, [orderId, currentUser, isAuthLoading, router, toast]);
 
   const handlePrint = () => {
     window.print();
@@ -73,9 +84,10 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     setIsCancelDialogOpen(false);
   };
 
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
-      <div className="py-12 text-center">
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
         <p className="text-lg text-muted-foreground">Loading order details...</p>
       </div>
     );
@@ -85,7 +97,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     return (
         <div className="py-12 text-center">
             <h1 className="text-2xl font-semibold text-destructive mb-4">Order Not Found</h1>
-            <p className="text-muted-foreground mb-6">Sorry, we couldn&apos;t find details for this order.</p>
+            <p className="text-muted-foreground mb-6">Sorry, we couldn't find details for this order, or it may not belong to you.</p>
             <Button asChild variant="outline">
                 <Link href="/profile">Back to Profile</Link>
             </Button>
