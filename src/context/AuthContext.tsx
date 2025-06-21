@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email: additionalData?.email || firebaseUser.email || '',
           name: additionalData?.name || firebaseUser.displayName || 'New User',
           role: additionalData?.role || 'buyer', // Default to buyer
-          profileImageUrl: additionalData?.profileImageUrl || firebaseUser.photoURL || 'https://placehold.co/128x128.png',
+          profileImageUrl: additionalData?.profileImageUrl || 'https://placehold.co/128x128.png',
           wishlist: additionalData?.wishlist || [],
           followedArtisans: additionalData?.followedArtisans || [],
           createdAt: Timestamp.now().toDate().toISOString(),
@@ -187,6 +187,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         role: 'seller',
         artisanProfileId: userCredential.user.uid,
       });
+
+      // Create the corresponding document in 'artisanProfiles' collection
+      const artisanProfileRef = doc(db, 'artisanProfiles', userCredential.user.uid);
+      await setDoc(artisanProfileRef, {
+        name: userData.name,
+        email: userData.email,
+        bio: "Welcome to my artisan store! I'm excited to share my creations with you.",
+        profileImageUrl: 'https://placehold.co/300x300.png',
+        bannerImageUrl: 'https://placehold.co/1200x400.png',
+        followers: 0,
+        averageRating: 0,
+        location: 'Sri Lanka',
+        speciality: 'Handicraft Artisan',
+        userId: userCredential.user.uid,
+        createdAt: new Date().toISOString(),
+        isVerified: false,
+      });
+
       setIsLoading(false);
       return true;
     } catch (error: any) {
@@ -204,6 +222,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userDocRef = doc(db, 'users', currentUser.id);
         const artisanProfileId = currentUser.id;
         await updateDoc(userDocRef, { role: 'seller', artisanProfileId: artisanProfileId });
+        
+        // Also create/check for document in 'artisanProfiles' collection
+        const artisanProfileRef = doc(db, 'artisanProfiles', currentUser.id);
+        const artisanDocSnap = await getDoc(artisanProfileRef);
+        if (!artisanDocSnap.exists()) {
+          await setDoc(artisanProfileRef, {
+            name: currentUser.name,
+            email: currentUser.email,
+            bio: "Welcome to my artisan store! I'm excited to share my creations with you.",
+            profileImageUrl: currentUser.profileImageUrl || 'https://placehold.co/300x300.png',
+            bannerImageUrl: 'https://placehold.co/1200x400.png',
+            followers: 0,
+            averageRating: 0,
+            location: 'Sri Lanka',
+            speciality: 'Handicraft Artisan',
+            userId: currentUser.id,
+            createdAt: new Date().toISOString(),
+            isVerified: false,
+          });
+        }
+
         const updatedUser = { ...currentUser, role: 'seller' as 'seller', artisanProfileId: artisanProfileId };
         setCurrentUser(updatedUser);
         toast({ title: "Account Upgraded", description: "You are now registered as a seller!" });
