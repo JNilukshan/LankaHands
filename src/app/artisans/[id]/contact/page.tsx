@@ -13,11 +13,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, type ChangeEvent, useRef } from "react";
 import React from "react";
 import { Loader2, Send, ImageUp, ChevronLeft, UserCircle2 } from "lucide-react";
-import type { Artisan, SellerNotification } from "@/types";
+import type { Artisan } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getArtisanById } from '@/services/artisanService';
+import { createNotification } from '@/services/notificationService';
 
 const contactArtisanSchema = z.object({
   customerName: z.string().min(2, { message: "Your name must be at least 2 characters."}),
@@ -26,7 +27,28 @@ const contactArtisanSchema = z.object({
 });
 type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
 
-const LOCAL_STORAGE_NOTIFICATIONS_KEY = 'lankaHandsSellerNotifications';
+// Server Action to create the notification in Firestore
+async function sendMessage(artisanId: string, artisanName: string, formData: ContactArtisanFormValues) {
+    'use server';
+
+    try {
+        const notificationPayload = {
+            type: 'new_message' as const,
+            title: `New Message from ${formData.customerName || 'Customer'}`,
+            description: formData.messageText,
+            artisanId: artisanId,
+            sender: formData.customerName || 'Customer',
+            // Note: link would ideally be to a real message thread page
+            link: `/dashboard/seller/messages/thread/${artisanId}/${Date.now()}` 
+        };
+        await createNotification(notificationPayload);
+        return { success: true, message: `Your message has been sent to ${artisanName}.` };
+    } catch (error) {
+        console.error("Failed to send message and create notification", error);
+        return { success: false, message: "Could not send your message. Please try again later." };
+    }
+}
+
 
 export default function ContactArtisanPage({ params }: { params: { id: string } }) {
   const artisanId = params.id;
@@ -91,45 +113,34 @@ export default function ContactArtisanPage({ params }: { params: { id: string } 
   const handleSubmitMessage = async (data: ContactArtisanFormValues) => {
     setIsSending(true);
 
-    console.log("Sending message to artisan:", artisan?.name, data);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (artisan) {
-      try {
-        const storedNotificationsString = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
-        const existingNotifications: SellerNotification[] = storedNotificationsString ? JSON.parse(storedNotificationsString) : [];
-        
-        const newNotification: SellerNotification = {
-          id: `notif_contact_${Date.now()}`,
-          type: 'new_message',
-          title: `New Message from ${data.customerName || 'Customer'} for ${artisan.name}`,
-          description: data.messageText + (data.imageFile ? ` (Attachment: data.imageFile.name)` : ''),
-          timestamp: new Date().toISOString(),
-          read: false,
-          sender: data.customerName || 'Customer',
-          artisanId: artisan.id,
-          link: `/dashboard/seller/messages/thread/${artisan.id}/${Date.now()}` 
-        };
-
-        const updatedNotifications = [newNotification, ...existingNotifications];
-        localStorage.setItem(LOCAL_STORAGE_NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
-
-      } catch (e) {
-        console.error("Failed to save notification to localStorage", e);
-        toast({ title: "Error", description: "Could not save notification locally.", variant: "destructive" });
-      }
+    if (!artisan) {
+        toast({ title: "Error", description: "Artisan details not loaded.", variant: "destructive"});
+        setIsSending(false);
+        return;
     }
     
-    toast({
-      title: "Message Sent!",
-      description: `Your message has been sent to ${artisan?.name || 'the artisan'}.`,
-    });
-    setIsSending(false);
-    form.reset();
-    setImagePreview(null);
-     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+    // Call the server action instead of using localStorage
+    const result = await sendMessage(artisan.id, artisan.name, data);
+    
+    if (result.success) {
+        toast({
+          title: "Message Sent!",
+          description: result.message,
+        });
+        form.reset();
+        setImagePreview(null);
+         if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    } else {
+        toast({
+            title: "Failed to Send",
+            description: result.message,
+            variant: "destructive"
+        });
     }
+
+    setIsSending(false);
   };
 
   if (isPageLoading) {

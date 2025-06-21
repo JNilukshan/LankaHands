@@ -1,76 +1,18 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Bell, ShoppingCart, MessageCircle, Star, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import { Bell, ShoppingCart, MessageCircle, Star, AlertTriangle, Check, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import type { SellerNotification } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { getNotificationsByArtisanId, updateNotification, markAllNotificationsAsRead, clearAllNotificationsForArtisan } from '@/services/notificationService';
 
-type NotificationType = 'new_order' | 'new_message' | 'new_review' | 'low_stock' | 'general';
-
-interface SellerNotification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  description: string;
-  timestamp: Date;
-  read: boolean;
-  link?: string; // Optional link to relevant page (e.g., order details)
-  sender?: string; // e.g., customer name for messages/reviews
-}
-
-const initialMockNotifications: SellerNotification[] = [
-  {
-    id: 'notif1',
-    type: 'new_order',
-    title: 'New Order Received!',
-    description: 'Order #ORD00125 for Batik Wall Hanging placed by Chandima P.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    read: false,
-    link: '/dashboard/seller/orders/order00125', // Example link
-  },
-  {
-    id: 'notif2',
-    type: 'new_message',
-    title: 'New Message from Rohan S.',
-    description: 'Inquiry about custom dimensions for the Clay Vase Set...',
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-    read: false,
-    sender: 'Rohan S.',
-    link: '/dashboard/seller/messages/msg001', // Example link
-  },
-  {
-    id: 'notif3',
-    type: 'new_review',
-    title: '5-Star Review for Wooden Elephant',
-    description: 'Fathima Z. left a review: "Absolutely stunning craftsmanship!"',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
-    read: true,
-    sender: 'Fathima Z.',
-    link: '/dashboard/seller/reviews#rev003', // Example link
-  },
-  {
-    id: 'notif4',
-    type: 'low_stock',
-    title: 'Low Stock Alert: Spiced Tea Pack',
-    description: 'Only 3 units remaining for "Spiced Tea Pack". Consider restocking.',
-    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    read: false,
-    link: '/dashboard/seller/products/prod004/edit', // Example link
-  },
-  {
-    id: 'notif5',
-    type: 'general',
-    title: 'Platform Update Scheduled',
-    description: 'Scheduled maintenance on Sunday at 2 AM. Expect brief downtime.',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    read: true,
-  },
-];
-
-const getNotificationIcon = (type: NotificationType, read: boolean) => {
+const getNotificationIcon = (type: SellerNotification['type'], read: boolean) => {
   const color = read ? "text-muted-foreground" : "text-primary";
   switch (type) {
     case 'new_order': return <ShoppingCart size={24} className={color} />;
@@ -82,30 +24,71 @@ const getNotificationIcon = (type: NotificationType, read: boolean) => {
 };
 
 export default function NotificationsPage() {
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<SellerNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    // Simulate fetching notifications
-    setNotifications(initialMockNotifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
-  }, []);
+    if (authLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return;
+    }
 
-  const toggleReadStatus = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, read: !notif.read } : notif
-      )
-    );
+    setIsLoading(true);
+    getNotificationsByArtisanId(currentUser.id)
+      .then(data => {
+        setNotifications(data.map(n => ({...n, timestamp: new Date(n.timestamp).toISOString() }))); // Ensure timestamps are consistent
+      })
+      .catch(err => console.error("Failed to fetch notifications:", err))
+      .finally(() => setIsLoading(false));
+  }, [currentUser, authLoading, router]);
+
+  const handleToggleRead = (id: string, currentStatus: boolean) => {
+    startTransition(async () => {
+      const success = await updateNotification(id, { read: !currentStatus });
+      if (success) {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id === id ? { ...notif, read: !notif.read } : notif
+          )
+        );
+      }
+    });
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+  const handleMarkAllAsRead = () => {
+    if (!currentUser) return;
+    startTransition(async () => {
+      const success = await markAllNotificationsAsRead(currentUser.id);
+      if (success) {
+        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+      }
+    });
   };
   
-  const clearAllNotifications = () => {
-    setNotifications([]);
+  const handleClearAll = () => {
+    if (!currentUser) return;
+    startTransition(async () => {
+      const success = await clearAllNotificationsForArtisan(currentUser.id);
+      if (success) {
+        setNotifications([]);
+      }
+    });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (isLoading || authLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading notifications...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -114,11 +97,13 @@ export default function NotificationsPage() {
           <Bell size={32} className="mr-3 text-accent" /> Notifications
         </h1>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={markAllAsRead} disabled={unreadCount === 0}>
-                <Check size={16} className="mr-2"/> Mark All as Read
+            <Button variant="outline" onClick={handleMarkAllAsRead} disabled={unreadCount === 0 || isPending}>
+                {isPending && unreadCount > 0 ? <Loader2 size={16} className="mr-2 animate-spin"/> : <Check size={16} className="mr-2"/>}
+                Mark All as Read
             </Button>
-            <Button variant="destructive" onClick={clearAllNotifications} disabled={notifications.length === 0}>
-                <Trash2 size={16} className="mr-2"/> Clear All
+            <Button variant="destructive" onClick={handleClearAll} disabled={notifications.length === 0 || isPending}>
+                {isPending && notifications.length > 0 ? <Loader2 size={16} className="mr-2 animate-spin"/> : <Trash2 size={16} className="mr-2"/>}
+                Clear All
             </Button>
         </div>
       </div>
@@ -149,15 +134,16 @@ export default function NotificationsPage() {
                     {notif.sender && <p className="text-xs text-muted-foreground">From: {notif.sender}</p>}
                     <p className={`text-sm ${notif.read ? 'text-muted-foreground/80' : 'text-foreground/90'} mt-1`}>{notif.description}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      {notif.timestamp.toLocaleDateString()} at {notif.timestamp.toLocaleTimeString()}
+                      {new Date(notif.timestamp).toLocaleDateString()} at {new Date(notif.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 items-end shrink-0">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => toggleReadStatus(notif.id)}
+                      onClick={() => handleToggleRead(notif.id, notif.read)}
                       className="text-xs"
+                      disabled={isPending}
                     >
                       {notif.read ? 'Mark as Unread' : 'Mark as Read'}
                     </Button>
@@ -186,6 +172,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
-
-    
