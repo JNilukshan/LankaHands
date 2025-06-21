@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { User, Order, Product, OrderItem } from '@/types';
+import type { Order, Product } from '@/types';
 import { Edit3, History, Heart, UserCircle2, ShoppingBag, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/shared/ProductCard';

@@ -22,15 +22,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getMockOrdersByCustomerId } from '@/lib/mock-data';
+import { getOrderById } from '@/services/orderService';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-
-const getOrderDetails = async (orderId: string, customerId: string): Promise<Order | null> => {
-  const orders = await getMockOrdersByCustomerId(customerId);
-  const order = orders.find(o => o.id === orderId);
-  return order || null;
-};
 
 export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
@@ -55,8 +49,20 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
     const fetchOrder = async () => {
       if (!orderId) return;
       setLoading(true);
-      const orderDetails = await getOrderDetails(orderId, currentUser.id);
-      setOrder(orderDetails);
+      const orderDetails = await getOrderById(orderId);
+      
+      // Security Check: Ensure the fetched order belongs to the current user
+      if (orderDetails && orderDetails.userId === currentUser.id) {
+          setOrder(orderDetails);
+      } else if (orderDetails) {
+          // User is trying to access an order that isn't theirs
+          toast({ title: "Access Denied", description: "You do not have permission to view this order.", variant: "destructive" });
+          setOrder(null);
+          router.push('/profile'); // Redirect away
+      } else {
+          // Order was not found at all
+          setOrder(null);
+      }
       setLoading(false);
     };
 
@@ -190,10 +196,10 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
                             <div>
                                 <Link href={`/products/${item.productId}`} className="font-medium text-primary hover:underline text-md">{item.productName}</Link>
                                 <p className="text-xs text-muted-foreground">Product ID: {item.productId}</p>
-                                <p className="text-sm text-muted-foreground mt-1">Qty: {item.quantity} &times; ${item.price.toFixed(2)}</p>
+                                <p className="text-sm text-muted-foreground mt-1">Qty: {item.quantity} &times; ${item.priceAtPurchase.toFixed(2)}</p>
                             </div>
                         </div>
-                        <p className="text-md font-semibold text-primary sm:ml-auto">${(item.quantity * item.price).toFixed(2)}</p>
+                        <p className="text-md font-semibold text-primary sm:ml-auto">${(item.quantity * item.priceAtPurchase).toFixed(2)}</p>
                     </li>
                     ))}
                 </ul>

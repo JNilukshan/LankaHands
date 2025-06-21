@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { getSellerStats } from '@/services/sellerService';
 import { getOrdersByArtisanId } from '@/services/orderService';
+import { getNotificationsByArtisanId } from '@/services/notificationService';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -25,10 +26,10 @@ export default function SellerDashboardPage() {
 
   const [stats, setStats] = useState<SellerStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const unreadNotificationsCount = 5; // Example count, can be dynamic later
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -39,10 +40,19 @@ export default function SellerDashboardPage() {
 
     const fetchData = async () => {
       setIsLoadingData(true);
-      const sellerStats = await getSellerStats(currentUser.id);
+      
+      const [sellerStats, allOrders, allNotifications] = await Promise.all([
+        getSellerStats(currentUser.id),
+        getOrdersByArtisanId(currentUser.id),
+        getNotificationsByArtisanId(currentUser.id),
+      ]);
+
       setStats(sellerStats);
-      const allOrders = await getOrdersByArtisanId(currentUser.id);
       setRecentOrders(allOrders.slice(0, 5)); // Get top 5 recent orders
+
+      const unreadCount = allNotifications.filter(n => !n.read).length;
+      setUnreadNotificationsCount(unreadCount);
+
       setIsLoadingData(false);
     };
     fetchData();

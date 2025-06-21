@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Store, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle, Image as ImageIcon } from 'lucide-react'; 
+import { Settings, CreditCard, Truck, ShieldCheck, ImagePlus, Save, UserCircle, Image as ImageIcon, Loader2 } from 'lucide-react'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from "react";
-import { mockArtisanNimali } from '@/lib/mock-data'; // Using Nimali as the seller for dashboard settings
 import type { Artisan } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { getArtisanById } from '@/services/artisanService';
 
 const craftCategories = [
   "Batik Artist", "Master Batik Artist",
@@ -28,40 +30,80 @@ const craftCategories = [
   "Other"
 ];
 
-// For this prototype, settings page will reflect Nimali Perera's data
-const sellerData: Artisan = mockArtisanNimali;
-
 export default function StoreSettingsPage() {
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
-  const [artisanName, setArtisanName] = useState(sellerData.name);
-  const [speciality, setSpeciality] = useState(sellerData.speciality || "Batik Artist");
-  const [otherSpecialityText, setOtherSpecialityText] = useState(
-    craftCategories.includes(sellerData.speciality || "") ? "" : sellerData.speciality || ""
-  );
-  const [location, setLocation] = useState(sellerData.location || "");
-  const [bio, setBio] = useState(sellerData.bio);
-
-  // Shipping settings state
-  const [localRate, setLocalRate] = useState(sellerData.shippingSettings?.localRate?.toString() || "5.00");
-  const [localDeliveryTime, setLocalDeliveryTime] = useState(sellerData.shippingSettings?.localDeliveryTime || "3-5 business days");
-  const [internationalRate, setInternationalRate] = useState(sellerData.shippingSettings?.internationalRate?.toString() || "25.00");
-  const [internationalDeliveryTime, setInternationalDeliveryTime] = useState(sellerData.shippingSettings?.internationalDeliveryTime || "7-21 business days");
-  const [freeLocalShippingThreshold, setFreeLocalShippingThreshold] = useState(sellerData.shippingSettings?.freeShippingLocalThreshold?.toString() || "100");
-  const [freeInternationalShippingThreshold, setFreeInternationalShippingThreshold] = useState(sellerData.shippingSettings?.freeShippingInternationalThreshold?.toString() || "200");
-  const [processingTime, setProcessingTime] = useState(sellerData.shippingSettings?.processingTime || "1-2 business days");
   
-  // Policy settings state
-  const [returnPolicy, setReturnPolicy] = useState(sellerData.storePolicies?.returnPolicy || "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.");
-  const [exchangePolicy, setExchangePolicy] = useState(sellerData.storePolicies?.exchangePolicy || "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.");
-  const [cancellationPolicy, setCancellationPolicy] = useState(sellerData.storePolicies?.cancellationPolicy || "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped.");
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [sellerData, setSellerData] = useState<Artisan | null>(null);
 
+  // Form states
+  const [artisanName, setArtisanName] = useState("");
+  const [speciality, setSpeciality] = useState("");
+  const [otherSpecialityText, setOtherSpecialityText] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
+
+  const [localRate, setLocalRate] = useState("");
+  const [localDeliveryTime, setLocalDeliveryTime] = useState("");
+  const [internationalRate, setInternationalRate] = useState("");
+  const [internationalDeliveryTime, setInternationalDeliveryTime] = useState("");
+  const [freeLocalShippingThreshold, setFreeLocalShippingThreshold] = useState("");
+  const [freeInternationalShippingThreshold, setFreeInternationalShippingThreshold] = useState("");
+  const [processingTime, setProcessingTime] = useState("");
+  
+  const [returnPolicy, setReturnPolicy] = useState("");
+  const [exchangePolicy, setExchangePolicy] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState("");
 
   useEffect(() => {
-    if (sellerData.speciality && !craftCategories.includes(sellerData.speciality)) {
-      setSpeciality("Other");
-      setOtherSpecialityText(sellerData.speciality);
+    if (isAuthLoading) return;
+    if (!currentUser || currentUser.role !== 'seller') {
+      router.push('/login');
+      return;
     }
-  }, []);
+
+    const fetchArtisanData = async () => {
+      setIsDataLoading(true);
+      const data = await getArtisanById(currentUser.id);
+      setSellerData(data);
+      if (data) {
+        setArtisanName(data.name);
+        setLocation(data.location || "");
+        setBio(data.bio || "");
+
+        // Handle speciality dropdown logic
+        const currentSpeciality = data.speciality || "";
+        if (craftCategories.includes(currentSpeciality)) {
+          setSpeciality(currentSpeciality);
+          setOtherSpecialityText("");
+        } else if (currentSpeciality) {
+          setSpeciality("Other");
+          setOtherSpecialityText(currentSpeciality);
+        } else {
+          setSpeciality("");
+          setOtherSpecialityText("");
+        }
+
+        // Set shipping and policy states
+        setLocalRate(data.shippingSettings?.localRate?.toString() || "5.00");
+        setLocalDeliveryTime(data.shippingSettings?.localDeliveryTime || "3-5 business days");
+        setInternationalRate(data.shippingSettings?.internationalRate?.toString() || "25.00");
+        setInternationalDeliveryTime(data.shippingSettings?.internationalDeliveryTime || "7-21 business days");
+        setFreeLocalShippingThreshold(data.shippingSettings?.freeShippingLocalThreshold?.toString() || "100");
+        setFreeInternationalShippingThreshold(data.shippingSettings?.freeShippingInternationalThreshold?.toString() || "200");
+        setProcessingTime(data.shippingSettings?.processingTime || "1-2 business days");
+        
+        setReturnPolicy(data.storePolicies?.returnPolicy || "We accept returns within 14 days for defective items or if the product is not as described. Please contact us for a return authorization. Buyer pays return shipping unless the item is faulty.");
+        setExchangePolicy(data.storePolicies?.exchangePolicy || "Exchanges are offered on a case-by-case basis for items of similar value, subject to availability. Please contact us to discuss.");
+        setCancellationPolicy(data.storePolicies?.cancellationPolicy || "Orders can be cancelled within 24 hours of placement, provided they have not yet been shipped.");
+      }
+      setIsDataLoading(false);
+    };
+
+    fetchArtisanData();
+  }, [currentUser, isAuthLoading, router]);
 
   const handleSave = (section: string) => {
     toast({
@@ -76,6 +118,14 @@ export default function StoreSettingsPage() {
     });
   };
 
+  if (isAuthLoading || isDataLoading) {
+    return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
+            <p className="text-lg text-muted-foreground">Loading store settings...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -285,5 +335,3 @@ export default function StoreSettingsPage() {
     </div>
   );
 }
-
-    
