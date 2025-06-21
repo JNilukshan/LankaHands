@@ -24,11 +24,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getOrderById } from '@/services/orderService';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
+export default function OrderDetailsPage() {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const params = useParams<{ orderId: string }>();
   const orderId = params.orderId;
   
   const [order, setOrder] = React.useState<Order | null>(null);

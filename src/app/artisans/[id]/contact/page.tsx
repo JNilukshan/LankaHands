@@ -19,6 +19,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getArtisanById } from '@/services/artisanService';
 import { createNotification } from '@/services/notificationService';
+import { useParams } from "next/navigation";
 
 const contactArtisanSchema = z.object({
   customerName: z.string().min(2, { message: "Your name must be at least 2 characters."}),
@@ -50,7 +51,8 @@ async function sendMessage(artisanId: string, artisanName: string, formData: Con
 }
 
 
-export default function ContactArtisanPage({ params }: { params: { id: string } }) {
+export default function ContactArtisanPage() {
+  const params = useParams<{ id: string }>();
   const artisanId = params.id;
 
   const { toast } = useToast();

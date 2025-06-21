@@ -17,7 +17,7 @@ import type { Product } from "@/types";
 import { getProductById, updateProduct } from '@/services/productService';
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 
 const productSchema = z.object({
@@ -35,9 +35,10 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 const categories = ['Apparel', 'Decor', 'Accessories', 'Home Decor', 'Jewelry', 'Pottery', 'Paintings', 'Sculptures', 'Other'];
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage() {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const params = useParams<{ id: string }>();
   const productId = params.id; 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
