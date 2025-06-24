@@ -231,8 +231,10 @@ const Header: FC = () => {
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" size="icon" className="rounded-full">
                      <Avatar className="h-8 w-8">
-                       <AvatarImage src={currentUser.profileImageUrl as string | undefined} alt={currentUser.name} data-ai-hint="buyer avatar"/>
-                       <AvatarFallback><User className="h-5 w-5 text-primary"/></AvatarFallback>
+                        <AvatarImage src={currentUser.profileImageUrl as string | undefined} alt={currentUser.name} data-ai-hint="buyer avatar"/>
+                        <AvatarFallback className="bg-black text-white text-xs font-semibold">
+                            {currentUser.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
                      </Avatar>
                    </Button>
                 </DropdownMenuTrigger>
@@ -309,4 +311,3 @@ const Header: FC = () => {
 };
 
 export default Header;
-

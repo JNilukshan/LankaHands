@@ -235,7 +235,7 @@ export default function ProductView({ product }: ProductViewProps) {
                   <div className="flex items-start space-x-4">
                     <Avatar>
                       <AvatarImage src={review.userAvatar} alt={review.userName} data-ai-hint="person avatar"/>
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-black text-white font-semibold">
                         {review.userName ? review.userName.substring(0,2).toUpperCase() : <UserCircle2/>}
                       </AvatarFallback>
                     </Avatar>
@@ -260,4 +260,3 @@ export default function ProductView({ product }: ProductViewProps) {
     </div>
   );
 }
-

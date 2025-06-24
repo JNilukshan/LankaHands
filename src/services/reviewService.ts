@@ -36,7 +36,7 @@ export async function submitReview(data: SubmitReviewData): Promise<{ success: b
       const newReviewData = {
           userId,
           userName,
-          userAvatar: userAvatar || 'https://placehold.co/128x128.png',
+          userAvatar: userAvatar || undefined,
           rating,
           reviewTitle: reviewTitle || '',
           comment,

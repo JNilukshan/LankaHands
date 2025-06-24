@@ -106,7 +106,7 @@ export default function EditProfilePage() {
                     <FormLabel htmlFor="profile-image-upload">
                       <Avatar className="h-32 w-32 cursor-pointer border-4 border-primary/20 hover:border-primary/50 transition-colors">
                         <AvatarImage src={imagePreview || undefined} alt={currentUser.name} data-ai-hint="person avatar" />
-                        <AvatarFallback className="text-4xl bg-muted">
+                        <AvatarFallback className="text-4xl bg-black text-white">
                           {currentUser.name ? currentUser.name.substring(0,2).toUpperCase() : <UserCircle />}
                         </AvatarFallback>
                       </Avatar>

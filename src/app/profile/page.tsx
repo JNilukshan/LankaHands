@@ -77,7 +77,7 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row items-center gap-6">
             <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
               <AvatarImage src={typeof currentUser.profileImageUrl === 'string' ? currentUser.profileImageUrl : undefined} alt={currentUser.name} data-ai-hint="person avatar"/>
-              <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
+              <AvatarFallback className="text-4xl bg-black text-white">
                 {currentUser.name ? currentUser.name.substring(0,2).toUpperCase() : <UserCircle2 />}
               </AvatarFallback>
             </Avatar>

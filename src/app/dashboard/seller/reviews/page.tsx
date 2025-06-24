@@ -128,7 +128,7 @@ export default function ViewReviewsPage() {
                   <div className="flex items-start space-x-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={review.userAvatar as string | undefined} alt={review.userName} data-ai-hint="person avatar" />
-                      <AvatarFallback className="bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-black text-white font-semibold text-lg">
                          {review.userName ? review.userName.substring(0,2).toUpperCase() : <UserCircle2 />}
                       </AvatarFallback>
                     </Avatar>

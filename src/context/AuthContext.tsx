@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email: additionalData?.email || firebaseUser.email || '',
           name: additionalData?.name || firebaseUser.displayName || 'New User',
           role: additionalData?.role || 'buyer',
-          profileImageUrl: additionalData?.profileImageUrl || 'https://placehold.co/128x128.png',
+          profileImageUrl: additionalData?.profileImageUrl || undefined,
           wishlist: additionalData?.wishlist || [],
           followedArtisans: additionalData?.followedArtisans || [],
           createdAt: Timestamp.now().toDate().toISOString(),
