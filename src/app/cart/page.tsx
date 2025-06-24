@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -10,25 +10,62 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import type { CartItem } from '@/types';
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, CheckCircle, Package } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, CheckCircle, Package, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { createOrdersFromCart } from '@/services/orderService';
+import { useRouter } from 'next/navigation';
+
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartItemCount } = useCart();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 0) return; // Prevent negative quantities directly
     updateQuantity(productId, newQuantity);
   };
 
-  const handleCheckout = () => {
-    // Simulate checkout process
-    toast({
-      title: "Checkout Initiated (Mock)",
-      description: "This is a prototype. No actual order will be placed.",
-    });
-    // clearCart(); // Optionally clear cart on mock checkout
+  const handleCheckout = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to place an order.",
+        variant: "destructive"
+      });
+      router.push('/login');
+      return;
+    }
+    if (getCartItemCount() === 0) {
+      toast({
+        title: "Cart is Empty",
+        description: "You cannot checkout with an empty cart.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsCheckingOut(true);
+    const result = await createOrdersFromCart(cartItems, currentUser);
+    setIsCheckingOut(false);
+    
+    if (result.success) {
+        toast({
+            title: "Order Placed!",
+            description: "Your order has been successfully placed. You can view it in your profile.",
+        });
+        clearCart();
+        router.push('/profile');
+    } else {
+        toast({
+            title: "Checkout Failed",
+            description: result.message || "An unexpected error occurred.",
+            variant: "destructive"
+        });
+    }
   };
 
   const cartTotal = getCartTotal();
@@ -161,8 +198,10 @@ export default function CartPage() {
                 size="lg" 
                 className="w-full bg-primary hover:bg-primary/90"
                 onClick={handleCheckout}
+                disabled={isCheckingOut}
               >
-                <CheckCircle size={20} className="mr-2" /> Proceed to Checkout
+                {isCheckingOut ? <Loader2 size={20} className="mr-2 animate-spin" /> : <CheckCircle size={20} className="mr-2" />}
+                {isCheckingOut ? 'Placing Order...' : 'Proceed to Checkout'}
               </Button>
               <Button variant="link" className="text-sm text-destructive p-0 h-auto" onClick={clearCart}>
                 Clear Cart
@@ -174,4 +213,3 @@ export default function CartPage() {
     </div>
   );
 }
-

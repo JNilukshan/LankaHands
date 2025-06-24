@@ -25,7 +25,12 @@ export default function ProfilePage() {
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
 
   useEffect(() => {
-    if (!currentUser || isAuthLoading) return;
+    if (isAuthLoading) return;
+     if (!currentUser) {
+        // isLoadingPageData is already true, this avoids flicker before redirect
+        return; 
+    }
+
 
     const fetchData = async () => {
       setIsLoadingPageData(true);
@@ -109,8 +114,22 @@ export default function ProfilePage() {
                     <CardTitle className="text-lg font-semibold">Order #{order.id.substring(0,8)}</CardTitle>
                     <CardDescription>Date: {new Date(order.orderDate).toLocaleDateString()} | Total: ${order.totalAmount.toFixed(2)}</CardDescription>
                   </div>
-                  <Badge variant={order.status === 'Delivered' ? 'default' : order.status === 'Shipped' ? 'outline' : 'secondary'} 
-                         className={order.status === 'Delivered' ? 'bg-green-500 text-white' : order.status === 'Shipped' ? 'border-blue-500 text-blue-500' : ''}>
+                   <Badge
+                    variant={
+                        order.status === 'Delivered' ? 'default' :
+                        order.status === 'Shipped' ? 'secondary' : 
+                        order.status === 'Pending' ? 'secondary' : 
+                        order.status === 'Cancelled' ? 'destructive' :
+                        'default'
+                    }
+                    className={`text-sm px-3 py-1 ${
+                        order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-primary-foreground' :
+                        order.status === 'Shipped' ? 'bg-blue-500 hover:bg-blue-500 text-primary-foreground' : 
+                        order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-secondary-foreground' : 
+                        order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-destructive-foreground' :
+                        ''
+                    }`}
+                  >
                     {order.status}
                   </Badge>
                 </CardHeader>

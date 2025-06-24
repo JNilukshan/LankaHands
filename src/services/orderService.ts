@@ -1,8 +1,100 @@
 
 'use server';
 
-import type { Order, OrderItem, Artisan } from '@/types';
+import type { Order, OrderItem, CartItem, Artisan, AuthenticatedUser } from '@/types';
 import { adminDb } from '@/lib/firebaseConfig';
+import { FieldValue } from 'firebase-admin/firestore';
+import { revalidatePath } from 'next/cache';
+import { createNotification } from './notificationService';
+
+/**
+ * Creates one or more orders from a user's cart.
+ * It groups items by artisan and creates a separate order for each artisan.
+ * @param cartItems The items from the user's cart.
+ * @param user The authenticated user placing the order.
+ * @returns A promise that resolves to an object with success status and a message.
+ */
+export async function createOrdersFromCart(cartItems: CartItem[], user: AuthenticatedUser) {
+    if (!user || !cartItems || cartItems.length === 0) {
+        return { success: false, message: 'Invalid user or cart data.' };
+    }
+
+    // Group cart items by artisanId
+    const itemsByArtisan = cartItems.reduce<Record<string, CartItem[]>>((acc, item) => {
+        const artisanId = item.artisanId || 'unknown';
+        if (!acc[artisanId]) {
+            acc[artisanId] = [];
+        }
+        acc[artisanId].push(item);
+        return acc;
+    }, {});
+
+    const batch = adminDb.batch();
+    const createdOrderIds: string[] = [];
+
+    try {
+        for (const artisanId in itemsByArtisan) {
+            const artisanItems = itemsByArtisan[artisanId];
+            const totalAmount = artisanItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+            const orderRef = adminDb.collection('orders').doc();
+            createdOrderIds.push(orderRef.id);
+            
+            const orderData: Omit<Order, 'id' | 'items'> = {
+                userId: user.id,
+                customerName: user.name,
+                artisanId: artisanId === 'unknown' ? undefined : artisanId,
+                totalAmount: totalAmount,
+                orderDate: new Date().toISOString(), // Use ISO string for client/server consistency
+                status: 'Pending',
+                grandTotal: totalAmount, // Simplified for now
+                shippingAddress: "123 Craft Lane, Colombo, 00700, Sri Lanka", // Mock shipping address as string
+            };
+            
+            const orderItems: OrderItem[] = artisanItems.map(cartItem => ({
+                productId: cartItem.id,
+                productName: cartItem.name,
+                productImage: cartItem.image,
+                quantity: cartItem.quantity,
+                priceAtPurchase: cartItem.price,
+                artisanId: cartItem.artisanId,
+            }));
+            
+            const finalOrderDoc = {
+                ...orderData,
+                orderDate: FieldValue.serverTimestamp(), // Use server timestamp for accuracy
+                items: orderItems,
+            };
+
+            batch.set(orderRef, finalOrderDoc);
+            
+            // Create a notification for the seller
+            if (artisanId !== 'unknown') {
+                 const notificationPayload = {
+                    type: 'new_order' as const,
+                    title: `New Order #${orderRef.id.substring(0,6)} Received`,
+                    description: `${artisanItems.length} item(s) ordered by ${user.name}.`,
+                    artisanId: artisanId,
+                    sender: user.name,
+                    link: `/dashboard/seller/orders` 
+                };
+                await createNotification(notificationPayload);
+            }
+        }
+        
+        await batch.commit();
+
+        revalidatePath('/profile');
+        revalidatePath('/dashboard/seller');
+        revalidatePath('/dashboard/seller/orders');
+        
+        return { success: true, message: 'Your order has been placed successfully!', orderIds: createdOrderIds };
+
+    } catch (error) {
+        console.error("Error creating orders:", error);
+        return { success: false, message: 'Failed to place your order. Please try again.' };
+    }
+}
 
 export async function getOrdersByCustomerId(customerId: string): Promise<Order[]> {
   if (!customerId) return [];
@@ -14,19 +106,15 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
       
     if (ordersSnapshot.empty) return [];
     
-    const orders: Order[] = await Promise.all(ordersSnapshot.docs.map(async (doc) => {
+    const orders: Order[] = ordersSnapshot.docs.map(doc => {
       const data = doc.data();
-      // Assuming items are a subcollection. If not, this needs adjustment.
-      const itemsSnapshot = await doc.ref.collection('items').get();
-      const items: OrderItem[] = itemsSnapshot.docs.map(itemDoc => itemDoc.data() as OrderItem);
-      
       return {
         id: doc.id,
         ...data,
         orderDate: data.orderDate?.toDate().toISOString() || new Date().toISOString(),
-        items: items,
+        items: data.items || [], // Items are stored directly on the order document
       } as Order;
-    }));
+    });
     
     return orders;
   } catch (error) {
@@ -44,9 +132,6 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
         const data = orderDoc.data();
         if (!data) return null;
 
-        const itemsSnapshot = await orderDoc.ref.collection('items').get();
-        const items: OrderItem[] = itemsSnapshot.docs.map(itemDoc => itemDoc.data() as OrderItem);
-
         let artisan: Artisan | undefined = undefined;
         if (data.artisanId) {
             const artisanDoc = await adminDb.collection('artisanProfiles').doc(data.artisanId).get();
@@ -54,19 +139,13 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
                 artisan = { id: artisanDoc.id, ...artisanDoc.data() } as Artisan;
             }
         }
-        
-        const shippingAddressString = typeof data.shippingAddress === 'object' 
-            ? `${data.shippingAddress.recipientName || ''}, ${data.shippingAddress.street}, ${data.shippingAddress.city}, ${data.shippingAddress.postalCode}, ${data.shippingAddress.country}`.replace(/^, /,'')
-            : data.shippingAddress;
-
 
         return {
             id: orderDoc.id,
             ...data,
             orderDate: data.orderDate?.toDate().toISOString() || new Date().toISOString(),
-            items: items,
+            items: data.items || [],
             artisan: artisan,
-            shippingAddress: shippingAddressString, // Flattened for display
         } as Order;
 
     } catch (error) {
@@ -85,18 +164,15 @@ export async function getOrdersByArtisanId(artisanId: string): Promise<Order[]> 
 
         if (ordersSnapshot.empty) return [];
 
-        const orders: Order[] = await Promise.all(ordersSnapshot.docs.map(async (doc) => {
+        const orders: Order[] = ordersSnapshot.docs.map(doc => {
             const data = doc.data();
-            const itemsSnapshot = await doc.ref.collection('items').get();
-            const items: OrderItem[] = itemsSnapshot.docs.map(itemDoc => itemDoc.data() as OrderItem);
-            
             return {
                 id: doc.id,
                 ...data,
                 orderDate: data.orderDate?.toDate().toISOString() || new Date().toISOString(),
-                items: items,
+                items: data.items || [],
             } as Order;
-        }));
+        });
         
         return orders;
     } catch (error) {
