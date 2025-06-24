@@ -103,97 +103,96 @@ export default function SellerDashboardPage() {
         <StatCard icon={ShoppingBag} title="Listed Products" value={stats?.productsCount.toString() || '0'} description="Active items in your store" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-lg">
-          <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats?.pendingOrders || 0} pending)</CardTitle>
-            <Button variant="link" className="text-sm text-primary p-0 h-auto" asChild><Link href="/dashboard/seller/orders">View All Orders</Link></Button>
-          </CardHeader>
-          <CardContent>
-             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+      <Card className="shadow-lg">
+        <CardHeader>
+            <CardTitle className="text-xl font-headline text-primary">Quick Links</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+            <QuickLinkItem href="/dashboard/seller/products" icon={ListOrdered} label="Manage Products" />
+            <QuickLinkItem href="/dashboard/seller/reviews" icon={MessageSquare} label="View Reviews" />
+            <QuickLinkItem href="/dashboard/seller/analytics" icon={BarChart3} label="Sales Analytics" />
+            <QuickLinkItem href="/dashboard/seller/followers" icon={Users} label="View Followers" />
+            <QuickLinkItem href="/dashboard/seller/settings" icon={Settings} label="Store Settings" />
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-lg">
+        <CardHeader className="flex flex-row justify-between items-center">
+          <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats?.pendingOrders || 0} pending)</CardTitle>
+          <Button variant="link" className="text-sm text-primary p-0 h-auto" asChild><Link href="/dashboard/seller/orders">View All Orders</Link></Button>
+        </CardHeader>
+        <CardContent>
+            <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentOrders.map(order => (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">#{order.id.substring(0,8)}</TableCell>
+                  <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{order.customerName || `Customer ${order.userId}`}</TableCell>
+                  <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-center">
+                      <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8 min-w-[100px] justify-center">
+                          <Badge 
+                              variant={
+                              order.status === 'Delivered' ? 'default' : 
+                              order.status === 'Shipped' ? 'outline' : 
+                              order.status === 'Cancelled' ? 'destructive' : 'secondary'
+                              }
+                              className={
+                              `pointer-events-none text-xs ${ order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' : 
+                              order.status === 'Shipped' ? 'border-blue-500 text-blue-500 hover:bg-blue-500/10' : 
+                              order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
+                              order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' : '' }`
+                              }
+                          >
+                              {order.status}
+                          </Badge>
+                          <ChevronDown className="h-3 w-3 opacity-70" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          {orderStatuses.map(statusOption => (
+                          <DropdownMenuItem 
+                              key={statusOption} 
+                              onClick={() => handleStatusChange(order.id, statusOption)}
+                              disabled={order.status === statusOption}
+                          >
+                              {statusOption}
+                          </DropdownMenuItem>
+                          ))}
+                      </DropdownMenuContent>
+                      </DropdownMenu>
+                  </TableCell>
+                  <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => handleViewOrder(order)}>
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">View Order</span>
+                      </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map(order => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.id.substring(0,8)}</TableCell>
-                    <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{order.customerName || `Customer ${order.userId}`}</TableCell>
-                    <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
-                    <TableCell className="text-center">
-                        <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs h-8 min-w-[100px] justify-center">
-                            <Badge 
-                                variant={
-                                order.status === 'Delivered' ? 'default' : 
-                                order.status === 'Shipped' ? 'outline' : 
-                                order.status === 'Cancelled' ? 'destructive' : 'secondary'
-                                }
-                                className={
-                                `pointer-events-none text-xs ${ order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-500 text-white' : 
-                                order.status === 'Shipped' ? 'border-blue-500 text-blue-500 hover:bg-blue-500/10' : 
-                                order.status === 'Pending' ? 'bg-yellow-400 hover:bg-yellow-400 text-yellow-900' :
-                                order.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-500 text-white' : '' }`
-                                }
-                            >
-                                {order.status}
-                            </Badge>
-                            <ChevronDown className="h-3 w-3 opacity-70" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {orderStatuses.map(statusOption => (
-                            <DropdownMenuItem 
-                                key={statusOption} 
-                                onClick={() => handleStatusChange(order.id, statusOption)}
-                                disabled={order.status === statusOption}
-                            >
-                                {statusOption}
-                            </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => handleViewOrder(order)}>
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View Order</span>
-                        </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {recentOrders.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                No recent orders.
-                </div>
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </TableBody>
+          </Table>
+          {recentOrders.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+              No recent orders.
+              </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-xl font-headline text-primary">Quick Links</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <QuickLinkItem href="/dashboard/seller/products" icon={ListOrdered} label="Manage Products" />
-                <QuickLinkItem href="/dashboard/seller/reviews" icon={MessageSquare} label="View Reviews" />
-                <QuickLinkItem href="/dashboard/seller/analytics" icon={BarChart3} label="Sales Analytics" />
-                <QuickLinkItem href="/dashboard/seller/followers" icon={Users} label="View Followers" />
-                <QuickLinkItem href="/dashboard/seller/settings" icon={Settings} label="Store Settings" />
-            </CardContent>
-        </Card>
-      </div>
 
       {selectedOrder && (
         <Dialog open={isViewOrderDialogOpen} onOpenChange={setIsViewOrderDialogOpen}>
