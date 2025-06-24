@@ -45,7 +45,7 @@ const RegisterForm = () => {
 
    useEffect(() => {
     if (!authLoading && currentUser) {
-      router.push('/profile'); // Redirect if already logged in
+      router.push('/'); // Redirect if already logged in
     }
   }, [currentUser, authLoading, router]);
 
@@ -59,7 +59,7 @@ const RegisterForm = () => {
         title: "Registration Successful",
         description: "Welcome to LankaHands! You are now logged in.",
       });
-      // router.push('/profile'); // onAuthStateChanged in AuthContext will handle redirect implicitly
+      // onAuthStateChanged in AuthContext will handle redirect implicitly
     } else {
       // Error toast is handled within registerAsBuyer
     }

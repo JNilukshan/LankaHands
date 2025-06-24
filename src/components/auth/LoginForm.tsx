@@ -42,7 +42,7 @@ const LoginForm = () => {
       if (currentUser.role === 'seller') {
         router.push('/dashboard/seller');
       } else {
-        router.push('/profile');
+        router.push('/');
       }
     }
   }, [currentUser, authLoading, router]);
