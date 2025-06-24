@@ -12,6 +12,17 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { getSellerStats } from '@/services/sellerService';
 import { getOrdersByArtisanId } from '@/services/orderService';
 import { useAuth } from '@/context/AuthContext';
@@ -67,7 +78,7 @@ export default function SellerDashboardPage() {
     setIsViewOrderDialogOpen(true);
   };
   
-  if (isAuthLoading || isLoadingData || !currentUser) {
+  if (isAuthLoading || isLoadingData || !currentUser || !stats) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
@@ -81,12 +92,37 @@ export default function SellerDashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold text-primary">Seller Dashboard</h1>
         <div className="flex items-center gap-2">
-            <Link href={`/artisans/${currentUser.id}`} passHref> 
-              <Button variant="outline">
-                <UserCircle2 size={20} className="mr-2 text-primary" />
-                View Public Profile
-              </Button>
-            </Link>
+            {stats.isProfileIncomplete ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline">
+                    <UserCircle2 size={20} className="mr-2 text-primary" />
+                    View Public Profile
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Complete Your Artisan Profile</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Your public profile seems to be new. To attract customers, it's a great idea to add your bio, speciality, and other details. You can do this in the Store Settings.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Maybe Later</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Link href="/dashboard/seller/settings">Go to Store Settings</Link>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Link href={`/artisans/${currentUser.id}`} passHref> 
+                <Button variant="outline">
+                  <UserCircle2 size={20} className="mr-2 text-primary" />
+                  View Public Profile
+                </Button>
+              </Link>
+            )}
             <Link href="/dashboard/seller/contacts" passHref>
               <Button variant="outline">
                 <Contact size={20} className="mr-2 text-primary" />
@@ -97,10 +133,10 @@ export default function SellerDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={DollarSign} title="Total Sales" value={`$${stats?.totalSales.toLocaleString() || '0'}`} description="All-time sales" />
-        <StatCard icon={Star} title="Average Rating" value={stats?.averageRating.toFixed(1) || '0.0'} description={`Based on ${stats?.totalReviews || 0} reviews`} />
-        <StatCard icon={Users} title="Followers" value={stats?.followers.toString() || '0'} description="People following your store" />
-        <StatCard icon={ShoppingBag} title="Listed Products" value={stats?.productsCount.toString() || '0'} description="Active items in your store" />
+        <StatCard icon={DollarSign} title="Total Sales" value={`$${stats.totalSales.toLocaleString()}`} description="All-time sales" />
+        <StatCard icon={Star} title="Average Rating" value={stats.averageRating.toFixed(1)} description={`Based on ${stats.totalReviews} reviews`} />
+        <StatCard icon={Users} title="Followers" value={stats.followers.toString()} description="People following your store" />
+        <StatCard icon={ShoppingBag} title="Listed Products" value={stats.productsCount.toString()} description="Active items in your store" />
       </div>
 
       <Card className="shadow-lg">
@@ -118,7 +154,7 @@ export default function SellerDashboardPage() {
       
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats?.pendingOrders || 0} pending)</CardTitle>
+          <CardTitle className="text-xl font-headline text-primary">Recent Orders ({stats.pendingOrders} pending)</CardTitle>
           <Button variant="link" className="text-sm text-primary p-0 h-auto" asChild><Link href="/dashboard/seller/orders">View All Orders</Link></Button>
         </CardHeader>
         <CardContent>
@@ -302,3 +338,5 @@ const QuickLinkItem: React.FC<QuickLinkItemProps> = ({ href, icon: Icon, label }
         </Link>
     </Button>
 );
+
+    

@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 // Note: StaticImageData is primarily for images imported directly in Next.js.
@@ -105,13 +106,7 @@ export interface Order {
   grandTotal: number;
   orderDate: string; // ISO date string
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  shippingAddress?: {
-    street: string;
-    city: string;
-    postalCode: string;
-    country: string;
-    recipientName?: string;
-  };
+  shippingAddress?: string;
   artisanId?: string;
   artisan?: Artisan;
   paymentDetails?: {
@@ -151,6 +146,7 @@ export interface SellerStats {
   totalReviews: number;
   productsCount: number;
   pendingOrders: number;
+  isProfileIncomplete?: boolean;
 }
 
 export type NotificationType = 'new_order' | 'new_message' | 'new_review' | 'low_stock' | 'general';
@@ -179,3 +175,5 @@ export interface AuthenticatedUser {
   wishlist?: string[];
   artisanProfileId?: string; // Present if role is 'seller'
 }
+
+    

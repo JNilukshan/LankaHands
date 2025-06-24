@@ -12,6 +12,9 @@ export async function getSellerStats(artisanId: string): Promise<SellerStats | n
         if (!artisanDoc.exists) return null;
         const artisan = artisanDoc.data();
 
+        // Check if the profile is using the default bio, indicating it's likely incomplete.
+        const isProfileIncomplete = artisan?.bio === "Welcome to my artisan store! I'm excited to share my creations with you.";
+
         const productsSnapshot = await adminDb.collection('products').where('artisanId', '==', artisanId).get();
         const ordersSnapshot = await adminDb.collection('orders').where('artisanId', '==', artisanId).get();
 
@@ -36,9 +39,12 @@ export async function getSellerStats(artisanId: string): Promise<SellerStats | n
             totalReviews: totalReviews,
             productsCount: productsSnapshot.size,
             pendingOrders: pendingOrders,
+            isProfileIncomplete: isProfileIncomplete,
         };
     } catch (error) {
         console.error(`Error fetching seller stats for artisan ID ${artisanId}:`, error);
         return null;
     }
 }
+
+    
