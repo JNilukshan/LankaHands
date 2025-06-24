@@ -3,9 +3,55 @@
 
 import type { Review, Product } from '@/types';
 import { adminDb } from '@/lib/firebaseConfig';
+import { FieldValue } from 'firebase-admin/firestore';
+import { revalidatePath } from 'next/cache';
 
 // A type for reviews that also includes product info
 export type ReviewWithProductInfo = Review & { productName: string, productImageUrl?: string };
+
+export interface SubmitReviewData {
+  productId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  rating: number;
+  reviewTitle?: string;
+  comment: string;
+}
+
+export async function submitReview(data: SubmitReviewData): Promise<{ success: boolean; message: string; }> {
+  const { productId, userId, userName, userAvatar, rating, reviewTitle, comment } = data;
+  if (!productId || !userId || !rating || !comment) {
+      return { success: false, message: 'Missing required review data.' };
+  }
+
+  const reviewRef = adminDb.collection('products').doc(productId).collection('reviews').doc();
+
+  try {
+      const productDoc = await adminDb.collection('products').doc(productId).get();
+      if (!productDoc.exists) {
+        return { success: false, message: "Cannot submit a review for a product that doesn't exist." };
+      }
+
+      const newReviewData = {
+          userId,
+          userName,
+          userAvatar: userAvatar || 'https://placehold.co/128x128.png',
+          rating,
+          reviewTitle: reviewTitle || '',
+          comment,
+          createdAt: FieldValue.serverTimestamp(),
+      };
+      await reviewRef.set(newReviewData);
+
+      revalidatePath(`/products/${productId}`);
+
+      return { success: true, message: 'Your review has been submitted!' };
+  } catch (error) {
+      console.error("Error submitting review:", error);
+      return { success: false, message: 'There was an error submitting your review.' };
+  }
+}
 
 export async function getReviewsByArtisanId(artisanId: string): Promise<ReviewWithProductInfo[]> {
   if (!artisanId) return [];

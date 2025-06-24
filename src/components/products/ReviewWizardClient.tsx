@@ -1,30 +1,32 @@
 
 "use client";
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import StarRating from '@/components/shared/StarRating';
-import { reviewWizard, type ReviewWizardInput } from '@/ai/flows/review-wizard'; // Assuming this path
+import { reviewWizard, type ReviewWizardInput } from '@/ai/flows/review-wizard';
 import { Wand2, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { submitReview, type SubmitReviewData } from '@/services/reviewService';
 
 
 const reviewWizardSchema = z.object({
   overallRating: z.number().min(1, { message: "Please provide a star rating."}).max(5),
   reviewTitle: z.string().min(3, { message: "Review title must be at least 3 characters."}).max(100, { message: "Review title must be 100 characters or less."}).optional().or(z.literal('')),
-  productQuality: z.string().min(10, { message: "Please describe the product quality in at least 10 characters." }).optional().or(z.literal('')),
-  deliverySpeed: z.string().min(10, { message: "Please describe the delivery speed in at least 10 characters." }).optional().or(z.literal('')),
-  artisanEngagement: z.string().min(10, { message: "Please describe your engagement with the artisan in at least 10 characters." }).optional().or(z.literal('')),
-  finalReview: z.string().min(20, { message: "If provided, the review must be at least 20 characters." }).optional().or(z.literal('')),
+  productQuality: z.string().optional(),
+  deliverySpeed: z.string().optional(),
+  artisanEngagement: z.string().optional(),
+  finalReview: z.string().min(20, { message: "The final review must be at least 20 characters." }),
 });
 
 type ReviewWizardFormValues = z.infer<typeof reviewWizardSchema>;
@@ -39,6 +41,8 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const router = useRouter();
 
   const form = useForm<ReviewWizardFormValues>({
     resolver: zodResolver(reviewWizardSchema),
@@ -54,10 +58,11 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
 
   const handleGenerateSuggestion = async () => {
     const values = form.getValues();
-    // For AI suggestion, these fields are effectively required.
-    const inputValid = await form.trigger(["productQuality", "deliverySpeed", "artisanEngagement"]);
-
-    if (!values.productQuality || !values.deliverySpeed || !values.artisanEngagement || !inputValid) {
+    const productQualityForAI = values.productQuality || "";
+    const deliverySpeedForAI = values.deliverySpeed || "";
+    const artisanEngagementForAI = values.artisanEngagement || "";
+    
+    if (!productQualityForAI || !deliverySpeedForAI || !artisanEngagementForAI) {
       toast({
         title: "Missing Information for AI Wizard",
         description: "Please fill in details about quality, delivery, and engagement before generating a suggestion.",
@@ -70,9 +75,9 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
     setSuggestedReview(null);
     try {
       const wizardInput: ReviewWizardInput = {
-        productQuality: values.productQuality,
-        deliverySpeed: values.deliverySpeed,
-        artisanEngagement: values.artisanEngagement,
+        productQuality: productQualityForAI,
+        deliverySpeed: deliverySpeedForAI,
+        artisanEngagement: artisanEngagementForAI,
       };
       const result = await reviewWizard(wizardInput);
       setSuggestedReview(result.reviewSuggestion);
@@ -90,26 +95,41 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
   };
   
   const onSubmit = async (data: ReviewWizardFormValues) => {
+    if (!currentUser) {
+        toast({ title: "Login Required", description: "You must be logged in to submit a review.", variant: "destructive" });
+        router.push('/login');
+        return;
+    }
+
     setIsSubmitting(true);
-    console.log("Submitting review:", { productId, ...data });
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    toast({
-      title: "Review Submitted!",
-      description: `Thank you for your review of ${productName}.`,
-    });
-    form.reset({ // Reset with initial default values
-        overallRating: 0,
-        reviewTitle: "",
-        productQuality: "",
-        deliverySpeed: "",
-        artisanEngagement: "",
-        finalReview: ""
-    });
-    setSuggestedReview(null);
+    const reviewData: SubmitReviewData = {
+        productId: productId,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userAvatar: currentUser.profileImageUrl,
+        rating: data.overallRating,
+        reviewTitle: data.reviewTitle || '',
+        comment: data.finalReview,
+    };
+    
+    const result = await submitReview(reviewData);
+
     setIsSubmitting(false);
-    // Potentially redirect user or update UI
+
+    if (result.success) {
+        toast({
+            title: "Review Submitted!",
+            description: result.message,
+        });
+        router.push(`/products/${productId}`);
+    } else {
+        toast({
+            title: "Error",
+            description: result.message,
+            variant: "destructive",
+        });
+    }
   };
 
 
@@ -210,13 +230,13 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
               name="finalReview"
               render={({ field }) => (
                 <FormItem className="mt-6 pt-4 border-t">
-                  <FormLabel className="text-md font-semibold">Your Detailed Review (Optional)</FormLabel>
+                  <FormLabel className="text-md font-semibold">Your Detailed Review*</FormLabel>
                   <FormControl>
                     <Textarea 
                       rows={suggestedReview ? 8 : 5} 
-                      placeholder={suggestedReview ? "Your generated review will appear here. Feel free to edit it." : "Share your thoughts about the product... (Optional)"} 
+                      placeholder={suggestedReview ? "Your generated review will appear here. Feel free to edit it." : "Share your thoughts about the product..."} 
                       {...field} 
-                      value={field.value || ""} // Ensure value is controlled, handles null/undefined from reset
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -226,7 +246,7 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
 
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isSubmitting || isLoading || form.getValues("overallRating") === 0} className="w-full bg-primary hover:bg-primary/90">
+            <Button type="submit" disabled={isSubmitting || isLoading} className="w-full bg-primary hover:bg-primary/90">
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Submit Review
             </Button>
