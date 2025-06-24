@@ -20,6 +20,14 @@ export interface StorePolicies {
   cancellationPolicy?: string;
 }
 
+export interface ContactDetails {
+  phone?: string;
+  email?: string;
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+}
+
 export interface Artisan {
   id: string; // Corresponds to Firebase Auth UID if the artisan is also a user
   userId?: string; // Link to users collection (Firebase Auth UID) - can be same as id
@@ -34,6 +42,7 @@ export interface Artisan {
   speciality?: string;
   shippingSettings?: ShippingSettings;
   storePolicies?: StorePolicies;
+  contactDetails?: ContactDetails;
   isVerified?: boolean;
   createdAt?: string; // ISO date string
 }

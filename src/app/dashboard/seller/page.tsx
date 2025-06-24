@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Bell, UserCircle2, Loader2 } from "lucide-react";
+import { DollarSign, Star, Users, MessageSquare, ShoppingBag, Settings, BarChart3, ListOrdered, Eye, ChevronDown, Contact, UserCircle2, Loader2 } from "lucide-react";
 import type { SellerStats, Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -14,7 +14,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { getSellerStats } from '@/services/sellerService';
 import { getOrdersByArtisanId } from '@/services/orderService';
-import { getNotificationsByArtisanId } from '@/services/notificationService';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -26,7 +25,6 @@ export default function SellerDashboardPage() {
 
   const [stats, setStats] = useState<SellerStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewOrderDialogOpen, setIsViewOrderDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -41,18 +39,14 @@ export default function SellerDashboardPage() {
     const fetchData = async () => {
       setIsLoadingData(true);
       
-      const [sellerStats, allOrders, allNotifications] = await Promise.all([
+      const [sellerStats, allOrders] = await Promise.all([
         getSellerStats(currentUser.id),
         getOrdersByArtisanId(currentUser.id),
-        getNotificationsByArtisanId(currentUser.id),
       ]);
 
       setStats(sellerStats);
       setRecentOrders(allOrders.slice(0, 5)); // Get top 5 recent orders
-
-      const unreadCount = allNotifications.filter(n => !n.read).length;
-      setUnreadNotificationsCount(unreadCount);
-
+      
       setIsLoadingData(false);
     };
     fetchData();
@@ -93,16 +87,11 @@ export default function SellerDashboardPage() {
                 View Public Profile
               </Button>
             </Link>
-            <Link href="/dashboard/seller/notifications" passHref>
-                <Button variant="outline" className="relative">
-                    <Bell size={20} className="mr-2 text-primary" />
-                    Notifications
-                    {unreadNotificationsCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs">
-                        {unreadNotificationsCount}
-                    </Badge>
-                    )}
-                </Button>
+            <Link href="/dashboard/seller/contacts" passHref>
+              <Button variant="outline">
+                <Contact size={20} className="mr-2 text-primary" />
+                Manage Contacts
+              </Button>
             </Link>
         </div>
       </div>
