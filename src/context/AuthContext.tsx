@@ -45,19 +45,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       let userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        const newUserDocData: FirestoreUserDocument = {
+        // Build the new user document, but leave optional fields out for now.
+        const newUserDocData: Omit<FirestoreUserDocument, 'profileImageUrl' | 'artisanProfileId'> & Partial<Pick<FirestoreUserDocument, 'profileImageUrl' | 'artisanProfileId'>> = {
           uid: firebaseUser.uid,
           email: additionalData?.email || firebaseUser.email || '',
           name: additionalData?.name || firebaseUser.displayName || 'New User',
           role: additionalData?.role || 'buyer',
-          profileImageUrl: additionalData?.profileImageUrl || undefined,
           wishlist: additionalData?.wishlist || [],
           followedArtisans: additionalData?.followedArtisans || [],
           createdAt: Timestamp.now().toDate().toISOString(),
         };
+
+        // Conditionally add optional fields to avoid writing 'undefined' to Firestore.
+        if (additionalData?.profileImageUrl) {
+          newUserDocData.profileImageUrl = additionalData.profileImageUrl;
+        }
+        
         if (newUserDocData.role === 'seller') {
            newUserDocData.artisanProfileId = additionalData?.artisanProfileId || firebaseUser.uid;
         }
+
         await setDoc(userDocRef, newUserDocData);
         userDocSnap = await getDoc(userDocRef);
         console.log(`AuthContext: Created new Firestore user document for ${firebaseUser.uid}`);
