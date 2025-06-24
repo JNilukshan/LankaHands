@@ -60,16 +60,10 @@ export default function ProductView({ product }: ProductViewProps) {
     }
 
     setIsLoadingWishlist(true);
-    // In a real app, this would be an async call to a Server Action
-    // For now, we simulate and update AuthContext directly.
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     if (isProductInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-      toast({ title: "Removed from Wishlist", description: `${product.name} has been removed from your wishlist.` });
+      await removeFromWishlist(product.id);
     } else {
-      addToWishlist(product.id);
-      toast({ title: "Added to Wishlist", description: `${product.name} has been added to your wishlist.` });
+      await addToWishlist(product.id);
     }
     setIsLoadingWishlist(false);
   };

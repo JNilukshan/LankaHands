@@ -232,7 +232,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToWishlist = useCallback(async (productId: string) => {
     if (currentUser && currentUser.role === 'buyer') {
-      setIsLoading(true);
       try {
         const userDocRef = doc(db, 'users', currentUser.id);
         await updateDoc(userDocRef, {
@@ -243,18 +242,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error: any) {
         console.error("Add to wishlist error:", error);
         toast({ title: "Error", description: "Could not add to wishlist.", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
       }
     } else if (!currentUser) {
         toast({ title: "Login Required", description: "Please login to add items to wishlist.", variant: "destructive"});
         router.push('/login');
     }
-  }, [currentUser, toast, router]);
+  }, [currentUser, toast, router, setCurrentUser]);
 
   const removeFromWishlist = useCallback(async (productId: string) => {
     if (currentUser && currentUser.role === 'buyer') {
-      setIsLoading(true);
       try {
         const userDocRef = doc(db, 'users', currentUser.id);
         await updateDoc(userDocRef, {
@@ -265,11 +261,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error: any) {
         console.error("Remove from wishlist error:", error);
         toast({ title: "Error", description: "Could not remove from wishlist.", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
       }
+    } else if (!currentUser) {
+      toast({ title: "Login Required", description: "Please login to manage your wishlist.", variant: "destructive" });
+      router.push('/login');
     }
-  }, [currentUser, toast]);
+  }, [currentUser, toast, router, setCurrentUser]);
 
   const isProductInWishlist = useCallback((productId: string): boolean => {
     return !!(currentUser && currentUser.role === 'buyer' && currentUser.wishlist?.includes(productId));
