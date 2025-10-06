@@ -10,7 +10,7 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
-# Network Security Group (only 3 rules)
+# Network Security Group
 resource "azurerm_network_security_group" "nsg" {
   name                = "${var.project_name}-nsg"
   location            = azurerm_resource_group.rg.location
@@ -52,6 +52,7 @@ resource "azurerm_network_security_group" "nsg" {
     destination_address_prefix = "*"
   }
 
+#for the nodejs dev server
   security_rule {
   name                       = "NextJSDevPort"
   priority                   = 1004
