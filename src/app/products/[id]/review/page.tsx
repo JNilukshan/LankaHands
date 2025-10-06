@@ -7,12 +7,13 @@ async function getProductNameForReview(productId: string): Promise<string> {
   return product?.name || "the Product";
 }
 
-export default async function ReviewPage({ params }: { params: { id: string } }) {
-  const productName = await getProductNameForReview(params.id);
+export default async function ProductReviewPage({ params }: { params: { id: string } }) {
+  const { id } = await params;
+  const productName = await getProductNameForReview(id);
 
   return (
     <div className="py-8">
-      <ReviewWizardClient productName={productName} productId={params.id} />
+      <ReviewWizardClient productName={productName} productId={id} />
     </div>
   );
 }

@@ -29,9 +29,9 @@ const contactArtisanSchema = z.object({
 type ContactArtisanFormValues = z.infer<typeof contactArtisanSchema>;
 
 
-export default function ContactArtisanPage() {
-  const params = useParams<{ id: string }>();
-  const artisanId = params.id;
+export default async function ContactArtisanPage({ params }: { params: { id: string } }) {
+  const { id } = await params;
+  const artisanId = id;
 
   const { toast } = useToast();
   const [isPageLoading, setIsPageLoading] = useState(true);

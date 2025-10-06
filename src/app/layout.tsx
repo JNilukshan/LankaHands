@@ -8,7 +8,7 @@ import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext'; // Import AuthProvider
 
 export const metadata: Metadata = {
-  title: 'LankaHands - Authentic Sri Lankan Crafts',
+  title: 'LankaHands',
   description: 'Discover handcrafted goods from talented Sri Lankan artisans.',
 };
 

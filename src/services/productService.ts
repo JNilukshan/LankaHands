@@ -5,6 +5,7 @@ import type { Product, Review } from '@/types';
 import { adminDb } from '@/lib/firebaseConfig';
 import { FieldValue }from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 
 /**
  * Creates a new product document in Firestore.
@@ -36,10 +37,21 @@ export async function createProduct(productData: Omit<Product, 'id' | 'createdAt
         
         return {
             id: newProductDoc.id,
-            ...data,
+            name: data.name || 'Unnamed Product',
+            description: data.description || '',
+            price: data.price || 0,
+            category: data.category || 'Uncategorized',
+            images: Array.isArray(data.images) && data.images.length > 0 ? data.images : ['https://placehold.co/600x400.png'],
+            artisanId: data.artisanId || '',
+            artisanName: data.artisanName || 'Unknown Artisan',
+            stock: data.stock !== undefined ? data.stock : 0,
+            longDescription: data.longDescription || data.description || '',
+            materials: data.materials || [],
+            dimensions: data.dimensions || '',
+            isVisible: data.isVisible !== undefined ? data.isVisible : true,
             // Convert Firestore Timestamps to ISO strings for client compatibility
-            createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-            updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+            createdAt: data.createdAt?.toDate?.().toISOString() || new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate?.().toISOString() || new Date().toISOString(),
             reviews: [],
         } as Product;
 
@@ -97,39 +109,46 @@ export async function deleteProduct(productId: string): Promise<boolean> {
  * Fetches all products from Firestore.
  * @returns A promise that resolves to an array of Product objects.
  */
-export async function getAllProducts(): Promise<Product[]> {
-  try {
-    const productsSnapshot = await adminDb.collection('products').where('isVisible', '==', true).get();
-    if (productsSnapshot.empty) {
-      console.log('No products found in Firestore.');
+export const getAllProducts = unstable_cache(
+  async (): Promise<Product[]> => {
+    try {
+      const productsSnapshot = await adminDb.collection('products').where('isVisible', '==', true).get();
+      if (productsSnapshot.empty) {
+        console.log('No products found in Firestore.');
+        return [];
+      }
+      const products: Product[] = productsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || 'Unnamed Product',
+          description: data.description || '',
+          price: data.price || 0,
+          category: data.category || 'Uncategorized',
+          images: Array.isArray(data.images) && data.images.length > 0 ? data.images : ['https://placehold.co/600x400.png'],
+          artisanId: data.artisanId || '',
+          artisanName: data.artisanName || 'Unknown Artisan', 
+          stock: data.stock !== undefined ? data.stock : 0,
+          longDescription: data.longDescription || data.description || '',
+          materials: data.materials || [],
+          dimensions: data.dimensions || '',
+          reviews: [], // Reviews are fetched separately
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        } as Product;
+      });
+      return products;
+    } catch (error) {
+      console.error("Error fetching all products:", error);
       return [];
     }
-    const products: Product[] = productsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || 'Unnamed Product',
-        description: data.description || '',
-        price: data.price || 0,
-        category: data.category || 'Uncategorized',
-        images: Array.isArray(data.images) && data.images.length > 0 ? data.images : ['https://placehold.co/600x400.png'],
-        artisanId: data.artisanId || '',
-        artisanName: data.artisanName || 'Unknown Artisan', 
-        stock: data.stock !== undefined ? data.stock : 0,
-        longDescription: data.longDescription || data.description || '',
-        materials: data.materials || [],
-        dimensions: data.dimensions || '',
-        reviews: [], // Reviews are fetched separately
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
-      } as Product;
-    });
-    return products;
-  } catch (error) {
-    console.error("Error fetching all products:", error);
-    return [];
+  },
+  ['all-products'],
+  {
+    tags: ['products'],
+    revalidate: 300, // Cache for 5 minutes
   }
-}
+);
 
 /**
  * Fetches a single product by its ID from Firestore.

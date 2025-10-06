@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { ShoppingCart, User, Menu, LogIn, UserPlus, Briefcase, Info, LayoutDashboard, LogOut as LogOutIcon, Store } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
@@ -116,7 +115,7 @@ const Header: FC = () => {
         <nav className="flex flex-col space-y-3 mt-8 flex-grow">
           {mainNavLinks.map(link => (
             <SheetClose asChild key={link.label}>
-              <Link href={link.href} className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
+              <Link href={link.href} prefetch={true} className="text-lg text-foreground hover:text-primary transition-colors flex items-center p-2 rounded-md hover:bg-muted">
                 <Info className="mr-3 h-5 w-5 text-primary" /> {link.label}
               </Link>
             </SheetClose>
@@ -173,7 +172,6 @@ const Header: FC = () => {
           )}
         </nav>
         <div className="mt-auto p-2">
-          <LanguageSwitcher />
         </div>
       </SheetContent>
     </Sheet>
@@ -189,14 +187,14 @@ const Header: FC = () => {
 
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {mainNavLinks.map(link => (
-            <Link key={link.label} href={link.href} className="text-foreground/80 hover:text-primary transition-colors">
+            <Link key={link.label} href={link.href} prefetch={true} className="text-foreground/80 hover:text-primary transition-colors">
               {link.label}
             </Link>
           ))}
         </nav>
 
         <div className="flex items-center space-x-2">
-          <div className="hidden md:block"> <LanguageSwitcher /> </div>
+        
           
           {!isAuthLoading && currentUser ? (
             currentUser.role === 'seller' ? (

@@ -15,7 +15,8 @@ import { notFound } from 'next/navigation';
 import ArtisanContactButton from '@/components/artisans/ArtisanContactButton';
 
 export default async function ArtisanProfilePage({ params }: { params: { id: string } }) {
-  const artisan = await getArtisanById(params.id);
+  const { id } = await params;
+  const artisan = await getArtisanById(id);
 
   if (!artisan) {
     notFound();

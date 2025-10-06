@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -9,37 +9,129 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json
 
-# testing
+# Testing
 /coverage
+*.lcov
+/nyc_output
 
-# next.js
+# Next.js
 /.next/
 /out/
+.next
 
-# production
+# Production builds
 /build
+/dist
 
-# misc
-.DS_Store
-*.pem
+# Environment variables
+.env*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# vercel
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary folders
+tmp/
+temp/
+
+# IDE and Editor files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.pem
+
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-.genkit/*
-.env*
-
-# firebase
+# Firebase
 firebase-debug.log
 firestore-debug.log
+ui-debug.log
+.firebase/
+*-debug.log
+firebase-functions-debug.log
+
+# AI/ML related (unused in your project)
+.genkit/*
+
+# Azure/Terraform
+azure_infra/*.tfstate
+azure_infra/*.tfstate.*
+azure_infra/.terraform/
+azure_infra/.terraform.lock.hcl
+azure_infra/terraform.tfvars
+azure_infra/crash.log
+azure_infra/override.tf
+azure_infra/override.tf.json
+azure_infra/*_override.tf
+azure_infra/*_override.tf.json
+
+# Security and sensitive files
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+serviceAccountKey.json
+google-services.json
+GoogleService-Info.plist
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Storybook
+storybook-static/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Zero-installs yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz

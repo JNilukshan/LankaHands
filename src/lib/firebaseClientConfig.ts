@@ -17,15 +17,15 @@ const firebaseConfig = {
 };
 
 // --- CRITICAL CHECK ---
-console.log("Firebase Client Config Values from process.env (Check BROWSER CONSOLE):");
-console.log("NEXT_PUBLIC_FIREBASE_API_KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "SET" : "MISSING or undefined");
-console.log("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "SET" : "MISSING or undefined");
-console.log("NEXT_PUBLIC_FIREBASE_PROJECT_ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "SET" : "MISSING or undefined");
-console.log("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:", process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? "SET" : "MISSING or undefined");
-console.log("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:", process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ? "SET" : "MISSING or undefined");
-console.log("NEXT_PUBLIC_FIREBASE_APP_ID:", process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? "SET" : "MISSING or undefined");
+// console.log("Firebase Client Config Values from process.env (Check BROWSER CONSOLE):");
+// console.log("NEXT_PUBLIC_FIREBASE_API_KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "SET" : "MISSING or undefined");
+// console.log("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "SET" : "MISSING or undefined");
+// console.log("NEXT_PUBLIC_FIREBASE_PROJECT_ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "SET" : "MISSING or undefined");
+// console.log("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:", process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? "SET" : "MISSING or undefined");
+// console.log("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:", process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ? "SET" : "MISSING or undefined");
+// console.log("NEXT_PUBLIC_FIREBASE_APP_ID:", process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? "SET" : "MISSING or undefined");
 
-console.log("Firebase Client Config: Actual firebaseConfig object to be used:", firebaseConfig);
+// console.log("Firebase Client Config: Actual firebaseConfig object to be used:", firebaseConfig);
 
 
 const essentialConfigKeys: (keyof typeof firebaseConfig)[] = [
@@ -54,7 +54,7 @@ if (missingKeys.length > 0) {
   );
   // Note: Firebase SDK will likely throw its own error if initialized with incomplete config.
 } else {
-  console.log("Firebase Client Config: All essential NEXT_PUBLIC_FIREBASE_... variables seem to be present in the firebaseConfig object. Attempting Firebase initialization.");
+  // console.log("Firebase Client Config: All essential NEXT_PUBLIC_FIREBASE_... variables seem to be present in the firebaseConfig object. Attempting Firebase initialization.");
 }
 
 
@@ -62,7 +62,7 @@ if (missingKeys.length > 0) {
 if (!getApps().length) {
   try {
     app = initializeApp(firebaseConfig);
-    console.log("Firebase Client Config: SUCCESSFULLY CALLED initializeApp. App options:", app.options);
+    // console.log("Firebase Client Config: SUCCESSFULLY CALLED initializeApp. App options:", app.options);
   } catch (error: any) {
     console.error("Firebase Client Config: Error during initializeApp(firebaseConfig):", error);
     console.error("Firebase Client Config: Failing firebaseConfig object was:", firebaseConfig);
@@ -70,7 +70,7 @@ if (!getApps().length) {
   }
 } else {
   app = getApp();
-  console.log("Firebase Client Config: Using existing Firebase app. App options:", app.options);
+  // console.log("Firebase Client Config: Using existing Firebase app. App options:", app.options);
 }
 
 // @ts-ignore: Potentially unassigned if init fails and no re-throw

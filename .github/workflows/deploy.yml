@@ -1,0 +1,86 @@
+name: Deploy Lankahands to Azure VM
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js App
+        run: npm run build
+
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          password: ${{ secrets.VM_PASSWORD }}
+          source: ".next package.json next.config.js public/*"
+          target: "/home/azureuser/lankahands/"
+
+      - name: SSH into VM and deploy with PM2 + Nginx
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          password: ${{ secrets.VM_PASSWORD }}
+          script: |
+            cd /home/azureuser/lankahands
+
+            # Install dependencies if needed
+            npm ci --omit=dev
+
+            # Start or restart app with PM2
+            if pm2 list | grep -q "lankahands"; then
+              pm2 restart lankahands
+            else
+              pm2 start npm --name "lankahands" -- start
+            fi
+
+            pm2 save
+            pm2 startup systemd -u azureuser --hp /home/azureuser
+
+            # Configure Nginx reverse proxy
+            sudo tee /etc/nginx/sites-available/lankahands > /dev/null << 'EOF'
+            server {
+                listen 80;
+                server_name _;
+
+                location / {
+                    proxy_pass http://localhost:3000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host $host;
+                    proxy_cache_bypass $http_upgrade;
+                }
+
+                location /health {
+                    return 200 "Lankahands OK";
+                    add_header Content-Type text/plain;
+                }
+
+                error_log /var/log/nginx/lankahands-error.log;
+                access_log /var/log/nginx/lankahands-access.log;
+            }
+            EOF
+
+            sudo ln -sf /etc/nginx/sites-available/lankahands /etc/nginx/sites-enabled/
+            sudo nginx -t
+            sudo systemctl reload nginx
+
+            echo "✅ Lankahands deployed successfully and live on port 80!"

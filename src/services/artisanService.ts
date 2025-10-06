@@ -4,37 +4,45 @@
 import type { Artisan } from '@/types';
 import { adminDb } from '@/lib/firebaseConfig';
 import { revalidatePath } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 
 /**
  * Fetches all artisans from Firestore.
  * @returns A promise that resolves to an array of Artisan objects.
  */
-export async function getAllArtisans(): Promise<Artisan[]> {
-  try {
-    const artisansSnapshot = await adminDb.collection('artisanProfiles').get();
-    if (artisansSnapshot.empty) {
-      console.log('No artisans found in Firestore.');
-      return [];
-    }
-    const artisans: Artisan[] = artisansSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || 'Unnamed Artisan',
-        bio: data.bio || '',
-        profileImageUrl: data.profileImageUrl || 'https://placehold.co/300x300.png',
-        followers: data.followers || 0,
-        averageRating: data.averageRating || 0,
-        location: data.location || 'Unknown Location',
-        speciality: data.speciality || 'General Artisan',
-      } as Artisan;
+export const getAllArtisans = unstable_cache(
+  async (): Promise<Artisan[]> => {
+    try {
+      const artisansSnapshot = await adminDb.collection('artisanProfiles').get();
+      if (artisansSnapshot.empty) {
+        console.log('No artisans found in Firestore.');
+        return [];
+      }
+      const artisans: Artisan[] = artisansSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || 'Unnamed Artisan',
+          bio: data.bio || '',
+          profileImageUrl: data.profileImageUrl || 'https://placehold.co/300x300.png',
+          followers: data.followers || 0,
+          averageRating: data.averageRating || 0,
+          location: data.location || 'Unknown Location',
+          speciality: data.speciality || 'General Artisan',
+        } as Artisan;
     });
     return artisans;
   } catch (error) {
     console.error("Error fetching all artisans:", error);
     return [];
   }
-}
+  },
+  ['all-artisans'],
+  {
+    tags: ['artisans'],
+    revalidate: 300, // Cache for 5 minutes
+  }
+);
 
 /**
  * Fetches a single artisan by their ID from Firestore.

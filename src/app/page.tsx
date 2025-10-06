@@ -7,6 +7,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getAllArtisans } from '@/services/artisanService';
 import { getAllProducts } from '@/services/productService';
+import heroImage from '@/assets/images/hero.jpg';
+import { Suspense } from 'react';
 
 
 export default async function HomePage() {
@@ -29,12 +31,11 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="relative h-[calc(100vh-10rem)] min-h-[400px] flex items-center justify-center text-center rounded-lg overflow-hidden shadow-xl">
         <Image
-          src="https://placehold.co/1200x600.png"
+          src={heroImage}
           alt="Sri Lankan crafts hero banner"
           fill
           style={{ objectFit: 'cover' }}
           className="absolute inset-0 z-0 opacity-50"
-          data-ai-hint="crafts market"
           priority
         />
         <div className="relative z-10 p-8 bg-background/70 backdrop-blur-sm rounded-md max-w-2xl">

@@ -15,7 +15,8 @@ export async function generateMetadata(
   { params }: ProductDetailPageProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const product: Product | null = await getProductById(params.id);
+  const { id } = await params;
+  const product: Product | null = await getProductById(id);
 
   if (!product) {
     return {
@@ -74,10 +75,12 @@ async function ProductLoader({ productId }: { productId: string }) {
     return <ProductView product={product} />;
 }
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const { id } = await params;
+  
   return (
     <Suspense fallback={<ProductViewSkeleton />}>
-        <ProductLoader productId={params.id} />
+        <ProductLoader productId={id} />
     </Suspense>
   );
 }
