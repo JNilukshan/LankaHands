@@ -1,12 +1,11 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // continue build even if TS errors exist
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // continue build even if ESLint errors exist
   },
   images: {
     remotePatterns: [
@@ -19,6 +18,8 @@ const nextConfig: NextConfig = {
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 31536000, // 1 year cache
+//    unoptimized: process.env.NODE_ENV === 'ci' || process.env.CI === 'true', 
+    // disables image optimization during CI to avoid sharp build failures
   },
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],

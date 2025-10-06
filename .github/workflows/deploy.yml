@@ -8,6 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      NEXT_PUBLIC_CI: true   # ✅ Add this so Next.js can detect CI build
+
     steps:
       # 1️⃣ Checkout code
       - name: Checkout code
@@ -20,38 +23,36 @@ jobs:
           node-version: '18'
 
       # 3️⃣ Install Linux build tools for sharp
-      - name: Install build tools
+      - name: Install Linux build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libvips-dev
 
-      # 4️⃣ Install dependencies including optional ones
+      # 4️⃣ Install dependencies (including optional) and force sharp
       - name: Install dependencies
-        run: npm ci --include=optional
+        run: |
+          npm ci --include=optional
+          npm install --platform=linux --arch=x64 --save-optional sharp
+          npm rebuild sharp
 
-      # 5️⃣ Rebuild sharp for Linux
-      - name: Rebuild sharp for Linux
-        run: npm rebuild sharp --platform=linux --arch=x64
-
-      # 6️⃣ Build Next.js App
+      # 5️⃣ Build Next.js app
       - name: Build Next.js App
         run: npm run build
 
-      # 7️⃣ Copy files to VM (remove existing folder first)
-      - name: Prepare VM for deployment
+      # 6️⃣ Prepare VM (remove old folder, create new)
+      - name: Prepare VM folder
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USERNAME }}
           password: ${{ secrets.VM_PASSWORD }}
           script: |
-            # Remove old folder if exists
             rm -rf /home/azureuser/lankahands
-            # Recreate folder
             mkdir -p /home/azureuser/lankahands
             sudo chown -R azureuser:azureuser /home/azureuser/lankahands
             sudo chmod -R 755 /home/azureuser/lankahands
 
+      # 7️⃣ Copy built files to VM
       - name: Copy files to VM
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -61,8 +62,8 @@ jobs:
           source: ".next package.json next.config.js public/*"
           target: "/home/azureuser/lankahands/"
 
-      # 8️⃣ Deploy with PM2 + Nginx
-      - name: SSH into VM and deploy
+      # 8️⃣ Deploy on VM with PM2 and Nginx
+      - name: SSH deploy PM2 + Nginx
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -74,7 +75,7 @@ jobs:
             # Install production dependencies
             npm ci --omit=dev
 
-            # Start or restart app with PM2
+            # Start/restart with PM2
             if pm2 list | grep -q "lankahands"; then
               pm2 restart lankahands
             else
@@ -84,7 +85,7 @@ jobs:
             pm2 save
             pm2 startup systemd -u azureuser --hp /home/azureuser
 
-            # Configure Nginx reverse proxy
+            # Nginx configuration
             sudo tee /etc/nginx/sites-available/lankahands > /dev/null << 'EOF'
             server {
                 listen 80;
@@ -109,7 +110,6 @@ jobs:
             }
             EOF
 
-            # Enable site and reload Nginx
             sudo ln -sf /etc/nginx/sites-available/lankahands /etc/nginx/sites-enabled/
             sudo nginx -t
             sudo systemctl reload nginx
