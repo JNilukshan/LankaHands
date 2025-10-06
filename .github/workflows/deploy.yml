@@ -9,19 +9,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm ci
+      # 3️⃣ Install Linux build tools for sharp
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
+      # 4️⃣ Install dependencies including optional ones
+      - name: Install dependencies
+        run: npm ci --include=optional
+
+      # 5️⃣ Rebuild sharp for Linux
+      - name: Rebuild sharp for Linux
+        run: npm rebuild sharp --platform=linux --arch=x64
+
+      # 6️⃣ Build Next.js App
       - name: Build Next.js App
         run: npm run build
+
+      # 7️⃣ Copy files to VM (remove existing folder first)
+      - name: Prepare VM for deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          password: ${{ secrets.VM_PASSWORD }}
+          script: |
+            # Remove old folder if exists
+            rm -rf /home/azureuser/lankahands
+            # Recreate folder
+            mkdir -p /home/azureuser/lankahands
+            sudo chown -R azureuser:azureuser /home/azureuser/lankahands
+            sudo chmod -R 755 /home/azureuser/lankahands
 
       - name: Copy files to VM
         uses: appleboy/scp-action@v0.1.5
@@ -32,7 +61,8 @@ jobs:
           source: ".next package.json next.config.js public/*"
           target: "/home/azureuser/lankahands/"
 
-      - name: SSH into VM and deploy with PM2 + Nginx
+      # 8️⃣ Deploy with PM2 + Nginx
+      - name: SSH into VM and deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -41,7 +71,7 @@ jobs:
           script: |
             cd /home/azureuser/lankahands
 
-            # Install dependencies if needed
+            # Install production dependencies
             npm ci --omit=dev
 
             # Start or restart app with PM2
@@ -79,6 +109,7 @@ jobs:
             }
             EOF
 
+            # Enable site and reload Nginx
             sudo ln -sf /etc/nginx/sites-available/lankahands /etc/nginx/sites-enabled/
             sudo nginx -t
             sudo systemctl reload nginx
