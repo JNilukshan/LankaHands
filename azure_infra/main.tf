@@ -67,6 +67,12 @@ resource "azurerm_network_security_group" "nsg" {
 
 }
 
+#attach the NSG to the NIC
+resource "azurerm_network_interface_security_group_association" "nsg_association" {
+  network_interface_id      = azurerm_network_interface.nic.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
 # Public IP
 resource "azurerm_public_ip" "public_ip" {
   name                = "${var.project_name}-ip"
