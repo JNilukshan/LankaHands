@@ -18,8 +18,6 @@
 ### Seller Dashboard
 - Analytics, product management, order tracking, notifications, and settings
 
-### Modern UI
-- Responsive interface built with **React** and **Tailwind CSS**
 
 ### Backend & Data
 - Firebase Firestore for data storage
