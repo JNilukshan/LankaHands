@@ -54,6 +54,14 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
         return;
     }
 
+    console.log('ReviewWizard: Starting submission with form data:', data);
+    console.log('ReviewWizard: Current user:', { 
+      id: currentUser.id, 
+      name: currentUser.name, 
+      email: currentUser.email,
+      hasAvatar: !!currentUser.profileImageUrl 
+    });
+
     setIsSubmitting(true);
     
     const reviewData: SubmitReviewData = {
@@ -66,20 +74,33 @@ const ReviewWizardClient: React.FC<ReviewWizardClientProps> = ({ productName, pr
         comment: data.comment,
     };
     
-    const result = await submitReview(reviewData);
+    console.log('ReviewWizard: Prepared review data:', reviewData);
+    
+    try {
+        const result = await submitReview(reviewData);
+        console.log('ReviewWizard: Submit result:', result);
 
-    setIsSubmitting(false);
+        setIsSubmitting(false);
 
-    if (result.success) {
-        toast({
-            title: "Review Submitted!",
-            description: result.message,
-        });
-        router.push(`/products/${productId}`);
-    } else {
+        if (result.success) {
+            toast({
+                title: "Review Submitted!",
+                description: result.message,
+            });
+            router.push(`/products/${productId}`);
+        } else {
+            toast({
+                title: "Error",
+                description: result.message,
+                variant: "destructive",
+            });
+        }
+    } catch (error) {
+        console.error('ReviewWizard: Unexpected error during submission:', error);
+        setIsSubmitting(false);
         toast({
             title: "Error",
-            description: result.message,
+            description: "An unexpected error occurred while submitting your review.",
             variant: "destructive",
         });
     }

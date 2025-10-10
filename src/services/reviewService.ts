@@ -21,34 +21,60 @@ export interface SubmitReviewData {
 
 export async function submitReview(data: SubmitReviewData): Promise<{ success: boolean; message: string; }> {
   const { productId, userId, userName, userAvatar, rating, reviewTitle, comment } = data;
+  
+  // Validate required fields
   if (!productId || !userId || !rating || !comment) {
+      console.error('submitReview: Missing required data:', { productId, userId, rating: !!rating, comment: !!comment });
       return { success: false, message: 'Missing required review data.' };
   }
 
-  const reviewRef = adminDb.collection('products').doc(productId).collection('reviews').doc();
+  console.log('submitReview: Starting submission with data:', { productId, userId, userName, rating, reviewTitle, comment: comment.substring(0, 50) + '...' });
 
   try {
+      // Check if product exists first
       const productDoc = await adminDb.collection('products').doc(productId).get();
       if (!productDoc.exists) {
+        console.error('submitReview: Product not found:', productId);
         return { success: false, message: "Cannot submit a review for a product that doesn't exist." };
       }
 
-      const newReviewData = {
+      // Create review reference
+      const reviewRef = adminDb.collection('products').doc(productId).collection('reviews').doc();
+      console.log('submitReview: Created review reference:', reviewRef.path);
+
+      // Prepare review data - exclude undefined fields completely
+      const newReviewData: any = {
           userId,
           userName,
-          userAvatar: userAvatar || undefined,
           rating,
           reviewTitle: reviewTitle || '',
           comment,
           createdAt: FieldValue.serverTimestamp(),
       };
-      await reviewRef.set(newReviewData);
 
+      // Only add userAvatar if it exists and is not undefined
+      if (userAvatar && userAvatar.trim() !== '') {
+          newReviewData.userAvatar = userAvatar;
+      }
+
+      console.log('submitReview: Submitting review data:', newReviewData);
+      
+      // Submit the review
+      await reviewRef.set(newReviewData);
+      console.log('submitReview: Review submitted successfully to:', reviewRef.path);
+
+      // Revalidate the product page
       revalidatePath(`/products/${productId}`);
+      console.log('submitReview: Revalidated path:', `/products/${productId}`);
 
       return { success: true, message: 'Your review has been submitted!' };
   } catch (error) {
-      console.error("Error submitting review:", error);
+      console.error("submitReview: Error occurred:", error);
+      console.error("submitReview: Error details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return { success: false, message: 'There was an error submitting your review.' };
   }
 }

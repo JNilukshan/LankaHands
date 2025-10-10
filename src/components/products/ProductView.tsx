@@ -92,7 +92,7 @@ export default function ProductView({ product }: ProductViewProps) {
       <div className="grid md:grid-cols-2 gap-8 items-start">
         {/* Image Gallery */}
         <div>
-          <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-xl mb-4">
+          <div className="relative w-full aspect-[4/3] max-w-lg rounded-lg overflow-hidden shadow-xl mb-4">
             {mainImage ? (
                 <Image src={mainImage} alt={product.name} fill style={{ objectFit: 'cover' }} data-ai-hint="product lifestyle" priority />
             ) : (

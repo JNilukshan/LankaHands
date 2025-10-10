@@ -39,7 +39,7 @@ function ProductViewSkeleton() {
         <div className="space-y-12">
             <div className="grid md:grid-cols-2 gap-8 items-start">
                 <div>
-                    <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+                    <Skeleton className="w-full aspect-[4/3] max-w-lg rounded-lg" />
                     <div className="grid grid-cols-3 gap-2 mt-4">
                         <Skeleton className="aspect-square rounded" />
                         <Skeleton className="aspect-square rounded" />
