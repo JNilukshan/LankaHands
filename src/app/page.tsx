@@ -40,7 +40,7 @@ export default async function HomePage() {
         />
         <div className="relative z-10 p-8 bg-background/70 backdrop-blur-sm rounded-md max-w-2xl">
           <h1 className="text-4xl md:text-5xl font-headline font-bold text-primary mb-4">
-            Discover the Heart of Sri Lankan Artistry for the World
+            Discover the Heart of Sri Lankan Artistry from Your Home
           </h1>
           <p className="text-lg md:text-xl text-foreground/80 mb-8">
             Explore unique handcrafted goods from talented local artisans. Each piece tells a story.
