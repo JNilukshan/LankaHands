@@ -1,4 +1,4 @@
-name: Deploy LankaHands to Azure VM
+name: Deploy LankaHands to AWS EC2
 
 on:
   push:
@@ -8,57 +8,56 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Deploy to Azure VM
+
+    - name: Deploy to AWS EC2
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USERNAME }}
-        password: ${{ secrets.VM_PASSWORD }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_KEY }}
         script: |
           echo "🚀 Starting LankaHands deployment..."
-          
-          # Navigate to project directory
-          cd /var/www/lankahands
-          
-          # Create backup
-          echo "📦 Creating backup..."
-          tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz .next/ || true
-          
+
+          # Navigate to or clone the project
+          cd /var/www
+          if [ ! -d "lankahands" ]; then
+            echo "📁 Cloning LankaHands repository..."
+            git clone https://github.com/JNilukshan/LankaHands.git lankahands
+          fi
+
+          cd lankahands
+
           # Pull latest changes
           echo "⬇️ Pulling latest changes..."
           git fetch origin
           git reset --hard origin/master
-          
+
           # Install dependencies
           echo "📋 Installing dependencies..."
           npm install
-          
-          # Build application
+
+          # Build the Next.js app
           echo "🔨 Building application..."
           npm run build
-          
-          # Restart PM2
-          echo "🔄 Restarting PM2..."
-          pm2 restart lankahands
-          
+
+          # Restart or start PM2
+          echo "🔄 Restarting PM2 process..."
+          pm2 restart lankahands || pm2 start npm --name "lankahands" -- start
+
           # Health check
           echo "🔍 Performing health check..."
           sleep 5
           if curl -f http://localhost:3000 > /dev/null 2>&1; then
-            echo "✅ Application is healthy"
+            echo "✅ LankaHands app is healthy"
           else
-            echo "❌ Application health check failed"
+            echo "⚠️ Health check failed, check PM2 logs"
+            pm2 logs lankahands --lines 20
             exit 1
           fi
-          
-          # Clean old backups (keep last 5)
-          echo "🧹 Cleaning old backups..."
-          ls -t backup-*.tar.gz 2>/dev/null | tail -n +6 | xargs rm -f || true
-          
+
           echo "✅ Deployment completed successfully at $(date)"
-          echo "🌐 Site: https://lankahands.duckdns.org"
+          echo "🌐 App running on port 3001"
