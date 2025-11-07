@@ -1,4 +1,4 @@
-name: Deploy LankaHands to AWS 
+name: Deploy LankaHands to AWS EC2
 
 on:
   push:
