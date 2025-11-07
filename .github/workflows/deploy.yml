@@ -14,7 +14,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Deploy to AWS EC2
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
@@ -22,31 +22,32 @@ jobs:
         script: |
           echo "🚀 Starting LankaHands deployment..."
 
-          # Navigate to or clone the project
+          # Go to web directory
           cd /var/www
-          if [ ! -d "lankahands" ]; then
-            echo "📁 Cloning LankaHands repository..."
-            git clone https://github.com/JNilukshan/LankaHands.git lankahands
-          fi
+
+          # Remove any existing old folder and clone fresh
+          echo "🧹 Cleaning old deployment..."
+          sudo rm -rf lankahands
+
+          echo "📁 Cloning LankaHands repository..."
+          sudo git clone https://github.com/JNilukshan/LankaHands.git lankahands
 
           cd lankahands
 
-          # Pull latest changes
-          echo "⬇️ Pulling latest changes..."
-          git fetch origin
-          git reset --hard origin/master
-
           # Install dependencies
-          echo "📋 Installing dependencies..."
+          echo "📦 Installing dependencies..."
           npm install
 
-          # Build the Next.js app
-          echo "🔨 Building application..."
+          # Build the app
+          echo "🔨 Building Next.js app..."
           npm run build
 
-          # Restart or start PM2
+          # Start or restart app with PM2
           echo "🔄 Restarting PM2 process..."
           pm2 restart lankahands || pm2 start npm --name "lankahands" -- start
+
+          # Optional: Save PM2 config to survive reboots
+          pm2 save
 
           # Health check
           echo "🔍 Performing health check..."
@@ -54,10 +55,10 @@ jobs:
           if curl -f http://localhost:3000 > /dev/null 2>&1; then
             echo "✅ LankaHands app is healthy"
           else
-            echo "⚠️ Health check failed, check PM2 logs"
+            echo "⚠️ Health check failed! Check PM2 logs:"
             pm2 logs lankahands --lines 20
             exit 1
           fi
 
           echo "✅ Deployment completed successfully at $(date)"
-          echo "🌐 App running on port 3001"
+          echo "🌐 App running on port 3000"
