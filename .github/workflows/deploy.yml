@@ -22,43 +22,53 @@ jobs:
         script: |
           echo "🚀 Starting LankaHands deployment..."
 
-          # Go to web directory
+          # Make sure node, npm, pm2 are available
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          export PATH=$PATH:/usr/local/bin
+
           cd /var/www
 
-          # Remove any existing old folder and clone fresh
+          # Clean old files safely
           echo "🧹 Cleaning old deployment..."
           sudo rm -rf lankahands
 
+          # Clone fresh repo
           echo "📁 Cloning LankaHands repository..."
           sudo git clone https://github.com/JNilukshan/LankaHands.git lankahands
 
           cd lankahands
+          sudo chown -R ubuntu:ubuntu /var/www/lankahands
 
-          # Install dependencies
+          # Fix npm permissions
+          echo "🔧 Fixing npm permissions..."
+          mkdir -p ~/.npm
+          npm config set prefix ~/.npm-global
+          export PATH=$PATH:~/.npm-global/bin
+
+          # Install dependencies cleanly
           echo "📦 Installing dependencies..."
-          npm install
+          npm install --legacy-peer-deps
 
-          # Build the app
-          echo "🔨 Building Next.js app..."
-          npm run build
+          # Build the Next.js app
+          echo "🔨 Building app..."
+          npx next build
 
-          # Start or restart app with PM2
-          echo "🔄 Restarting PM2 process..."
-          pm2 restart lankahands || pm2 start npm --name "lankahands" -- start
-
-          # Optional: Save PM2 config to survive reboots
+          # Restart or start PM2
+          echo "🔄 Restarting PM2..."
+          pm2 restart lankahands || pm2 start "npm run start" --name "lankahands" --update-env
           pm2 save
 
           # Health check
           echo "🔍 Performing health check..."
           sleep 5
           if curl -f http://localhost:3000 > /dev/null 2>&1; then
-            echo "✅ LankaHands app is healthy"
+            echo "✅ LankaHands app is running"
           else
-            echo "⚠️ Health check failed! Check PM2 logs:"
+            echo "❌ Health check failed. PM2 logs:"
             pm2 logs lankahands --lines 20
             exit 1
           fi
 
-          echo "✅ Deployment completed successfully at $(date)"
-          echo "🌐 App running on port 3000"
+          echo "✅ Deployment finished successfully!"
+          echo "🌐 Running on port 3000"
